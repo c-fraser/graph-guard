@@ -1,0 +1,23 @@
+name: test
+on:
+  push:
+    branches: [ '**' ]
+    tags-ignore: [ v* ]
+  pull_request:
+    branches: [ '**' ]
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Execute test
+        run: ./gradlew clean test

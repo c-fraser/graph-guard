@@ -1,0 +1,41 @@
+name: release
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Execute test
+        run: ./gradlew clean test
+  release:
+    needs: test
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Execute release
+        run: ./gradlew jreleaserFullRelease publishToSonatype closeAndReleaseSonatypeStagingRepository
+        env:
+          GITHUB_TOKEN: ${{secrets.RELEASE_TOKEN}}
+          SONATYPE_USERNAME: ${{secrets.SONATYPE_USERNAME}}
+          SONATYPE_PASSWORD: ${{secrets.SONATYPE_PASSWORD}}
+          GPG_SIGNING_KEY: ${{secrets.GPG_SIGNING_KEY}}
+          GPG_PASSWORD: ${{secrets.GPG_PASSWORD}}

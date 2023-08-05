@@ -1,0 +1,30 @@
+complexity:
+  LargeClass:
+    excludes:
+      - '**/src/test/**/*.kt'
+  LongMethod:
+    threshold: 67
+    excludes:
+      - '**/src/test/**/*.kt'
+  LongParameterList:
+    functionThreshold: 7
+
+coroutines:
+  active: true
+  InjectDispatcher:
+    excludes:
+      - '**/src/test/**/*.kt'
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false
+
+style:
+  ForbiddenComment:
+    active: false
+  LoopWithTooManyJumpStatements:
+    maxJumpCount: 3
+  MagicNumber:
+    active: false
+  ReturnCount:
+    max: 7

@@ -1,0 +1,10 @@
+bin
+build
+out
+.gradle
+.idea
+*.iml
+.vscode
+.DS_Store
+*.hprof
+src/main/java/io/github/cfraser/graphguard/antlr/*
