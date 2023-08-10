@@ -27,6 +27,7 @@ import org.neo4j.driver.Values
 class ServerTest : FunSpec() {
 
   init {
+    tags(LOCAL)
     test("proxy bolt messages") {
       withNeo4j {
         val proxy = thread {

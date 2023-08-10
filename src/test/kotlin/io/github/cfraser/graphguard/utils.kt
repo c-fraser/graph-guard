@@ -15,7 +15,10 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
+import io.kotest.core.NamedTag
 import org.testcontainers.containers.Neo4jContainer
+
+val LOCAL = NamedTag("Local")
 
 /** Use a running [Neo4jContainer] with the test [block]. */
 fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>.() -> T): T {

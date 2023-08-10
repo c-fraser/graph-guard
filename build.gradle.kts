@@ -235,6 +235,8 @@ configure<JReleaserExtension> {
 tasks {
   withType<Test> {
     useJUnitPlatform()
+    systemProperties =
+        System.getProperties().asIterable().associate { it.key.toString() to it.value }
     systemProperties("org.slf4j.simpleLogger.defaultLogLevel" to "debug")
   }
 

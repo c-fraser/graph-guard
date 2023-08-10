@@ -16,7 +16,7 @@ jobs:
           distribution: 'temurin'
           java-version: 17
       - name: Execute test
-        run: ./gradlew clean test
+        run: ./gradlew clean test -Dkotest.tags='!Local'
   release:
     needs: test
     name: release

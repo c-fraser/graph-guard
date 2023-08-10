@@ -14,6 +14,8 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
 * [Design](#design)
   * [Server](#server)
   * [Schema](#schema)
+    * [Nodes](#nodes)
+    * [Relationships](#relationships)
     * [Properties](#properties)
 * [Usage](#usage)
 * [Example](#example)
@@ -71,9 +73,16 @@ graph Movies {
 [//]: # (@formatter:on)
 <!--- KNIT Example01.kt --> 
 
-A `graph` contains `node` statements terminated by a semicolon. A `node`
-has [properties](#properties) and
-may have relationship definitions, comma-separated following a colon. A relationship definition
+A `graph` contains [node statements](#nodes) terminated by a semicolon.
+
+#### Nodes
+
+A `node` has [properties](#properties) and may have [relationship definitions](#relationships),
+comma-separated following a colon.
+
+#### Relationships
+
+A relationship definition
 has a direction (`->` or `--`) and a target node, and may also have [properties](#properties).
 
 #### Properties
@@ -139,20 +148,20 @@ val proxy = thread {
 Thread.sleep(3.seconds.inWholeMilliseconds) // Wait for the proxy server to initialize
 GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword)).use { driver ->
   driver.session().use { session ->
-    /** Run *this* invalid query and print the schema violation message. */
-    fun String.run() {
+    /** Run the invalid [query] and print the schema violation message. */
+    fun run(query: String) {
       try {
-        session.run(this)
+        session.run(query)
         error("Expected schema violation for query '$this'")
       } catch (exception: DatabaseException) {
         println(exception.message)
       }
     }
-    "CREATE (:TVShow {title: 'The Office', released: 2005})".run()
-    "MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000".run()
-    "MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})".run()
-    "MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.company = 'Warner Bros.'".run()
-    "CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})".run()
+    run("CREATE (:TVShow {title: 'The Office', released: 2005})")
+    run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
+    run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
+    run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
+    run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
   }
 }
 proxy.interrupt()
@@ -167,7 +176,7 @@ The code above prints the following *schema violation* messages.
 Unknown node TVShow
 Unknown property 'budget' for node Movie
 Unknown relationship WATCHED from Person to Movie
-Unknown property 'company' for relationship PRODUCED from Person to Movie
+Unknown property 'studio' for relationship PRODUCED from Person to Movie
 Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 ```
 
