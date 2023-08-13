@@ -24,6 +24,7 @@ import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.ListExpression
 import org.neo4j.cypherdsl.core.NodeBase
 import org.neo4j.cypherdsl.core.NodeLabel
+import org.neo4j.cypherdsl.core.NullLiteral
 import org.neo4j.cypherdsl.core.NumberLiteral
 import org.neo4j.cypherdsl.core.Operation
 import org.neo4j.cypherdsl.core.Operator
@@ -201,6 +202,7 @@ internal data class Query(
                   filters
                       .mapNotNull { filter ->
                         when (val expression = filter.right) {
+                          is NullLiteral -> Value(null)
                           is BooleanLiteral -> Value(expression.content)
                           is NumberLiteral -> Value(expression.content)
                           is StringLiteral -> Value(expression.content)
@@ -208,6 +210,7 @@ internal data class Query(
                               buildList {
                                     expression.accept { visitable ->
                                       when (visitable) {
+                                        is NullLiteral -> this += null
                                         is BooleanLiteral -> this += visitable.content
                                         is NumberLiteral -> this += visitable.content
                                         is StringLiteral -> this += visitable.content

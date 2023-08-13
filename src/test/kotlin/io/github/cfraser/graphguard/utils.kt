@@ -16,6 +16,9 @@ limitations under the License.
 package io.github.cfraser.graphguard
 
 import io.kotest.core.NamedTag
+import java.net.URI
+import kotlin.concurrent.thread
+import kotlin.time.Duration.Companion.seconds
 import org.testcontainers.containers.Neo4jContainer
 
 val LOCAL = NamedTag("Local")
@@ -26,6 +29,31 @@ fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>
       .withRandomPassword()
       .apply { start() }
       .use { neo4j -> neo4j.block() }
+}
+
+/** Run the test [block] with a [Server] created by the [initializer]. */
+fun Neo4jContainer<*>.withServer(
+    initializer: Neo4jContainer<*>.() -> Server = {
+      Server.create("localhost", 8787, URI(boltUrl), MOVIES_GRAPH_SCHEMA)
+    },
+    block: () -> Unit
+) {
+  if (System.getProperty("graph-guard.cli.test")?.toBooleanStrictOrNull() == true) {
+    @Suppress("UNUSED_VARIABLE") val boltUrl = boltUrl
+    block()
+    return
+  }
+  val proxy = thread {
+    try {
+      initializer().run()
+    } catch (_: InterruptedException) {}
+  }
+  Thread.sleep(1.seconds.inWholeMilliseconds)
+  try {
+    block()
+  } finally {
+    proxy.interrupt()
+  }
 }
 
 fun byteArrayOfSize(size: Int, byte: Byte = 0x3f): ByteArray {
@@ -107,8 +135,33 @@ val MOVIES_GRAPH =
                     relationships = emptySet()),
             ))
 
+/** The [Schema.Graph] for the [io.github.cfraser.graphguard.knit.PLACES_SCHEMA]. */
+val PLACES_GRAPH =
+    Schema.Graph(
+        name = "Places",
+        nodes =
+            setOf(
+                Schema.Node(
+                    name = "Theater",
+                    properties = setOf(Schema.Property("name", Schema.Property.Type.STRING)),
+                    relationships =
+                        setOf(
+                            Schema.Relationship(
+                                name = "SHOWING",
+                                source = "Theater",
+                                target = "Movies.Movie",
+                                isDirected = true,
+                                properties =
+                                    setOf(
+                                        Schema.Property(
+                                            "times", Schema.Property.Type.INTEGER, isList = true)),
+                            )))))
+
 /** The [Schema] for the [MOVIES_GRAPH]. */
 val MOVIES_GRAPH_SCHEMA = Schema(setOf(MOVIES_GRAPH))
+
+/** The [Schema] for the [MOVIES_GRAPH] and [PLACES_GRAPH]. */
+val MOVIES_AND_PLACES_GRAPH_SCHEMA = Schema(setOf(MOVIES_GRAPH, PLACES_GRAPH))
 
 /** Cypher for the [movies](https://github.com/neo4j-graph-examples/movies) graph. */
 object MoviesGraph {

@@ -20,6 +20,7 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jreleaser.gradle.plugin.JReleaserExtension
+import org.jreleaser.gradle.plugin.tasks.JReleaserFullReleaseTask
 import org.jreleaser.model.Active
 
 buildscript {
@@ -46,7 +47,7 @@ plugins {
 
 apply(plugin = "kotlinx-knit")
 
-allprojects {
+allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
@@ -55,9 +56,7 @@ allprojects {
   repositories { mavenCentral() }
 
   configure<JavaPluginExtension> { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
-}
 
-subprojects project@{
   tasks.withType<Jar> {
     manifest {
       attributes(
@@ -127,7 +126,7 @@ configure<SpotlessExtension> {
 
   kotlinGradle {
     ktfmt(ktfmtVersion)
-    licenseHeader(licenseHeader, "(import|buildscript|plugins|rootProject)")
+    licenseHeader(licenseHeader, "(import|buildscript|plugins|rootProject|@Suppress)")
     target(fileTree(rootProject.rootDir) { include("**/*.gradle.kts") })
   }
 }
@@ -188,6 +187,10 @@ publishing {
   }
 }
 
+val cliProject = project(":graph-guard-cli")
+val cliDist =
+    cliProject.buildDir.resolve("distributions").resolve("${cliProject.name}-shadow-$version.tar")
+
 configure<NexusPublishExtension> {
   repositories {
     sonatype {
@@ -229,6 +232,7 @@ configure<JReleaserExtension> {
         }
       }
     }
+    distributions { create(cliProject.name) { artifact { path.set(cliDist) } } }
   }
 }
 
@@ -260,4 +264,6 @@ tasks {
   }
 
   spotlessApply { dependsOn(syncDocs, detektAll) }
+
+  withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-cli:shadowDistTar") }
 }

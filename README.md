@@ -14,11 +14,15 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
 * [Design](#design)
   * [Server](#server)
   * [Schema](#schema)
+    * [Graph](#graph)
     * [Nodes](#nodes)
     * [Relationships](#relationships)
     * [Properties](#properties)
+    * [Violations](#violations)
 * [Usage](#usage)
-* [Example](#example)
+* [Examples](#examples)
+  * [Library](#library)
+  * [CLI](#cli)
 * [License](#license)
 
 <!--- END -->
@@ -43,7 +47,7 @@ the *client*.
 
 ### Schema
 
-The schema specifies the nodes and relationships in a graph. A schema is defined
+The schema describes the nodes and relationships in a graph. A schema is defined
 using `graph-guard`'s DSL language, demonstrated below for
 the [movies](https://github.com/neo4j-graph-examples/movies) graph.
 
@@ -73,17 +77,39 @@ graph Movies {
 [//]: # (@formatter:on)
 <!--- KNIT Example01.kt --> 
 
-A `graph` contains [node statements](#nodes) terminated by a semicolon.
+#### Graph
+
+A `graph` contains [node statements](#nodes). A [schema](#schema) may include multiple
+interconnected [graphs](#graph). To reference a *node* in another *graph*, qualify the *node* name
+with the *graph* name, as shown below.
+
+<!--- INCLUDE
+const val PLACES_SCHEMA =
+    """
+----- SUFFIX
+"""
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+graph Places {
+  node Theater(name: String):
+    SHOWING(times: List<Integer>) -> Movies.Movie;
+}
+```
+[//]: # (@formatter:on)
+<!--- KNIT Example02.kt --> 
 
 #### Nodes
 
-A `node` has [properties](#properties) and may have [relationship definitions](#relationships),
-comma-separated following a colon.
+A `node` must have a unique name, and may
+have [properties](#properties) and/or [relationship definitions](#relationships).
 
 #### Relationships
 
-A relationship definition
-has a direction (`->` or `--`) and a target node, and may also have [properties](#properties).
+Relationships are defined relative to the *source* [node](#nodes). A relationship definition must
+have a name, direction (`->` for directed, or `--` for undirected), and target node, and may also
+have [properties](#properties). A relationship must have a unique *name* + *source* + *target*.
 
 #### Properties
 
@@ -99,7 +125,19 @@ A node or relationship may have *typed* properties. The supported property types
 - `String`
 - `List<T>` - where `T` is another (un-parameterized) supported type
 
-A property can be designated as nullable by appending the `?` suffix to the type, e.g. `String?`.
+A property can be designated as nullable by appending the `?` suffix to the type, for
+example `String?` and `List<Any?>`.
+
+#### Violations
+
+The [server](#server)'s the *Cypher* query validation prevents the following [schema](#schema)
+violations.
+
+- `"Unknown ${entity}"` - a query has a node or relationship not defined in the schema
+- `"Unknown property '$property' for ${entity}"` - a query has a property (on a node or
+  relationship) not defined in the schema
+- `"Invalid query value(s) '${values}' for property '${property}' on ${entity}"` - a query has
+  property value(s) (on a node or relationship) conflicting with the type defined in the schema
 
 ## Usage
 
@@ -114,9 +152,11 @@ the [releases](https://github.com/c-fraser/graph-guard/releases).
 > Use [NGINX](https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/) or a
 > cloud load balancer to decrypt *Bolt* traffic for the proxy server.
 
-## Example
+## Examples
 
-<!--- TEST_NAME Example02Test --> 
+### Library
+
+<!--- TEST_NAME Example03Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Schema
 import io.github.cfraser.graphguard.Server
@@ -128,7 +168,7 @@ import java.net.URI
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
-fun runExample02() {
+fun runExample03() {
   withNeo4j {
 ----- SUFFIX
   }
@@ -168,7 +208,7 @@ proxy.interrupt()
 ```
 [//]: # (@formatter:on)
 
-<!--- KNIT Example02.kt --> 
+<!--- KNIT Example03.kt --> 
 
 The code above prints the following *schema violation* messages.
 
@@ -181,6 +221,40 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 ```
 
 <!--- TEST -->
+
+### CLI
+
+Run the `graph-guard-cli` application, extracted from
+the [shadow](https://github.com/johnrengelman/shadow) distribution, for a local Neo4j database.
+
+> Replace `x.y.z` with teh
+> desired [graph-guard release](https://github.com/c-fraser/graph-guard/releases) version.
+
+```shell
+tar -xvf graph-guard-cli-shadow-x.y.z.tar
+cat <<'EOF' | ./graph-guard-cli-shadow-x.y.z/bin/graph-guard-cli -p 8787 -g bolt://localhost:7687 -s -
+graph Schema {
+  // ...
+}
+EOF
+```
+
+<!--- 
+./gradlew test --tests "io.github.cfraser.graphguard.ServerTest" -Dgraph-guard.cli.test=true --debug-jvm
+./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist
+cat <<'EOF' | ./cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli  -h localhost -p 8787 -g bolt://localhost:7687 -s -
+graph Movies {
+  node Person(name: String, born: Integer):
+    ACTED_IN(roles: List<String>) -> Movie,
+    DIRECTED -> Movie,
+    PRODUCED -> Movie,
+    WROTE -> Movie,
+    REVIEWED(summary: String, rating: Integer) -> Movie;
+
+  node Movie(title: String, released: Integer, tagline: String);
+}
+EOF
+-->
 
 ## License
 

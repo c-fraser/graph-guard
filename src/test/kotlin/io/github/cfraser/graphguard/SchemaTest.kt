@@ -16,6 +16,7 @@ limitations under the License.
 package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
+import io.github.cfraser.graphguard.knit.PLACES_SCHEMA
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
@@ -24,25 +25,18 @@ import io.kotest.matchers.shouldBe
 class SchemaTest : FunSpec() {
 
   init {
-    test("parse graph schema") { Schema.parse(MOVIES_SCHEMA) shouldBe MOVIES_GRAPH_SCHEMA }
+    test("parse graph schema") {
+      Schema.parse(MOVIES_SCHEMA + PLACES_SCHEMA) shouldBe MOVIES_AND_PLACES_GRAPH_SCHEMA
+    }
 
     test("render graph schema") { MOVIES_GRAPH.render() shouldBe MOVIES_SCHEMA.trim() }
 
     context("validate cypher queries") {
-      @IsStableType
-      data class Data(
-          val query: String,
-          val parameters: Map<String, Any?>,
-          val expected: Schema.InvalidQuery?
-      )
-      infix fun String.with(parameters: Map<String, Any?>) = this to parameters
-      infix fun Pair<String, Map<String, Any?>>.expect(expected: Schema.InvalidQuery?) =
-          Data(first, second, expected)
       withData(
           "" with emptyMap() expect null,
-          "MATCH (theater:Theater)-[:SHOWING]->(movie:Movie) RETURN theater, movie" with
+          "MATCH (person:Person)-[:ACTED_IN]->(tvShow:TVShow) RETURN person, tvShow" with
               emptyMap() expect
-              Schema.InvalidQuery.Unknown(Schema.InvalidQuery.Entity.Node("Theater")),
+              Schema.InvalidQuery.Unknown(Schema.InvalidQuery.Entity.Node("TVShow")),
           "MATCH (TheMatrix:Movie {title:'The Matrix'}) SET TheMatrix.budget = 63000000" with
               emptyMap() expect
               Schema.InvalidQuery.UnknownProperty(
@@ -104,16 +98,70 @@ class SchemaTest : FunSpec() {
           MoviesGraph.MERGE_KEANU with mapOf("properties" to mapOf("born" to 1963L)) expect null,
           MoviesGraph.MERGE_KEANU with
               mapOf("properties" to mapOf("fullName" to "Keanu Charles Reeves")) expect
-              Schema.InvalidQuery.UnknownProperty(PERSON, "fullName")) {
+              Schema.InvalidQuery.UnknownProperty(PERSON, "fullName"),
+          "MATCH (theater:Theater)-[:SHOWING]->(movie:Movie) RETURN theater, movie" with
+              emptyMap() expect
+              null) { (query, parameters, expected) ->
+            MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected
+          }
+    }
+
+    context("validate nullable types") {
+      val schema =
+          """
+          graph G {
+            node A(a: List<Any?>);
+            node B(b: List<Any>?);
+          }
+          """
+              .trimIndent()
+              .let(Schema::parse)
+      withData(
+          "CREATE (:A {a: []})" with emptyMap() expect null,
+          "CREATE (:A {a: [1, '2', 3.0]})" with emptyMap() expect null,
+          "CREATE (:A {a: [1, '2', 3.0, null]})" with emptyMap() expect null,
+          "CREATE (:A {a: null})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(A, A_A, listOf(null)),
+          "CREATE (:A {a: \$a})" with
+              mapOf("a" to null) expect
+              Schema.InvalidQuery.InvalidProperty(A, A_A, listOf(null)),
+          "CREATE (:B {b: []})" with emptyMap() expect null,
+          "CREATE (:B {b: [1, '2', 3.0]})" with emptyMap() expect null,
+          "CREATE (:B {b: [null]]})" with emptyMap() expect null,
+          "CREATE (:B {b: \$b})" with mapOf("b" to listOf(null)) expect null,
+          "CREATE (:B {b: null})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(B, B_B, listOf(null)),
+          "CREATE (:B {b: \$b})" with
+              mapOf("b" to null) expect
+              Schema.InvalidQuery.InvalidProperty(B, B_B, listOf(null))) {
               (query, parameters, expected) ->
-            MOVIES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected
+            schema.validate(query, parameters) shouldBe expected
           }
     }
   }
 
+  @IsStableType
+  private data class Data(
+      val query: String,
+      val parameters: Map<String, Any?>,
+      val expected: Schema.InvalidQuery?
+  )
+
   private companion object {
+
+    infix fun String.with(parameters: Map<String, Any?>) = this to parameters
+
+    infix fun Pair<String, Map<String, Any?>>.expect(expected: Schema.InvalidQuery?) =
+        Data(first, second, expected)
 
     val PERSON = Schema.InvalidQuery.Entity.Node("Person")
     val NAME = Schema.Property("name", Schema.Property.Type.STRING)
+
+    val A = Schema.InvalidQuery.Entity.Node("A")
+    val A_A = Schema.Property("a", Schema.Property.Type.ANY, isList = true, allowsNullable = true)
+    val B = Schema.InvalidQuery.Entity.Node("B")
+    val B_B = Schema.Property("b", Schema.Property.Type.ANY, isList = true, isNullable = true)
   }
 }

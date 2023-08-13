@@ -20,18 +20,18 @@ grammar Schema;
 package io.github.cfraser.graphguard.antlr;
 }
 
-start: graph* EOF;
+start: graph+ EOF;
 
 graph: GRAPH name LC (node SEMICOLON)* RC;
 
-node: NODE name properties (COLON relationship (COMMA relationship)*)?;
-relationship: name (properties)? (UNDIRECTED | DIRECTED) target;
+node: NODE name properties? (COLON relationship (COMMA relationship)*)?;
+relationship: name properties? (UNDIRECTED | DIRECTED) target;
 
 properties: LP (property (COMMA property)*)? RP;
-property: name QM? COLON type;
+property: name COLON type;
 type: (value | list) QM?;
 value: VALUE;
-list: LIST LT value GT;
+list: LIST LT value QM? GT;
 
 name: NAME;
 qualified: QUALIFIED;
@@ -54,7 +54,7 @@ DIRECTED: '->';
 GRAPH: 'graph';
 NODE: 'node';
 
-VALUE: BOOLEAN | FLOAT | INTEGER | STRING;
+VALUE: ANY | BOOLEAN | FLOAT | INTEGER | STRING;
 ANY: 'Any';
 BOOLEAN: 'Boolean';
 FLOAT: 'Float';

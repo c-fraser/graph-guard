@@ -177,7 +177,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property isList whether the [Property] is a
    *   [List](https://neo4j.com/docs/cypher-manual/5/values-and-types/lists/) of the [type]
    * @property isNullable whether the [Property] value is nullable
-   * @property isOptional whether the [Property] is optional (can be omitted)
+   * @property allowsNullable whether the [Property] (container) allows nullable values
    */
   data class Property
   internal constructor(
@@ -185,14 +185,17 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       val type: Type,
       val isList: Boolean = false,
       val isNullable: Boolean = false,
-      val isOptional: Boolean = false
+      val allowsNullable: Boolean = false
   ) : Renderable {
 
     override fun render(): String {
-      val optional = if (isOptional) "?" else ""
-      val type = if (isList) "List<${type.render()}>" else type.render()
+      val type =
+          if (isList) {
+            val nullable = if (allowsNullable) "?" else ""
+            "List<${type.render()}$nullable>"
+          } else type.render()
       val nullable = if (isNullable) "?" else ""
-      return "$name$optional: $type$nullable"
+      return "$name: $type$nullable"
     }
 
     /**
@@ -267,7 +270,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       val tokens = CommonTokenStream(lexer)
       val parser = SchemaParser(tokens)
       val collector = Collector()
-      ParseTreeWalker().walk(collector, parser.graph())
+      ParseTreeWalker.DEFAULT.walk(collector, parser.start())
       return Schema(collector.graphs)
     }
 
@@ -325,11 +328,12 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
         property: Query.Property,
         parameters: Map<String, Any?>
     ): InvalidQuery? {
+      fun List<Any?>.filterNullIf(exclude: Boolean) = if (exclude) filterNotNull() else this
       fun List<Any?>.isValid(): Boolean {
-        if (isList && filterNotNull().any { it !is MutableList<*> }) return false
+        if (isList && filterNullIf(allowsNullable).any { it !is MutableList<*> }) return false
         if (!isList && filterNotNull().any { it is MutableList<*> }) return false
-        return flatMap { if (it is MutableList<*>) it else listOf(it) }
-            .run { if (isNullable) filterNotNull() else this }
+        return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
+            .filterNullIf(isNullable)
             .all(type.clazz::isInstance)
       }
       val values =
@@ -428,8 +432,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
                       .let(::checkNotNull)
               val isList = ctx.type().list() != null
               val isNullable = ctx.type().QM() != null
-              val isOptional = ctx.QM() != null
-              Property(name, type, isList, isNullable, isOptional)
+              val allowsNullable = ctx.type().list()?.QM() != null
+              Property(name, type, isList, isNullable, allowsNullable)
             }
             ?.toSet()
             ?: emptySet()

@@ -26,6 +26,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.clikt.parameters.types.inputStream
 import com.github.ajalt.clikt.parameters.types.int
 import io.github.cfraser.graphguard.BuildConfig
 import io.github.cfraser.graphguard.Schema
@@ -61,7 +62,9 @@ internal class Command :
 
   private val schema by
       mutuallyExclusiveOptions(
-              option("-s", "--schema", help = "The graph schema text"),
+              option("-s", "--schema", help = "The input stream with the graph schema text")
+                  .inputStream()
+                  .convert { stream -> stream.use { it.readBytes().toString(Charsets.UTF_8) } },
               option("-f", "--schema-file", help = "The file with the graph schema")
                   .file(mustExist = true, mustBeReadable = true, canBeDir = false)
                   .convert { it.readText() })
