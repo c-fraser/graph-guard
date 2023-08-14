@@ -1,0 +1,415 @@
+public final class io/github/cfraser/graphguard/Schema {
+	public static final field Companion Lio/github/cfraser/graphguard/Schema$Companion;
+	public final fun component1 ()Ljava/util/Set;
+	public final fun copy (Ljava/util/Set;)Lio/github/cfraser/graphguard/Schema;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Schema;Ljava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Schema;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGraphs ()Ljava/util/Set;
+	public fun hashCode ()I
+	public static final fun parse (Ljava/lang/String;)Lio/github/cfraser/graphguard/Schema;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Companion {
+	public final fun parse (Ljava/lang/String;)Lio/github/cfraser/graphguard/Schema;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Graph : io/github/cfraser/graphguard/Schema$Renderable {
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;)Lio/github/cfraser/graphguard/Schema$Graph;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Schema$Graph;Ljava/lang/String;Ljava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Schema$Graph;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getNodes ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun render ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Node : io/github/cfraser/graphguard/Schema$Renderable {
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;)Lio/github/cfraser/graphguard/Schema$Node;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Schema$Node;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Schema$Node;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProperties ()Ljava/util/Set;
+	public final fun getRelationships ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun render ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property : io/github/cfraser/graphguard/Schema$Renderable {
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Lio/github/cfraser/graphguard/Schema$Property$Type;ZZZ)Lio/github/cfraser/graphguard/Schema$Property;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Schema$Property;Ljava/lang/String;Lio/github/cfraser/graphguard/Schema$Property$Type;ZZZILjava/lang/Object;)Lio/github/cfraser/graphguard/Schema$Property;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowsNullable ()Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public fun hashCode ()I
+	public final fun isList ()Z
+	public final fun isNullable ()Z
+	public fun render ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type : java/lang/Enum, io/github/cfraser/graphguard/Schema$Renderable {
+	public static final field ANY Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public static final field BOOLEAN Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public static final field FLOAT Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public static final field INTEGER Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public static final field STRING Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public fun render ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/cfraser/graphguard/Schema$Property$Type;
+	public static fun values ()[Lio/github/cfraser/graphguard/Schema$Property$Type;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Relationship : io/github/cfraser/graphguard/Schema$Renderable {
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Set;)Lio/github/cfraser/graphguard/Schema$Relationship;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Schema$Relationship;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Schema$Relationship;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProperties ()Ljava/util/Set;
+	public final fun getSource ()Ljava/lang/String;
+	public final fun getTarget ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isDirected ()Z
+	public fun render ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/cfraser/graphguard/Schema$Renderable {
+	public abstract fun render ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Server : java/lang/Runnable {
+	public static final field Companion Lio/github/cfraser/graphguard/Server$Companion;
+	public static final fun create (Ljava/lang/String;ILjava/net/URI;Lio/github/cfraser/graphguard/Schema;)Lio/github/cfraser/graphguard/Server;
+	public static final fun create (Ljava/lang/String;ILjava/net/URI;Lio/github/cfraser/graphguard/Schema;Ljava/lang/Integer;)Lio/github/cfraser/graphguard/Server;
+	public static final fun create (Ljava/lang/String;ILjava/net/URI;Lio/github/cfraser/graphguard/Schema;Ljava/lang/Integer;I)Lio/github/cfraser/graphguard/Server;
+	public fun run ()V
+}
+
+public final class io/github/cfraser/graphguard/Server$Companion {
+	public final fun create (Ljava/lang/String;ILjava/net/URI;Lio/github/cfraser/graphguard/Schema;)Lio/github/cfraser/graphguard/Server;
+	public final fun create (Ljava/lang/String;ILjava/net/URI;Lio/github/cfraser/graphguard/Schema;Ljava/lang/Integer;)Lio/github/cfraser/graphguard/Server;
+	public final fun create (Ljava/lang/String;ILjava/net/URI;Lio/github/cfraser/graphguard/Schema;Ljava/lang/Integer;I)Lio/github/cfraser/graphguard/Server;
+	public static synthetic fun create$default (Lio/github/cfraser/graphguard/Server$Companion;Ljava/lang/String;ILjava/net/URI;Lio/github/cfraser/graphguard/Schema;Ljava/lang/Integer;IILjava/lang/Object;)Lio/github/cfraser/graphguard/Server;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaBaseListener : io/github/cfraser/graphguard/antlr/SchemaListener {
+	public fun <init> ()V
+	public fun enterEveryRule (Lorg/antlr/v4/runtime/ParserRuleContext;)V
+	public fun enterGraph (Lio/github/cfraser/graphguard/antlr/SchemaParser$GraphContext;)V
+	public fun enterList (Lio/github/cfraser/graphguard/antlr/SchemaParser$ListContext;)V
+	public fun enterName (Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;)V
+	public fun enterNode (Lio/github/cfraser/graphguard/antlr/SchemaParser$NodeContext;)V
+	public fun enterProperties (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext;)V
+	public fun enterProperty (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertyContext;)V
+	public fun enterQualified (Lio/github/cfraser/graphguard/antlr/SchemaParser$QualifiedContext;)V
+	public fun enterRelationship (Lio/github/cfraser/graphguard/antlr/SchemaParser$RelationshipContext;)V
+	public fun enterStart (Lio/github/cfraser/graphguard/antlr/SchemaParser$StartContext;)V
+	public fun enterTarget (Lio/github/cfraser/graphguard/antlr/SchemaParser$TargetContext;)V
+	public fun enterType (Lio/github/cfraser/graphguard/antlr/SchemaParser$TypeContext;)V
+	public fun enterValue (Lio/github/cfraser/graphguard/antlr/SchemaParser$ValueContext;)V
+	public fun exitEveryRule (Lorg/antlr/v4/runtime/ParserRuleContext;)V
+	public fun exitGraph (Lio/github/cfraser/graphguard/antlr/SchemaParser$GraphContext;)V
+	public fun exitList (Lio/github/cfraser/graphguard/antlr/SchemaParser$ListContext;)V
+	public fun exitName (Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;)V
+	public fun exitNode (Lio/github/cfraser/graphguard/antlr/SchemaParser$NodeContext;)V
+	public fun exitProperties (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext;)V
+	public fun exitProperty (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertyContext;)V
+	public fun exitQualified (Lio/github/cfraser/graphguard/antlr/SchemaParser$QualifiedContext;)V
+	public fun exitRelationship (Lio/github/cfraser/graphguard/antlr/SchemaParser$RelationshipContext;)V
+	public fun exitStart (Lio/github/cfraser/graphguard/antlr/SchemaParser$StartContext;)V
+	public fun exitTarget (Lio/github/cfraser/graphguard/antlr/SchemaParser$TargetContext;)V
+	public fun exitType (Lio/github/cfraser/graphguard/antlr/SchemaParser$TypeContext;)V
+	public fun exitValue (Lio/github/cfraser/graphguard/antlr/SchemaParser$ValueContext;)V
+	public fun visitErrorNode (Lorg/antlr/v4/runtime/tree/ErrorNode;)V
+	public fun visitTerminal (Lorg/antlr/v4/runtime/tree/TerminalNode;)V
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaLexer : org/antlr/v4/runtime/Lexer {
+	public static final field ANY I
+	public static final field BOOLEAN I
+	public static final field COLON I
+	public static final field COMMA I
+	public static final field COMMENT I
+	public static final field DIRECTED I
+	public static final field DOT I
+	public static final field FLOAT I
+	public static final field GRAPH I
+	public static final field GT I
+	public static final field INTEGER I
+	public static final field LC I
+	public static final field LIST I
+	public static final field LP I
+	public static final field LT I
+	public static final field NAME I
+	public static final field NODE I
+	public static final field QM I
+	public static final field QUALIFIED I
+	public static final field RC I
+	public static final field RP I
+	public static final field SEMICOLON I
+	public static final field STRING I
+	public static final field UNDIRECTED I
+	public static final field VALUE I
+	public static final field VOCABULARY Lorg/antlr/v4/runtime/Vocabulary;
+	public static final field WHITESPACE I
+	public static final field _ATN Lorg/antlr/v4/runtime/atn/ATN;
+	protected static final field _decisionToDFA [Lorg/antlr/v4/runtime/dfa/DFA;
+	public static final field _serializedATN Ljava/lang/String;
+	protected static final field _sharedContextCache Lorg/antlr/v4/runtime/atn/PredictionContextCache;
+	public static field channelNames [Ljava/lang/String;
+	public static field modeNames [Ljava/lang/String;
+	public static final field ruleNames [Ljava/lang/String;
+	public static final field tokenNames [Ljava/lang/String;
+	public fun <init> (Lorg/antlr/v4/runtime/CharStream;)V
+	public fun getATN ()Lorg/antlr/v4/runtime/atn/ATN;
+	public fun getChannelNames ()[Ljava/lang/String;
+	public fun getGrammarFileName ()Ljava/lang/String;
+	public fun getModeNames ()[Ljava/lang/String;
+	public fun getRuleNames ()[Ljava/lang/String;
+	public fun getSerializedATN ()Ljava/lang/String;
+	public fun getTokenNames ()[Ljava/lang/String;
+	public fun getVocabulary ()Lorg/antlr/v4/runtime/Vocabulary;
+}
+
+public abstract interface class io/github/cfraser/graphguard/antlr/SchemaListener : org/antlr/v4/runtime/tree/ParseTreeListener {
+	public abstract fun enterGraph (Lio/github/cfraser/graphguard/antlr/SchemaParser$GraphContext;)V
+	public abstract fun enterList (Lio/github/cfraser/graphguard/antlr/SchemaParser$ListContext;)V
+	public abstract fun enterName (Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;)V
+	public abstract fun enterNode (Lio/github/cfraser/graphguard/antlr/SchemaParser$NodeContext;)V
+	public abstract fun enterProperties (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext;)V
+	public abstract fun enterProperty (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertyContext;)V
+	public abstract fun enterQualified (Lio/github/cfraser/graphguard/antlr/SchemaParser$QualifiedContext;)V
+	public abstract fun enterRelationship (Lio/github/cfraser/graphguard/antlr/SchemaParser$RelationshipContext;)V
+	public abstract fun enterStart (Lio/github/cfraser/graphguard/antlr/SchemaParser$StartContext;)V
+	public abstract fun enterTarget (Lio/github/cfraser/graphguard/antlr/SchemaParser$TargetContext;)V
+	public abstract fun enterType (Lio/github/cfraser/graphguard/antlr/SchemaParser$TypeContext;)V
+	public abstract fun enterValue (Lio/github/cfraser/graphguard/antlr/SchemaParser$ValueContext;)V
+	public abstract fun exitGraph (Lio/github/cfraser/graphguard/antlr/SchemaParser$GraphContext;)V
+	public abstract fun exitList (Lio/github/cfraser/graphguard/antlr/SchemaParser$ListContext;)V
+	public abstract fun exitName (Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;)V
+	public abstract fun exitNode (Lio/github/cfraser/graphguard/antlr/SchemaParser$NodeContext;)V
+	public abstract fun exitProperties (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext;)V
+	public abstract fun exitProperty (Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertyContext;)V
+	public abstract fun exitQualified (Lio/github/cfraser/graphguard/antlr/SchemaParser$QualifiedContext;)V
+	public abstract fun exitRelationship (Lio/github/cfraser/graphguard/antlr/SchemaParser$RelationshipContext;)V
+	public abstract fun exitStart (Lio/github/cfraser/graphguard/antlr/SchemaParser$StartContext;)V
+	public abstract fun exitTarget (Lio/github/cfraser/graphguard/antlr/SchemaParser$TargetContext;)V
+	public abstract fun exitType (Lio/github/cfraser/graphguard/antlr/SchemaParser$TypeContext;)V
+	public abstract fun exitValue (Lio/github/cfraser/graphguard/antlr/SchemaParser$ValueContext;)V
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser : org/antlr/v4/runtime/Parser {
+	public static final field ANY I
+	public static final field BOOLEAN I
+	public static final field COLON I
+	public static final field COMMA I
+	public static final field COMMENT I
+	public static final field DIRECTED I
+	public static final field DOT I
+	public static final field FLOAT I
+	public static final field GRAPH I
+	public static final field GT I
+	public static final field INTEGER I
+	public static final field LC I
+	public static final field LIST I
+	public static final field LP I
+	public static final field LT I
+	public static final field NAME I
+	public static final field NODE I
+	public static final field QM I
+	public static final field QUALIFIED I
+	public static final field RC I
+	public static final field RP I
+	public static final field RULE_graph I
+	public static final field RULE_list I
+	public static final field RULE_name I
+	public static final field RULE_node I
+	public static final field RULE_properties I
+	public static final field RULE_property I
+	public static final field RULE_qualified I
+	public static final field RULE_relationship I
+	public static final field RULE_start I
+	public static final field RULE_target I
+	public static final field RULE_type I
+	public static final field RULE_value I
+	public static final field SEMICOLON I
+	public static final field STRING I
+	public static final field UNDIRECTED I
+	public static final field VALUE I
+	public static final field VOCABULARY Lorg/antlr/v4/runtime/Vocabulary;
+	public static final field WHITESPACE I
+	public static final field _ATN Lorg/antlr/v4/runtime/atn/ATN;
+	protected static final field _decisionToDFA [Lorg/antlr/v4/runtime/dfa/DFA;
+	public static final field _serializedATN Ljava/lang/String;
+	protected static final field _sharedContextCache Lorg/antlr/v4/runtime/atn/PredictionContextCache;
+	public static final field ruleNames [Ljava/lang/String;
+	public static final field tokenNames [Ljava/lang/String;
+	public fun <init> (Lorg/antlr/v4/runtime/TokenStream;)V
+	public fun getATN ()Lorg/antlr/v4/runtime/atn/ATN;
+	public fun getGrammarFileName ()Ljava/lang/String;
+	public fun getRuleNames ()[Ljava/lang/String;
+	public fun getSerializedATN ()Ljava/lang/String;
+	public fun getTokenNames ()[Ljava/lang/String;
+	public fun getVocabulary ()Lorg/antlr/v4/runtime/Vocabulary;
+	public final fun graph ()Lio/github/cfraser/graphguard/antlr/SchemaParser$GraphContext;
+	public final fun list ()Lio/github/cfraser/graphguard/antlr/SchemaParser$ListContext;
+	public final fun name ()Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;
+	public final fun node ()Lio/github/cfraser/graphguard/antlr/SchemaParser$NodeContext;
+	public final fun properties ()Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext;
+	public final fun property ()Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertyContext;
+	public final fun qualified ()Lio/github/cfraser/graphguard/antlr/SchemaParser$QualifiedContext;
+	public final fun relationship ()Lio/github/cfraser/graphguard/antlr/SchemaParser$RelationshipContext;
+	public final fun start ()Lio/github/cfraser/graphguard/antlr/SchemaParser$StartContext;
+	public final fun target ()Lio/github/cfraser/graphguard/antlr/SchemaParser$TargetContext;
+	public final fun type ()Lio/github/cfraser/graphguard/antlr/SchemaParser$TypeContext;
+	public final fun value ()Lio/github/cfraser/graphguard/antlr/SchemaParser$ValueContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$GraphContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun GRAPH ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun LC ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun RC ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun SEMICOLON ()Ljava/util/List;
+	public fun SEMICOLON (I)Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun name ()Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;
+	public fun node ()Ljava/util/List;
+	public fun node (I)Lio/github/cfraser/graphguard/antlr/SchemaParser$NodeContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$ListContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun GT ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun LIST ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun LT ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun QM ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun value ()Lio/github/cfraser/graphguard/antlr/SchemaParser$ValueContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$NameContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun NAME ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$NodeContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun COLON ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun COMMA ()Ljava/util/List;
+	public fun COMMA (I)Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun NODE ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun name ()Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;
+	public fun properties ()Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext;
+	public fun relationship ()Ljava/util/List;
+	public fun relationship (I)Lio/github/cfraser/graphguard/antlr/SchemaParser$RelationshipContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun COMMA ()Ljava/util/List;
+	public fun COMMA (I)Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun LP ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun RP ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun property ()Ljava/util/List;
+	public fun property (I)Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertyContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$PropertyContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun COLON ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun name ()Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;
+	public fun type ()Lio/github/cfraser/graphguard/antlr/SchemaParser$TypeContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$QualifiedContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun QUALIFIED ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$RelationshipContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun DIRECTED ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun UNDIRECTED ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun name ()Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;
+	public fun properties ()Lio/github/cfraser/graphguard/antlr/SchemaParser$PropertiesContext;
+	public fun target ()Lio/github/cfraser/graphguard/antlr/SchemaParser$TargetContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$StartContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun EOF ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun graph ()Ljava/util/List;
+	public fun graph (I)Lio/github/cfraser/graphguard/antlr/SchemaParser$GraphContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$TargetContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun name ()Lio/github/cfraser/graphguard/antlr/SchemaParser$NameContext;
+	public fun qualified ()Lio/github/cfraser/graphguard/antlr/SchemaParser$QualifiedContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$TypeContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun QM ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+	public fun list ()Lio/github/cfraser/graphguard/antlr/SchemaParser$ListContext;
+	public fun value ()Lio/github/cfraser/graphguard/antlr/SchemaParser$ValueContext;
+}
+
+public class io/github/cfraser/graphguard/antlr/SchemaParser$ValueContext : org/antlr/v4/runtime/ParserRuleContext {
+	public fun <init> (Lorg/antlr/v4/runtime/ParserRuleContext;I)V
+	public fun VALUE ()Lorg/antlr/v4/runtime/tree/TerminalNode;
+	public fun enterRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun exitRule (Lorg/antlr/v4/runtime/tree/ParseTreeListener;)V
+	public fun getRuleIndex ()I
+}
+
