@@ -1,6 +1,6 @@
 # graph-guard
 
-[![Test](https://github.com/c-fraser/graph-guard/workflows/Test/badge.svg)](https://github.com/c-fraser/graph-guard/actions)
+[![Test](https://github.com/c-fraser/graph-guard/workflows/test/badge.svg)](https://github.com/c-fraser/graph-guard/actions)
 [![Release](https://img.shields.io/github/v/release/c-fraser/graph-guard?logo=github&sort=semver)](https://github.com/c-fraser/graph-guard/releases)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.c-fraser/graph-guard.svg)](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard)
 [![Javadoc](https://javadoc.io/badge2/io.github.c-fraser/graph-guard/javadoc.svg)](https://javadoc.io/doc/io.github.c-fraser/graph-guard)
@@ -12,18 +12,18 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
 <!--- TOC -->
 
 * [Design](#design)
-  * [Server](#server)
-  * [Schema](#schema)
-    * [Graph](#graph)
-    * [Nodes](#nodes)
-    * [Relationships](#relationships)
-    * [Properties](#properties)
-    * [Violations](#violations)
-    * [Grammar](#grammar)
+    * [Server](#server)
+    * [Schema](#schema)
+        * [Graph](#graph)
+        * [Nodes](#nodes)
+        * [Relationships](#relationships)
+        * [Properties](#properties)
+        * [Violations](#violations)
+        * [Grammar](#grammar)
 * [Usage](#usage)
 * [Examples](#examples)
-  * [Library](#library)
-  * [CLI](#cli)
+    * [Library](#library)
+    * [CLI](#cli)
 * [License](#license)
 
 <!--- END -->
