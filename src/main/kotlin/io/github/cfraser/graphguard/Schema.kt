@@ -109,18 +109,11 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property name the name of the graph
    * @property nodes the nodes and relationships in the graph
    */
-  data class Graph internal constructor(val name: String, val nodes: Set<Node>) : Renderable {
+  data class Graph internal constructor(val name: String, val nodes: Set<Node>) {
 
-    override fun render(): String {
-      return "graph $name {\n${nodes.joinToString("\n\n", transform = Renderable::render)}\n}"
+    override fun toString(): String {
+      return "graph $name {\n${nodes.joinToString("\n\n", transform = Node::toString)}\n}"
     }
-  }
-
-  /** A [Renderable] type within the [Schema]. */
-  sealed interface Renderable {
-
-    /** Render the type. */
-    fun render(): String
   }
 
   /**
@@ -134,14 +127,14 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       val name: String,
       val properties: Set<Property>,
       val relationships: Set<Relationship>
-  ) : Renderable {
+  ) {
 
-    override fun render(): String {
+    override fun toString(): String {
       val relationships =
-          ":\n${relationships.joinToString(",\n", transform = Renderable::render)}"
+          ":\n${relationships.joinToString(",\n", transform = Relationship::toString)}"
               .takeUnless { relationships.isEmpty() }
               .orEmpty()
-      return "  node $name${properties.render()}$relationships;"
+      return "  node $name${properties.parenthesize()}$relationships;"
     }
   }
 
@@ -161,11 +154,11 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       val target: String,
       val isDirected: Boolean,
       val properties: Set<Property>
-  ) : Renderable {
+  ) {
 
-    override fun render(): String {
+    override fun toString(): String {
       val direction = if (isDirected) "->" else "--"
-      return "    $name${properties.render()} $direction $target"
+      return "    $name${properties.parenthesize()} $direction $target"
     }
   }
 
@@ -186,14 +179,14 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       val isList: Boolean = false,
       val isNullable: Boolean = false,
       val allowsNullable: Boolean = false
-  ) : Renderable {
+  ) {
 
-    override fun render(): String {
+    override fun toString(): String {
       val type =
           if (isList) {
             val nullable = if (allowsNullable) "?" else ""
-            "List<${type.render()}$nullable>"
-          } else type.render()
+            "List<$type$nullable>"
+          } else "$type"
       val nullable = if (isNullable) "?" else ""
       return "$name: $type$nullable"
     }
@@ -206,14 +199,14 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
      *
      * @property clazz the [KClass] of the value for the [Type]
      */
-    enum class Type(internal val clazz: KClass<*>) : Renderable {
+    enum class Type(internal val clazz: KClass<*>) {
       ANY(Any::class),
       BOOLEAN(Boolean::class),
       FLOAT(Float::class),
       INTEGER(Long::class),
       STRING(String::class);
 
-      override fun render(): String {
+      override fun toString(): String {
         return name.lowercase().replaceFirstChar(Char::uppercase)
       }
     }
@@ -237,7 +230,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
 
     class InvalidProperty(entity: Entity, property: Property, values: List<Any?>) :
         InvalidQuery(
-            "Invalid query value(s) '${values.joinToString()}' for property '${property.render()}' on ${entity.name}")
+            "Invalid query value(s) '${values.joinToString()}' for property '$property' on ${entity.name}")
 
     override fun equals(other: Any?): Boolean {
       return when {
@@ -274,9 +267,9 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       return Schema(collector.graphs)
     }
 
-    /** Render the [Set] of properties. */
-    private fun Set<Property>.render(): String {
-      return if (isEmpty()) "" else "(${joinToString { it.render() }})"
+    /** Parenthesize the [Set] of properties. */
+    private fun Set<Property>.parenthesize(): String {
+      return if (isEmpty()) "" else "(${joinToString(transform = Property::toString)})"
     }
 
     /** Filter the properties in the [Query] with the [label]. */

@@ -14,7 +14,7 @@ public final class io/github/cfraser/graphguard/Schema$Companion {
 	public final fun parse (Ljava/lang/String;)Lio/github/cfraser/graphguard/Schema;
 }
 
-public final class io/github/cfraser/graphguard/Schema$Graph : io/github/cfraser/graphguard/Schema$Renderable {
+public final class io/github/cfraser/graphguard/Schema$Graph {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/Set;
 	public final fun copy (Ljava/lang/String;Ljava/util/Set;)Lio/github/cfraser/graphguard/Schema$Graph;
@@ -23,11 +23,10 @@ public final class io/github/cfraser/graphguard/Schema$Graph : io/github/cfraser
 	public final fun getName ()Ljava/lang/String;
 	public final fun getNodes ()Ljava/util/Set;
 	public fun hashCode ()I
-	public fun render ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/Schema$Node : io/github/cfraser/graphguard/Schema$Renderable {
+public final class io/github/cfraser/graphguard/Schema$Node {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/Set;
 	public final fun component3 ()Ljava/util/Set;
@@ -38,11 +37,10 @@ public final class io/github/cfraser/graphguard/Schema$Node : io/github/cfraser/
 	public final fun getProperties ()Ljava/util/Set;
 	public final fun getRelationships ()Ljava/util/Set;
 	public fun hashCode ()I
-	public fun render ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/Schema$Property : io/github/cfraser/graphguard/Schema$Renderable {
+public final class io/github/cfraser/graphguard/Schema$Property {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Lio/github/cfraser/graphguard/Schema$Property$Type;
 	public final fun component3 ()Z
@@ -57,22 +55,21 @@ public final class io/github/cfraser/graphguard/Schema$Property : io/github/cfra
 	public fun hashCode ()I
 	public final fun isList ()Z
 	public final fun isNullable ()Z
-	public fun render ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/Schema$Property$Type : java/lang/Enum, io/github/cfraser/graphguard/Schema$Renderable {
+public final class io/github/cfraser/graphguard/Schema$Property$Type : java/lang/Enum {
 	public static final field ANY Lio/github/cfraser/graphguard/Schema$Property$Type;
 	public static final field BOOLEAN Lio/github/cfraser/graphguard/Schema$Property$Type;
 	public static final field FLOAT Lio/github/cfraser/graphguard/Schema$Property$Type;
 	public static final field INTEGER Lio/github/cfraser/graphguard/Schema$Property$Type;
 	public static final field STRING Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public fun render ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lio/github/cfraser/graphguard/Schema$Property$Type;
 	public static fun values ()[Lio/github/cfraser/graphguard/Schema$Property$Type;
 }
 
-public final class io/github/cfraser/graphguard/Schema$Relationship : io/github/cfraser/graphguard/Schema$Renderable {
+public final class io/github/cfraser/graphguard/Schema$Relationship {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
@@ -87,12 +84,7 @@ public final class io/github/cfraser/graphguard/Schema$Relationship : io/github/
 	public final fun getTarget ()Ljava/lang/String;
 	public fun hashCode ()I
 	public final fun isDirected ()Z
-	public fun render ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
-}
-
-public abstract interface class io/github/cfraser/graphguard/Schema$Renderable {
-	public abstract fun render ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/Server : java/lang/Runnable {

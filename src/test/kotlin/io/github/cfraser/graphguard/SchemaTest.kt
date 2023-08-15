@@ -29,7 +29,7 @@ class SchemaTest : FunSpec() {
       Schema.parse(MOVIES_SCHEMA + PLACES_SCHEMA) shouldBe MOVIES_AND_PLACES_GRAPH_SCHEMA
     }
 
-    test("render graph schema") { MOVIES_GRAPH.render() shouldBe MOVIES_SCHEMA.trim() }
+    test("render graph schema") { "$MOVIES_GRAPH" shouldBe MOVIES_SCHEMA.trim() }
 
     context("validate cypher queries") {
       withData(
