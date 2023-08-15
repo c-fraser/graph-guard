@@ -42,7 +42,7 @@ GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPas
     fun run(query: String) {
       try {
         session.run(query)
-        error("Expected schema violation for query '$this'")
+        error("Expected schema violation for query '$query'")
       } catch (exception: DatabaseException) {
         println(exception.message)
       }

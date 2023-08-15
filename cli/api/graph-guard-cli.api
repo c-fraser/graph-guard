@@ -1,4 +1,0 @@
-public final class io/github/cfraser/graphguard/cli/Main {
-	public static final fun main ([Ljava/lang/String;)V
-}
-

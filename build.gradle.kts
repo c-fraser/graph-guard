@@ -236,6 +236,8 @@ configure<JReleaserExtension> {
   }
 }
 
+apiValidation { ignoredProjects.add(cliProject.name) }
+
 tasks {
   withType<Test> {
     useJUnitPlatform()

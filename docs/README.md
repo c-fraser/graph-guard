@@ -19,6 +19,7 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
     * [Relationships](#relationships)
     * [Properties](#properties)
     * [Violations](#violations)
+    * [Grammar](#grammar)
 * [Usage](#usage)
 * [Examples](#examples)
   * [Library](#library)
@@ -41,13 +42,14 @@ the received [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/). 
 validation is performed by
 intercepting [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) requests and
 analyzing the [Cypher](https://neo4j.com/developer/cypher/) query (and parameters) for schema
-violations. If the intercepted query is determined to be *invalid* according to the schema, then
+[violations](#violations). If the intercepted query is determined to be *invalid* according to the
+schema, then
 a [FAILURE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-failure) response is sent to
 the *client*.
 
 ### Schema
 
-The schema describes the nodes and relationships in a graph. A schema is defined
+A schema describes the nodes and relationships in a graph. The schema is defined
 using `graph-guard`'s DSL language, demonstrated below for
 the [movies](https://github.com/neo4j-graph-examples/movies) graph.
 
@@ -125,19 +127,26 @@ A node or relationship may have *typed* properties. The supported property types
 - `String`
 - `List<T>` - where `T` is another (un-parameterized) supported type
 
-A property can be designated as nullable by appending the `?` suffix to the type, for
+A property can be designated as nullable by including the `?` suffix on the type, for
 example `String?` and `List<Any?>`.
 
 #### Violations
 
-The [server](#server)'s the *Cypher* query validation prevents the following [schema](#schema)
-violations.
+The [server](#server)'s the *Cypher* query validation checks for and prevents the
+following [schema](#schema) violations.
 
 - `"Unknown ${entity}"` - a query has a node or relationship not defined in the schema
-- `"Unknown property '$property' for ${entity}"` - a query has a property (on a node or
+- `"Unknown property '${property}' for ${entity}"` - a query has a property (on a node or
   relationship) not defined in the schema
 - `"Invalid query value(s) '${values}' for property '${property}' on ${entity}"` - a query has
   property value(s) (on a node or relationship) conflicting with the type defined in the schema
+
+#### Grammar
+
+Refer to
+the ([antlr4](https://github.com/antlr/antlr4))
+[grammar](https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4)
+for an exact specification of the [schema](#schema) DSL.
 
 ## Usage
 
@@ -148,7 +157,8 @@ the [releases](https://github.com/c-fraser/graph-guard/releases).
 
 > `graph-guard` requires Java 17+.
 
-> `graph-guard` doesn't currently support TLS.
+> `graph-guard` doesn't currently support TLS (because
+> of [ktor-network](https://youtrack.jetbrains.com/issue/KTOR-694) limitations).
 > Use [NGINX](https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/) or a
 > cloud load balancer to decrypt *Bolt* traffic for the proxy server.
 
@@ -192,7 +202,7 @@ GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPas
     fun run(query: String) {
       try {
         session.run(query)
-        error("Expected schema violation for query '$this'")
+        error("Expected schema violation for query '$query'")
       } catch (exception: DatabaseException) {
         println(exception.message)
       }
@@ -227,7 +237,7 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 Run the `graph-guard-cli` application, extracted from
 the [shadow](https://github.com/johnrengelman/shadow) distribution, for a local Neo4j database.
 
-> Replace `x.y.z` with teh
+> Replace `x.y.z` with the
 > desired [graph-guard release](https://github.com/c-fraser/graph-guard/releases) version.
 
 ```shell
