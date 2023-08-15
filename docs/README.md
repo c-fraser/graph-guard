@@ -35,7 +35,7 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
 The proxy `Server` proxies [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/) as
 displayed in the diagram below.
 
-![proxy-server](docs/proxy-server.png)
+![proxy-server](proxy-server.png)
 
 Incoming requests are dispatched to the *handler* specific to
 the received [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/). [Schema](#schema)

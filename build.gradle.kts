@@ -262,7 +262,12 @@ tasks {
       }
 
   val syncDocs by creating {
-    rootDir.resolve("README.md").copyTo(rootDir.resolve("docs/README.md"), overwrite = true)
+    doLast {
+      val docs = rootDir.resolve("docs/README.md")
+      rootDir.resolve("README.md").copyTo(docs, overwrite = true)
+      docs.writeText(
+          docs.readText().replace(Regex("\\(docs/.*\\)")) { it.value.replace("docs/", "") })
+    }
   }
 
   spotlessApply { dependsOn(syncDocs, detektAll) }
