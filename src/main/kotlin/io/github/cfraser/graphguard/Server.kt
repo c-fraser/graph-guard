@@ -68,7 +68,7 @@ import org.slf4j.MDC.MDCCloseable
  * @property address the [SocketAddress] to bind to
  * @property graphUri the [URI] of the graph to proxy data to
  * @property schema the [Schema] to use to validate intercepted queries
- * @property serverContext the lazily initialized [CoroutineContext] to use for the [Server]'s
+ * @property serverContext the lazily initialized [CoroutineContext] to use for the [Server]
  *   coroutines
  * @property validatedCache a [LoadingCache] of validated *Cypher* queries
  */
