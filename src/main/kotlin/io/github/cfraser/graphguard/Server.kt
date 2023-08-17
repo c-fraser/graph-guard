@@ -68,7 +68,8 @@ import org.slf4j.MDC.MDCCloseable
  * @property address the [SocketAddress] to bind to
  * @property graphUri the [URI] of the graph to proxy data to
  * @property schema the [Schema] to use to validate intercepted queries
- * @property serverContext the [CoroutineContext] to use for the dispatched [Server] coroutines
+ * @property serverContext the lazily initialized [CoroutineContext] to use for the [Server]'s
+ *   coroutines
  * @property validatedCache a [LoadingCache] of validated *Cypher* queries
  */
 class Server
@@ -76,7 +77,7 @@ internal constructor(
     private val address: SocketAddress,
     private val graphUri: URI,
     private val schema: Schema,
-    private val serverContext: CoroutineContext,
+    private val serverContext: Lazy<CoroutineContext>,
     private val validatedCache: LoadingCache<Pair<String, Map<String, Any?>>, Schema.InvalidQuery?>
 ) : Runnable {
 
@@ -88,8 +89,8 @@ internal constructor(
    */
   override fun run() {
     withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graphUri") {
-      runBlocking(serverContext) {
-        SelectorManager(serverContext).use { selector ->
+      runBlocking(serverContext.value) {
+        SelectorManager(serverContext.value).use { selector ->
           bind(selector).use { server ->
             LOGGER.info("Running proxy server on '{}'", server.localAddress)
             while (isActive) {
@@ -139,7 +140,7 @@ internal constructor(
   /** Connect a [Socket] to the [graphUri]. */
   private suspend fun connect(selector: SelectorManager): Socket {
     val socket = aSocket(selector).tcp().connect(InetSocketAddress(graphUri.host, graphUri.port))
-    if ("+s" in graphUri.scheme) return socket.tls(coroutineContext = serverContext)
+    if ("+s" in graphUri.scheme) return socket.tls(coroutineContext = serverContext.value)
     return socket
   }
 
@@ -276,7 +277,7 @@ internal constructor(
               Pair<String, Map<String, Any?>>, Schema.InvalidQuery?> { (query, parameters) ->
             schema.validate(query, parameters)
           }
-      return Server(address, graphUri, schema, dispatcher + MDCContext(), cache)
+      return Server(address, graphUri, schema, lazy { dispatcher + MDCContext() }, cache)
     }
 
     private val LOGGER = LoggerFactory.getLogger(Server::class.java)!!
