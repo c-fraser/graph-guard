@@ -17,6 +17,15 @@ package io.github.cfraser.graphguard
 
 import io.ktor.utils.io.core.toByteArray
 import java.nio.ByteBuffer
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -25,9 +34,8 @@ import kotlin.experimental.and
 /**
  * Utilities for (un)packing *Bolt 5+* [PackStream](https://neo4j.com/docs/bolt/current/packstream/)
  * data.
- *
- * TODO: (Un)pack [structure types](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/).
  */
+@Suppress("TooManyFunctions")
 internal object PackStream {
 
   /** The [Null](https://neo4j.com/docs/bolt/current/packstream/#data-type-null) type marker. */
@@ -160,6 +168,53 @@ internal object PackStream {
 
   /** The maximum size of an unsigned 32-bit integer. */
   private val MAX_32 = MAX_16 * 2
+
+  /**
+   * The [Date](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-date)
+   * signature.
+   */
+  private const val DATE = 'D'.code.toByte()
+
+  /**
+   * The [Time](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-time)
+   * signature.
+   */
+  private const val TIME = 'T'.code.toByte()
+
+  /**
+   * The
+   * [LocalTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-localtime)
+   * signature.
+   */
+  private const val LOCAL_TIME = 't'.code.toByte()
+
+  /**
+   * The
+   * [DateTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-datetime)
+   * signature.
+   */
+  private const val DATE_TIME = 'I'.code.toByte()
+
+  /**
+   * The
+   * [DateTimeZoneId](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-datetimezoneid)
+   * signature.
+   */
+  private const val DATE_TIME_ZONE_ID = 'i'.code.toByte()
+
+  /**
+   * The
+   * [LocalDateTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-localdatetime)
+   * signature.
+   */
+  private const val LOCAL_DATE_TIME = 'd'.code.toByte()
+
+  /**
+   * The
+   * [Duration](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-duration)
+   * signature.
+   */
+  private const val DURATION = 'E'.code.toByte()
 
   /** Pack bytes using a [Packer]. */
   @OptIn(ExperimentalContracts::class)
@@ -338,6 +393,77 @@ internal object PackStream {
       value.fields.forEach(::any)
     }
 
+    /**
+     * Pack the [localDate] as a
+     * [Date](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-date).
+     */
+    fun date(localDate: LocalDate): Packer =
+        structure(Structure(DATE, listOf(localDate.toEpochDay())))
+
+    /**
+     * Pack the [offsetTime] as a
+     * [Time](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-time).
+     */
+    fun time(offsetTime: OffsetTime): Packer =
+        structure(
+            Structure(
+                TIME,
+                listOf(offsetTime.toLocalTime().toNanoOfDay(), offsetTime.offset.totalSeconds)))
+
+    /**
+     * Pack the [localTime] as a
+     * [LocalTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-localtime).
+     */
+    fun localTime(localTime: LocalTime): Packer =
+        structure(Structure(LOCAL_TIME, listOf(localTime.toNanoOfDay())))
+
+    /**
+     * Pack the [zonedDateTime] as a
+     * [DateTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-datetime).
+     */
+    fun dateTime(zonedDateTime: ZonedDateTime): Packer =
+        when (val zone = zonedDateTime.zone) {
+          is ZoneOffset ->
+              structure(
+                  Structure(
+                      DATE_TIME,
+                      listOf(
+                          zonedDateTime.toInstant().epochSecond,
+                          zonedDateTime.nano,
+                          zone.totalSeconds)))
+          else -> error("ZonedDateTime '$zonedDateTime' is invalid")
+        }
+
+    /**
+     * Pack the [zonedDateTime] as a
+     * [DateTimeZoneId](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-datetimezoneid).
+     */
+    fun dateTimeZoneId(zonedDateTime: ZonedDateTime): Packer =
+        structure(
+            Structure(
+                DATE_TIME_ZONE_ID,
+                listOf(
+                    zonedDateTime.toInstant().epochSecond,
+                    zonedDateTime.nano,
+                    zonedDateTime.zone.id)))
+
+    /**
+     * Pack the [localDateTime] as a
+     * [LocalDateTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-localdatetime).
+     */
+    fun localDateTime(localDateTime: LocalDateTime): Packer =
+        structure(
+            Structure(
+                LOCAL_DATE_TIME,
+                listOf(localDateTime.toEpochSecond(ZoneOffset.UTC), localDateTime.nano)))
+
+    /**
+     * Pack the [duration] as a
+     * [Duration](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-duration).
+     */
+    fun duration(duration: Duration): Packer =
+        structure(Structure(DURATION, listOf(0L, 0L, duration.seconds, duration.nano)))
+
     @Suppress("CyclomaticComplexMethod")
     private fun any(value: Any?) {
       when (value) {
@@ -362,6 +488,12 @@ internal object PackStream {
         is Array<*> -> list(listOf(value))
         is List<*> -> list(value)
         is Map<*, *> -> dictionary(value)
+        is LocalDate -> date(value)
+        is OffsetTime -> time(value)
+        is LocalTime -> localTime(value)
+        is ZonedDateTime -> if (value.zone is ZoneOffset) dateTime(value) else dateTimeZoneId(value)
+        is LocalDateTime -> localDateTime(value)
+        is Duration -> duration(value)
         is Structure -> structure(value)
         else -> error("Value '$value' isn't packable")
       }
@@ -498,13 +630,13 @@ internal object PackStream {
     }
 
     @Suppress("CyclomaticComplexMethod")
-    private fun any(): Any? {
+    internal fun any(): Any? {
       val marker = buffer.run { mark().get().also { _ -> reset() } }
       return when (marker and 0xf0.toByte()) {
         TINY_STRING -> string()
         TINY_LIST -> list()
         TINY_DICT -> dictionary()
-        TINY_STRUCT -> structure()
+        TINY_STRUCT -> structure().toType()
         else ->
             when (marker) {
               NULL -> `null`()
@@ -528,10 +660,73 @@ internal object PackStream {
               DICT_16,
               DICT_32 -> dictionary()
               STRUCT_8,
-              STRUCT_16 -> structure()
+              STRUCT_16 -> structure().toType()
               // TINY_INT
               else -> integer()
             }
+      }
+    }
+
+    /**
+     * Convert the [Structure] to a
+     * [type](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#_structures).
+     *
+     * Returns *this* [Structure] if the [Structure.signature] is unknown or unsupported.
+     */
+    private fun Structure.toType(): Any {
+      return try {
+        when (signature) {
+          DATE -> {
+            check(fields.size == 1)
+            val epochDay = fields[0] as Long
+            LocalDate.ofEpochDay(epochDay)
+          }
+          TIME -> {
+            check(fields.size == 2)
+            val nanoOfDayLocal = fields[0] as Long
+            val offsetSeconds = Math.toIntExact(fields[1] as Long)
+            val localTime = LocalTime.ofNanoOfDay(nanoOfDayLocal)
+            val offset = ZoneOffset.ofTotalSeconds(offsetSeconds)
+            OffsetTime.of(localTime, offset)
+          }
+          LOCAL_TIME -> {
+            check(fields.size == 1)
+            val nanoOfDayLocal = fields[0] as Long
+            LocalTime.ofNanoOfDay(nanoOfDayLocal)
+          }
+          DATE_TIME,
+          DATE_TIME_ZONE_ID -> {
+            check(fields.size == 3)
+            val epochSecondLocal = fields[0] as Long
+            val nano = fields[1] as Long
+            val zoneId =
+                if (signature == DATE_TIME) {
+                  val offsetSeconds = Math.toIntExact(fields[2] as Long)
+                  ZoneOffset.ofTotalSeconds(offsetSeconds)
+                } else {
+                  val zoneId = fields[2] as String
+                  ZoneId.of(zoneId)
+                }
+            val instant = Instant.ofEpochSecond(epochSecondLocal, nano)
+            val localDateTime = LocalDateTime.ofInstant(instant, zoneId)
+            ZonedDateTime.of(localDateTime, zoneId)
+          }
+          LOCAL_DATE_TIME -> {
+            check(fields.size == 2)
+            val epochSecondUtc = fields[0] as Long
+            val nano = Math.toIntExact(fields[1] as Long)
+            LocalDateTime.ofEpochSecond(epochSecondUtc, nano, ZoneOffset.UTC)
+          }
+          DURATION -> {
+            check(fields.size == 4)
+            val seconds = fields[2] as Long
+            val nanoseconds = fields[3] as Long
+            Duration.ofSeconds(seconds, nanoseconds)
+          }
+          else -> this
+        }
+      } catch (_: Throwable) {
+        error("Structure (${Char(signature.toInt())}) '$this' is invalid")
       }
     }
 

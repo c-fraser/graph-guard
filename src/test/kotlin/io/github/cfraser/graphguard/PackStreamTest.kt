@@ -20,6 +20,13 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class PackStreamTest : FunSpec() {
@@ -605,6 +612,43 @@ class PackStreamTest : FunSpec() {
                       PackStream.Structure(0x68, listOf("3", "4"))))) { (actual, expected) ->
             actual shouldBe expected
           }
+    }
+
+    test("(un)pack date") { verify(LocalDate.now(), PackStream.Packer::date) }
+
+    test("(un)pack time") { verify(OffsetTime.now(), PackStream.Packer::time) }
+
+    test("(un)pack local time") { verify(LocalTime.now(), PackStream.Packer::localTime) }
+
+    test("(un)pack date time") {
+      verify(ZonedDateTime.of(LocalDateTime.now(), ZoneOffset.UTC), PackStream.Packer::dateTime)
+    }
+
+    test("(un)pack date time zone id") {
+      verify(ZonedDateTime.now(), PackStream.Packer::dateTimeZoneId)
+    }
+
+    test("(un)pack local date time") {
+      verify(LocalDateTime.now(), PackStream.Packer::localDateTime)
+    }
+
+    context("(un)pack duration") {
+      withData(
+          Duration.ofNanos(1),
+          Duration.ofMillis(1),
+          Duration.ofSeconds(1),
+          Duration.ofMinutes(1),
+          Duration.ofHours(1),
+          Duration.ofDays(1)) { duration ->
+            verify(duration, PackStream.Packer::duration)
+          }
+    }
+  }
+
+  private companion object {
+
+    fun <T> verify(expected: T, packer: PackStream.Packer.(T) -> PackStream.Packer) {
+      PackStream.pack { packer(expected) }.unpack { any() } shouldBe expected
     }
   }
 }
