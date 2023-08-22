@@ -18,14 +18,15 @@ package io.github.cfraser.graphguard
 import io.github.cfraser.graphguard.Query.Property.Type.Container
 import io.github.cfraser.graphguard.Query.Property.Type.Resolvable
 import io.github.cfraser.graphguard.Query.Property.Type.Value
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import kotlin.jvm.optionals.getOrNull
-import org.neo4j.cypherdsl.core.BooleanLiteral
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.ListExpression
+import org.neo4j.cypherdsl.core.Literal
 import org.neo4j.cypherdsl.core.NodeBase
 import org.neo4j.cypherdsl.core.NodeLabel
 import org.neo4j.cypherdsl.core.NullLiteral
-import org.neo4j.cypherdsl.core.NumberLiteral
 import org.neo4j.cypherdsl.core.Operation
 import org.neo4j.cypherdsl.core.Operator
 import org.neo4j.cypherdsl.core.Parameter
@@ -33,7 +34,6 @@ import org.neo4j.cypherdsl.core.PatternElement
 import org.neo4j.cypherdsl.core.RelationshipBase
 import org.neo4j.cypherdsl.core.Statement
 import org.neo4j.cypherdsl.core.StatementCatalog
-import org.neo4j.cypherdsl.core.StringLiteral
 import org.neo4j.cypherdsl.core.SymbolicName
 import org.neo4j.cypherdsl.core.ast.Visitable
 import org.neo4j.cypherdsl.parser.CypherParser
@@ -203,17 +203,13 @@ internal data class Query(
                       .mapNotNull { filter ->
                         when (val expression = filter.right) {
                           is NullLiteral -> Value(null)
-                          is BooleanLiteral -> Value(expression.content)
-                          is NumberLiteral -> Value(expression.content)
-                          is StringLiteral -> Value(expression.content)
+                          is Literal<*> -> Value(expression.content)
                           is ListExpression ->
                               buildList {
                                     expression.accept { visitable ->
                                       when (visitable) {
                                         is NullLiteral -> this += null
-                                        is BooleanLiteral -> this += visitable.content
-                                        is NumberLiteral -> this += visitable.content
-                                        is StringLiteral -> this += visitable.content
+                                        is Literal<*> -> this += visitable.content
                                       }
                                     }
                                   }
@@ -231,6 +227,14 @@ internal data class Query(
               Property(owner, name, propertyTypes["$owner.$name"].orEmpty())
             }
             .toSet()
+      }
+
+    /** Get the content of the [Literal] using [MethodHandles.lookup]. */
+    private val Literal<*>.content: Any?
+      get() {
+        val type = MethodType.methodType(Any::class.java)
+        val handle = MethodHandles.lookup().findVirtual(this::class.java, "getContent", type)
+        return handle.invoke(this)
       }
   }
 }

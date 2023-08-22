@@ -122,10 +122,22 @@ A node or relationship may have *typed* properties. The supported property types
 
 - `Any` - a dynamically typed property
 - `Boolean`
+- `Date` - a
+  [date()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-date)
+- `DateTime` -
+  a [datetime()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-datetime)
+- `Duration` -
+  a [duration()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/)
 - `Float`
 - `Integer`
-- `String`
 - `List<T>` - where `T` is another (un-parameterized) supported type
+- `LocalDateTime` -
+  a [localdatetime()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-localdatetime)
+- `LocalTime` -
+  a [localtime()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-localtime)
+- `String`
+- `Time` -
+  a [time()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-time)
 
 A property can be designated as nullable by including the `?` suffix on the type, for
 example `String?` and `List<Any?>`.

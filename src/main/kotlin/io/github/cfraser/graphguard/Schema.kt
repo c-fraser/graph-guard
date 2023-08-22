@@ -24,6 +24,12 @@ import io.github.cfraser.graphguard.antlr.SchemaParser.NodeContext
 import io.github.cfraser.graphguard.antlr.SchemaParser.PropertiesContext
 import io.github.cfraser.graphguard.antlr.SchemaParser.RelationshipContext
 import io.github.cfraser.graphguard.antlr.SchemaParser.ValueContext
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetTime
+import java.time.ZonedDateTime
 import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
@@ -202,9 +208,15 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     enum class Type(internal val clazz: KClass<*>) {
       ANY(Any::class),
       BOOLEAN(Boolean::class),
+      DATE(LocalDate::class),
+      DATE_TIME(ZonedDateTime::class),
+      DURATION(Duration::class),
       FLOAT(Float::class),
       INTEGER(Long::class),
-      STRING(String::class);
+      LOCAL_DATE_TIME(LocalDateTime::class),
+      LOCAL_TIME(LocalTime::class),
+      STRING(String::class),
+      TIME(OffsetTime::class);
 
       override fun toString(): String {
         return name.lowercase().replaceFirstChar(Char::uppercase)
@@ -298,8 +310,14 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
                         setOf(
                             when (value) {
                               is Boolean,
+                              is Duration,
+                              is LocalDate,
+                              is LocalDateTime,
+                              is LocalTime,
                               is Number,
+                              is OffsetTime,
                               is String,
+                              is ZonedDateTime,
                               null -> Query.Property.Type.Value(value)
                               is List<*> -> Query.Property.Type.Container(value)
                               else -> error("Unexpected parameter value")
@@ -419,7 +437,10 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
                         is ListContext -> +type.value()
                         else -> error("Unknown property type")
                       }
-                      .let(String::uppercase)
+                      .replace(Regex("([a-z])([A-Z]+)")) {
+                        "${it.groupValues[1]}_${it.groupValues[2]}"
+                      }
+                      .uppercase()
                       .runCatching(Property.Type::valueOf)
                       .getOrNull()
                       .let(::checkNotNull)

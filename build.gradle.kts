@@ -51,7 +51,7 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.1.1"
+  version = "0.2.0"
 
   repositories { mavenCentral() }
 

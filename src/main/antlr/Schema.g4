@@ -54,12 +54,29 @@ DIRECTED: '->';
 GRAPH: 'graph';
 NODE: 'node';
 
-VALUE: ANY | BOOLEAN | FLOAT | INTEGER | STRING;
+VALUE:
+  ANY
+  | BOOLEAN
+  | DATE
+  | DATE_TIME
+  | DURATION
+  | FLOAT
+  | INTEGER
+  | LOCAL_DATE_TIME
+  | LOCAL_TIME
+  | STRING
+  | TIME;
 ANY: 'Any';
 BOOLEAN: 'Boolean';
+DATE : 'Date';
+DATE_TIME: 'DateTime';
+DURATION: 'Duration';
 FLOAT: 'Float';
 INTEGER: 'Integer';
+LOCAL_DATE_TIME: 'LocalDateTime';
+LOCAL_TIME: 'LocalTime';
 STRING: 'String';
+TIME: 'Time';
 LIST: 'List';
 
 NAME: [_A-Za-z] [_0-9A-Za-z]*;

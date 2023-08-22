@@ -21,6 +21,12 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetTime
+import java.time.ZonedDateTime
 
 class SchemaTest : FunSpec() {
 
@@ -140,6 +146,56 @@ class SchemaTest : FunSpec() {
             schema.validate(query, parameters) shouldBe expected
           }
     }
+
+    context("validate temporal types") {
+      val localDate = LocalDate.now()
+      val offsetTime = OffsetTime.now()
+      val localTime = LocalTime.now()
+      val zonedDateTime = ZonedDateTime.now()
+      val localDateTime = LocalDateTime.now()
+      val duration = Duration.ofSeconds(1)
+      val schema =
+          """
+          graph G {
+            node C(c: Date);
+            node D(d: Time);
+            node E(e: LocalTime);
+            node F(f: DateTime);
+            node G(g: LocalDateTime);
+            node H(h: Duration);
+          }
+          """
+              .trimIndent()
+              .let(Schema::parse)
+      withData(
+          "CREATE (:C {c: \$c})" with mapOf("c" to localDate) expect null,
+          "CREATE (:C {c: \$c})" with
+              mapOf("c" to offsetTime) expect
+              Schema.InvalidQuery.InvalidProperty(C, C_C, listOf(offsetTime)),
+          "CREATE (:D {d: \$d})" with mapOf("d" to offsetTime) expect null,
+          "CREATE (:D {d: \$d})" with
+              mapOf("d" to localTime) expect
+              Schema.InvalidQuery.InvalidProperty(D, D_D, listOf(localTime)),
+          "CREATE (:E {e: \$e})" with mapOf("e" to localTime) expect null,
+          "CREATE (:E {e: \$e})" with
+              mapOf("e" to zonedDateTime) expect
+              Schema.InvalidQuery.InvalidProperty(E, E_E, listOf(zonedDateTime)),
+          "CREATE (:F {f: \$f})" with mapOf("f" to zonedDateTime) expect null,
+          "CREATE (:F {f: \$f})" with
+              mapOf("f" to localDateTime) expect
+              Schema.InvalidQuery.InvalidProperty(F, F_F, listOf(localDateTime)),
+          "CREATE (:G {g: \$g})" with mapOf("g" to localDateTime) expect null,
+          "CREATE (:G {g: \$g})" with
+              mapOf("g" to localDate) expect
+              Schema.InvalidQuery.InvalidProperty(G, G_G, listOf(localDate)),
+          "CREATE (:H {h: \$h})" with mapOf("h" to duration) expect null,
+          "CREATE (:H {h: \$h})" with
+              mapOf("h" to "") expect
+              Schema.InvalidQuery.InvalidProperty(H, H_H, listOf(""))) {
+              (query, parameters, expected) ->
+            schema.validate(query, parameters) shouldBe expected
+          }
+    }
   }
 
   @IsStableType
@@ -163,5 +219,17 @@ class SchemaTest : FunSpec() {
     val A_A = Schema.Property("a", Schema.Property.Type.ANY, isList = true, allowsNullable = true)
     val B = Schema.InvalidQuery.Entity.Node("B")
     val B_B = Schema.Property("b", Schema.Property.Type.ANY, isList = true, isNullable = true)
+    val C = Schema.InvalidQuery.Entity.Node("C")
+    val C_C = Schema.Property("c", Schema.Property.Type.DATE)
+    val D = Schema.InvalidQuery.Entity.Node("D")
+    val D_D = Schema.Property("d", Schema.Property.Type.TIME)
+    val E = Schema.InvalidQuery.Entity.Node("E")
+    val E_E = Schema.Property("e", Schema.Property.Type.LOCAL_TIME)
+    val F = Schema.InvalidQuery.Entity.Node("F")
+    val F_F = Schema.Property("f", Schema.Property.Type.DATE_TIME)
+    val G = Schema.InvalidQuery.Entity.Node("G")
+    val G_G = Schema.Property("g", Schema.Property.Type.LOCAL_DATE_TIME)
+    val H = Schema.InvalidQuery.Entity.Node("H")
+    val H_H = Schema.Property("h", Schema.Property.Type.DURATION)
   }
 }
