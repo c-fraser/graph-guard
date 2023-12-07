@@ -252,6 +252,8 @@ tasks {
         file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}/antlr")
   }
 
+  val sourcesJar by getting { dependsOn(generateGrammarSource) }
+
   val generateTestGrammarSource by getting
 
   withType<KotlinCompile> { dependsOn(generateGrammarSource, generateTestGrammarSource) }
