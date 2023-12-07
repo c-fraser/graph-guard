@@ -252,11 +252,11 @@ tasks {
         file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}/antlr")
   }
 
-  val sourcesJar by getting { dependsOn(generateGrammarSource) }
-
   val generateTestGrammarSource by getting
 
   withType<KotlinCompile> { dependsOn(generateGrammarSource, generateTestGrammarSource) }
+  named("sourcesJar") { dependsOn(generateGrammarSource, generateTestGrammarSource) }
+  withType<DokkaTask> { dependsOn(generateGrammarSource, generateTestGrammarSource) }
 
   val syncDocs by creating {
     doLast {
