@@ -33,7 +33,7 @@ internal object Bolt {
   private const val ID = 0x6060b017
 
   /** The [Message]s indexed by [Message.signature]. */
-  val MESSAGES = Message.values().associateBy { it.signature }
+  val MESSAGES = Message.entries.associateBy { it.signature }
 
   /**
    * A [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages).

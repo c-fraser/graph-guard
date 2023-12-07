@@ -145,7 +145,7 @@ internal constructor(
   }
 
   /**
-   * Managed a [Bolt (proxy) session](https://neo4j.com/docs/bolt/current/bolt/message/#session)
+   * Manage a [Bolt (proxy) session](https://neo4j.com/docs/bolt/current/bolt/message/#session)
    * between the *client* and *graph*.
    */
   private suspend fun session(

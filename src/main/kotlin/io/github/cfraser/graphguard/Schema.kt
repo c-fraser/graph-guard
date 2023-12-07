@@ -449,8 +449,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
               val allowsNullable = ctx.type().list()?.QM() != null
               Property(name, type, isList, isNullable, allowsNullable)
             }
-            ?.toSet()
-            ?: emptySet()
+            ?.toSet() ?: emptySet()
       }
     }
   }

@@ -203,13 +203,13 @@ internal data class Query(
                       .mapNotNull { filter ->
                         when (val expression = filter.right) {
                           is NullLiteral -> Value(null)
-                          is Literal<*> -> Value(expression.content)
+                          is Literal<*> -> Value(expression._content)
                           is ListExpression ->
                               buildList {
                                     expression.accept { visitable ->
                                       when (visitable) {
                                         is NullLiteral -> this += null
-                                        is Literal<*> -> this += visitable.content
+                                        is Literal<*> -> this += visitable._content
                                       }
                                     }
                                   }
@@ -230,7 +230,7 @@ internal data class Query(
       }
 
     /** Get the content of the [Literal] using [MethodHandles.lookup]. */
-    private val Literal<*>.content: Any?
+    private val Literal<*>._content: Any?
       get() {
         val type = MethodType.methodType(Any::class.java)
         val handle = MethodHandles.lookup().findVirtual(this::class.java, "getContent", type)

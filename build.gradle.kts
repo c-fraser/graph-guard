@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import com.diffplug.gradle.spotless.SpotlessExtension
+import com.diffplug.gradle.spotless.SpotlessTask
 import io.github.gradlenexus.publishplugin.NexusPublishExtension
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.dokka.gradle.DokkaTask
@@ -188,11 +189,11 @@ publishing {
 }
 
 val cliProject = project(":graph-guard-cli")
-val cliDist =
-    cliProject.buildDir.resolve("distributions").resolve("${cliProject.name}-shadow-$version.tar")
+val cliDist: Provider<RegularFile> =
+    cliProject.layout.buildDirectory.file("distributions/${cliProject.name}-shadow-$version.tar")
 
-configure<NexusPublishExtension> {
-  repositories {
+configure<NexusPublishExtension> publish@{
+  this@publish.repositories {
     sonatype {
       nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
       snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
@@ -251,15 +252,9 @@ tasks {
         file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}/antlr")
   }
 
-  withType<KotlinCompile> { dependsOn(generateGrammarSource) }
+  val generateTestGrammarSource by getting
 
-  val detektAll by
-      creating(Detekt::class) {
-        parallel = true
-        buildUponDefaultConfig = true
-        config.setFrom(rootDir.resolve("detekt.yml"))
-        source = kotlinSourceFiles
-      }
+  withType<KotlinCompile> { dependsOn(generateGrammarSource, generateTestGrammarSource) }
 
   val syncDocs by creating {
     doLast {
@@ -270,7 +265,20 @@ tasks {
     }
   }
 
-  spotlessApply { dependsOn(syncDocs, detektAll) }
+  spotlessApply { dependsOn(syncDocs) }
+
+  val spotlessKotlin by named<SpotlessTask>("spotlessKotlin")
+  val spotlessKotlinGradle by
+      named<SpotlessTask>("spotlessKotlinGradle") { mustRunAfter(spotlessKotlin) }
+
+  val detektAll by
+      creating(Detekt::class) {
+        mustRunAfter(spotlessKotlinGradle)
+        parallel = true
+        buildUponDefaultConfig = true
+        config.setFrom(rootDir.resolve("detekt.yml"))
+        source = kotlinSourceFiles
+      }
 
   withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-cli:shadowDistTar") }
 }
