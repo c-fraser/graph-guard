@@ -7,4 +7,4 @@ out
 .vscode
 .DS_Store
 *.hprof
-src/main/java/io/github/cfraser/graphguard/antlr/*
+src/main/java/io/github/cfraser/graphguard/Schema*

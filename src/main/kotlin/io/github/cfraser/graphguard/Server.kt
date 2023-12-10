@@ -15,12 +15,9 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
-import io.github.cfraser.graphguard.Bolt.readChunked
-import io.github.cfraser.graphguard.Bolt.readVersion
-import io.github.cfraser.graphguard.Bolt.verifyHandshake
-import io.github.cfraser.graphguard.Bolt.writeChunked
+import io.github.cfraser.graphguard.Bolt.ID
+import io.github.cfraser.graphguard.Bolt.toMessage
+import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.github.cfraser.graphguard.Server.Handler
 import io.ktor.network.selector.SelectorManager
@@ -36,6 +33,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeFully
 import java.net.URI
+import java.nio.ByteBuffer
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -56,30 +54,63 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.withTimeout
+import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
 
 /**
- * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) 5+ messages to a
- * [Neo4j](https://neo4j.com/) (compatible) database and performs realtime schema validation of the
- * intercepted queries.
+ * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
+ * [Neo4j](https://neo4j.com/) (5+ compatible) database and performs dynamic message transformation
+ * via the [handler].
  *
- * @property address the [SocketAddress] to bind to
+ * @param hostname the hostname to bind the [Server] to
+ * @param port the port to bind the [Server] to
+ * @param parallelism the number of parallel coroutines used by the [Server]
  * @property graphUri the [URI] of the graph to proxy data to
- * @property schema the [Schema] to use to validate intercepted queries
- * @property serverContext the lazily initialized [CoroutineContext] to use for the [Server]
- *   coroutines
- * @property validatedCache a [LoadingCache] of validated *Cypher* queries
+ * @property handler the [Server.Handler] to use to [Server.Handler.handle] proxied messages
  */
-class Server
-internal constructor(
-    private val address: SocketAddress,
+class Server(
     private val graphUri: URI,
-    private val schema: Schema,
-    private val serverContext: Lazy<CoroutineContext>,
-    private val validatedCache: LoadingCache<Pair<String, Map<String, Any?>>, Schema.InvalidQuery?>
+    private val handler: Handler,
+    hostname: String = "localhost",
+    port: Int = 8787,
+    parallelism: Int? = null
 ) : Runnable {
+
+  /**
+   * Initialize a [Server] that performs realtime [schema] validation of the intercepted queries.
+   *
+   * @param graphUri the [URI] of the graph to proxy data to
+   * @param schema the [Schema] to use to validate intercepted queries
+   * @param cacheSize the size of the [Schema.Validator] cache
+   * @param hostname the hostname to bind the [Server] to
+   * @param port the port to bind the [Server] to
+   * @param parallelism the number of parallel coroutines used by the [Server]
+   */
+  constructor(
+      graphUri: URI,
+      schema: Schema,
+      cacheSize: Long? = null,
+      hostname: String = "localhost",
+      port: Int = 8787,
+      parallelism: Int? = null
+  ) : this(graphUri, schema.Validator(cacheSize), hostname, port, parallelism)
+
+  /** The [SocketAddress] of the server. */
+  private val address = InetSocketAddress(hostname, port)
+
+  /**
+   * The lazily initialized [CoroutineContext] to use for the [Server] coroutines.
+   * > Inherits MDC of the calling thread.
+   */
+  private val context by lazy {
+    var dispatcher = Dispatchers.IO
+    if (parallelism != null)
+        dispatcher =
+            @OptIn(ExperimentalCoroutinesApi::class) dispatcher.limitedParallelism(parallelism)
+    dispatcher + MDCContext()
+  }
 
   /**
    * Run the proxy server on the [address], connecting to the [graphUri].
@@ -89,8 +120,8 @@ internal constructor(
    */
   override fun run() {
     withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graphUri") {
-      runBlocking(serverContext.value) {
-        SelectorManager(serverContext.value).use { selector ->
+      runBlocking(context) {
+        SelectorManager(context).use { selector ->
           bind(selector).use { server ->
             LOGGER.info("Running proxy server on '{}'", server.localAddress)
             while (isActive) {
@@ -140,7 +171,7 @@ internal constructor(
   /** Connect a [Socket] to the [graphUri]. */
   private suspend fun connect(selector: SelectorManager): Socket {
     val socket = aSocket(selector).tcp().connect(InetSocketAddress(graphUri.host, graphUri.port))
-    if ("+s" in graphUri.scheme) return socket.tls(coroutineContext = serverContext.value)
+    if ("+s" in graphUri.scheme) return socket.tls(coroutineContext = context)
     return socket
   }
 
@@ -165,15 +196,17 @@ internal constructor(
       LOGGER.debug("Read version from {} '{}'", graphAddress, version)
       clientWriter.writeInt(version.bytes())
       LOGGER.debug("Wrote version to {}", clientAddress)
+      val requestWriter = graphAddress to graphWriter
+      val responseWriter = clientAddress to clientWriter
       try {
         val incoming =
-            proxy(
-                clientAddress,
-                clientReader,
-                graphAddress,
-                graphWriter,
-                GoodbyeHandler then RunHandler(clientAddress, clientWriter))
-        val outgoing = proxy(graphAddress, graphReader, clientAddress, clientWriter)
+            proxy(clientAddress, clientReader) {
+              if (it is Bolt.Request) requestWriter else responseWriter
+            }
+        val outgoing =
+            proxy(graphAddress, graphReader) {
+              if (it is Bolt.Response) responseWriter else requestWriter
+            }
         select {
           incoming.onJoin { outgoing.cancel() }
           outgoing.onJoin { incoming.cancel() }
@@ -184,12 +217,44 @@ internal constructor(
           else -> LOGGER.error("Proxy session failure", thrown)
         }
       } finally {
-        graphWriter.runCatching {
-          withTimeout(3.seconds) {
-            writeMessage(PackStream.Structure(Bolt.Message.GOODBYE.signature, emptyList()))
-          }
-        }
+        graphWriter.runCatching { withTimeout(3.seconds) { writeMessage(Bolt.Goodbye) } }
       }
+    }
+  }
+
+  /**
+   * Proxy the *handled*
+   * [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/#message-exchange) from the
+   * [source] to the *resolved destination*.
+   * > Intercept [Bolt.Goodbye] and [cancel] the [CoroutineScope] to end the session.
+   */
+  private fun CoroutineScope.proxy(
+      source: SocketAddress,
+      reader: ByteReadChannel,
+      resolver: (Bolt.Message) -> Pair<SocketAddress, ByteWriteChannel>
+  ): Job = launch {
+    while (isActive) {
+      var message =
+          try {
+            reader.readMessage()
+          } catch (_: Throwable) {
+            break
+          }
+      LOGGER.debug("Read '{}' from {}", message, source)
+      message =
+          try {
+            handler.handle(message)
+          } catch (thrown: Throwable) {
+            LOGGER.error("Failed to handle '{}'", message, thrown)
+            message
+          }
+      if (message == Bolt.Goodbye) {
+        cancel("${Bolt.Goodbye}")
+        return@launch
+      }
+      val (destination, writer) = resolver(message)
+      writer.writeMessage(message)
+      LOGGER.debug("Wrote '{}' to {}", message, destination)
     }
   }
 
@@ -197,88 +262,33 @@ internal constructor(
    * [Server.Handler] handles
    * [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/#messages).
    */
-  private fun interface Handler {
+  fun interface Handler {
 
     /**
-     * Handle the [message]. Return `true` if intercepted message was handled, otherwise return
-     * `false` to defer handling.
-     */
-    suspend fun handle(message: PackStream.Structure): Boolean
-  }
-
-  /** Intercept [Bolt.Message.GOODBYE] and [cancel] the [CoroutineScope] to end the session. */
-  private object GoodbyeHandler : Handler {
-
-    override suspend fun handle(message: PackStream.Structure): Boolean {
-      if (message.signature != Bolt.Message.GOODBYE.signature) return false
-      coroutineScope { cancel("${Bolt.Message.GOODBYE} message received") }
-      return true
-    }
-  }
-
-  /**
-   * [RunHandler] is a [Server.Handler] that validates the query and parameters in a
-   * [Bolt.Message.RUN] message. If the data in the [PackStream.Structure] is invalid, according to
-   * the [schema], then respond to the [destination], via the [writer], with a
-   * [Bolt.Message.FAILURE] message.
-   */
-  private inner class RunHandler(
-      private val destination: SocketAddress,
-      private val writer: ByteWriteChannel
-  ) : Handler {
-
-    override suspend fun handle(message: PackStream.Structure): Boolean {
-      if (message.signature != Bolt.Message.RUN.signature) return false
-      val query = (message.fields.getOrNull(0) as? String) ?: return false
-      val parameters =
-          @Suppress("UNCHECKED_CAST") (message.fields.getOrNull(1) as? Map<String, Any?>)
-              ?: return false
-      val invalid = validatedCache[query to parameters] ?: return false
-      LOGGER.warn("Cypher query '{} {}' is invalid", query, parameters)
-      val failure =
-          PackStream.Structure(
-              Bolt.Message.FAILURE.signature,
-              listOf(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message)))
-      writer.writeMessage(failure)
-      LOGGER.debug("Wrote {} to {} '{}'", Bolt.Message.FAILURE, destination, failure)
-      return true
-    }
-  }
-
-  companion object {
-
-    /**
-     * Create a [Server] instance.
+     * Handle the [message]. If the returned, optionally transformed, [Bolt.Message] is a
+     * [Bolt.Request] then it's sent to the graph server, otherwise the [Bolt.Response] is sent to
+     * the proxy client.
      *
-     * @param hostname the [InetSocketAddress.hostname] to bind to
-     * @param port the [InetSocketAddress.port] to bind to
-     * @param graphUri the [URI] of the graph to proxy data to
-     * @param schema the [Schema] to use to validate intercepted queries
-     * @param parallelism the number of parallel coroutines used by the [Server]
-     * @param queryCacheSize the maximum size of the cache for validated queries
+     * [Handler.handle] will (almost certainly) be executed concurrently, via concurrent proxy
+     * sessions managed by the [Server]. Thus, perform any necessary synchronization in the
+     * [Handler.handle] implementation.
      */
-    @JvmStatic
-    @JvmOverloads
-    fun create(
-        hostname: String,
-        port: Int,
-        graphUri: URI,
-        schema: Schema,
-        parallelism: Int? = null,
-        queryCacheSize: Int = 1024
-    ): Server {
-      val address = InetSocketAddress(hostname, port)
-      var dispatcher = Dispatchers.IO
-      if (parallelism != null)
-          dispatcher =
-              @OptIn(ExperimentalCoroutinesApi::class) dispatcher.limitedParallelism(parallelism)
-      val cache =
-          Caffeine.newBuilder().maximumSize(queryCacheSize.toLong()).build<
-              Pair<String, Map<String, Any?>>, Schema.InvalidQuery?> { (query, parameters) ->
-            schema.validate(query, parameters)
-          }
-      return Server(address, graphUri, schema, lazy { dispatcher + MDCContext() }, cache)
+    suspend fun handle(message: Bolt.Message): Bolt.Message
+
+    companion object {
+
+      /**
+       * Chain `this` [Server.Handler] with [that].
+       * > `this` [Server.Handler.handle] is invoked before [that].
+       */
+      operator fun Handler.plus(that: Handler): Handler {
+        return Handler { message -> that.handle(this.handle(message)) }
+      }
     }
+  }
+
+  @VisibleForTesting
+  internal companion object {
 
     private val LOGGER = LoggerFactory.getLogger(Server::class.java)!!
 
@@ -303,55 +313,93 @@ internal constructor(
       }
     }
 
-    /** Chain `this` [Server.Handler] with [that]. */
-    private infix fun Handler.then(that: Handler): Handler {
-      return Handler { message -> this.handle(message) || that.handle(message) }
-    }
+    /** Read and verify the [handshake](https://neo4j.com/docs/bolt/current/bolt/handshake/). */
+    private suspend fun ByteReadChannel.verifyHandshake(): ByteArray {
 
-    /**
-     * Proxy the [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/#message-exchange)
-     * from the [source] to the [destination] via the [reader] and [writer].
-     */
-    private fun CoroutineScope.proxy(
-        source: SocketAddress,
-        reader: ByteReadChannel,
-        destination: SocketAddress,
-        writer: ByteWriteChannel,
-        handler: Handler = Handler { false }
-    ): Job = launch {
-      while (isActive) {
-        val message =
-            try {
-              reader.readMessage()
-            } catch (_: Throwable) {
-              break
-            }
-        LOGGER.debug("Read {} from {} '{}'", Bolt.MESSAGES[message.signature], source, message)
-        if (handler.handle(message)) continue
-        writer.writeMessage(message)
-        LOGGER.debug("Wrote {} to {} '{}'", Bolt.MESSAGES[message.signature], destination, message)
+      /**
+       * Verify the handshake [bytes] contains the [ID] and supports Bolt 5+.
+       *
+       * @throws IllegalStateException if the handshake is invalid/unsupported
+       */
+      fun verify(bytes: ByteArray) {
+        val buffer = ByteBuffer.wrap(bytes.copyOf())
+        val id = buffer.getInt()
+        check(id == ID) { "Unexpected identifier '0x${Integer.toHexString(id)}'" }
+        val versions = buildList {
+          repeat(4) { _ ->
+            val version = Bolt.Version(buffer.getInt())
+            if (version.major >= 5) return else this += "$version"
+          }
+        }
+        error("None of the versions '$versions' are supported")
       }
+
+      val bytes = ByteArray(Int.SIZE_BYTES * 5)
+      readFully(bytes, 0, bytes.size)
+      return bytes.also(::verify)
     }
 
     /**
-     * Read a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking)
-     * [PackStream.Structure].
+     * Read the [version](https://neo4j.com/docs/bolt/current/bolt/handshake/#_version_negotiation).
      */
+    private suspend fun ByteReadChannel.readVersion(): Bolt.Version {
+      return Bolt.Version(readInt())
+    }
+
+    /** Read a [Bolt.Message] from the [ByteReadChannel]. */
     private suspend fun ByteReadChannel.readMessage(
         timeout: Duration = Duration.INFINITE
-    ): PackStream.Structure {
-      return readChunked(timeout).unpack { structure() }
+    ): Bolt.Message {
+      val structure = readChunked(timeout).unpack { structure() }
+      return structure.toMessage()
     }
 
     /**
-     * Write a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking)
-     * [PackStream.Structure].
+     * Read a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking) message from the
+     * [ByteReadChannel].
      */
+    suspend fun ByteReadChannel.readChunked(timeout: Duration): ByteArray {
+      var bytes = ByteArray(0)
+      withTimeout(timeout) {
+        while (true) {
+          val size = readShort().toUShort().toInt()
+          if (size == 0) {
+            // NoOp chunk (connection keep-alive)
+            if (bytes.isEmpty()) continue
+            // Received all chunks, return the bytes
+            break
+          }
+          val offset = bytes.lastIndex + 1
+          bytes += ByteArray(size)
+          readFully(bytes, offset, size)
+        }
+      }
+      return bytes
+    }
+
+    /** Write a [Bolt.Message] to the [ByteWriteChannel]. */
     private suspend fun ByteWriteChannel.writeMessage(
-        message: PackStream.Structure,
+        message: Bolt.Message,
         maxChunkSize: Int = UShort.MAX_VALUE.toInt()
     ) {
-      writeChunked(PackStream.pack { structure(message) }, maxChunkSize)
+      val structure = message.toStructure()
+      writeChunked(PackStream.pack { structure(structure) }, maxChunkSize)
+    }
+
+    /**
+     * Write a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking) [message] to
+     * the [ByteWriteChannel].
+     */
+    suspend fun ByteWriteChannel.writeChunked(message: ByteArray, maxChunkSize: Int) {
+      message
+          .asSequence()
+          .chunked(maxChunkSize)
+          .map { bytes -> bytes.toByteArray() }
+          .forEach { chunk ->
+            writeShort(chunk.size.toShort())
+            writeFully(chunk)
+            writeFully(byteArrayOf(0x0, 0x0))
+          }
     }
   }
 }

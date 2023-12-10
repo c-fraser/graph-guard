@@ -52,7 +52,7 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.2.1"
+  version = "0.3.0"
 
   repositories { mavenCentral() }
 
@@ -188,7 +188,7 @@ publishing {
   }
 }
 
-val cliProject = project(":graph-guard-cli")
+val cliProject = project(":graph-guard-app")
 val cliDist: Provider<RegularFile> =
     cliProject.layout.buildDirectory.file("distributions/${cliProject.name}-shadow-$version.tar")
 
@@ -244,19 +244,35 @@ tasks {
     useJUnitPlatform()
     systemProperties =
         System.getProperties().asIterable().associate { it.key.toString() to it.value }
-    systemProperties("org.slf4j.simpleLogger.defaultLogLevel" to "debug")
+    /*systemProperties("org.slf4j.simpleLogger.defaultLogLevel" to "debug")
+    testLogging { showStandardStreams = true }*/
+  }
+
+  val grammarSrcDir = file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}")
+
+  val modifyGrammarSource by creating {
+    mustRunAfter(withType<AntlrTask>())
+    doLast {
+      fileTree(grammarSrcDir) { include("*.java") }
+          .forEach { file ->
+            file.writeText(
+                file
+                    .readText()
+                    // reduce visibility of generated types
+                    .replace("public class", "class")
+                    .replace("public interface", "interface"))
+          }
+    }
   }
 
   generateGrammarSource {
-    outputDirectory =
-        file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}/antlr")
+    finalizedBy(modifyGrammarSource)
+    outputDirectory = grammarSrcDir
   }
 
-  val generateTestGrammarSource by getting
-
-  withType<KotlinCompile> { dependsOn(generateGrammarSource, generateTestGrammarSource) }
-  named("sourcesJar") { dependsOn(generateGrammarSource, generateTestGrammarSource) }
-  withType<DokkaTask> { dependsOn(generateGrammarSource, generateTestGrammarSource) }
+  withType<KotlinCompile> { dependsOn(withType<AntlrTask>()) }
+  named("sourcesJar") { dependsOn(withType<AntlrTask>()) }
+  withType<DokkaTask> { dependsOn(withType<AntlrTask>()) }
 
   val syncDocs by creating {
     doLast {
@@ -282,5 +298,5 @@ tasks {
         source = kotlinSourceFiles
       }
 
-  withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-cli:shadowDistTar") }
+  withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-app:shadowDistTar") }
 }

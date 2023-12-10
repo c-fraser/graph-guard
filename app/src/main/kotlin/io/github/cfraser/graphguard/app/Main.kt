@@ -15,7 +15,7 @@ limitations under the License.
 */
 @file:JvmName("Main")
 
-package io.github.cfraser.graphguard.cli
+package io.github.cfraser.graphguard.app
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
@@ -71,6 +71,6 @@ internal class Command :
           .required()
 
   override fun run() {
-    Server.create(hostname, port, URI(graphUri), Schema.parse(schema)).run()
+    Server(URI(graphUri), Schema(schema), hostname = hostname, port = port).run()
   }
 }

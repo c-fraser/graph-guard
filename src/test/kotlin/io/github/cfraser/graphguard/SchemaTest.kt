@@ -32,7 +32,7 @@ class SchemaTest : FunSpec() {
 
   init {
     test("parse graph schema") {
-      Schema.parse(MOVIES_SCHEMA + PLACES_SCHEMA) shouldBe MOVIES_AND_PLACES_GRAPH_SCHEMA
+      Schema(MOVIES_SCHEMA + PLACES_SCHEMA) shouldBe MOVIES_AND_PLACES_GRAPH_SCHEMA
     }
 
     test("render graph schema") { "$MOVIES_GRAPH" shouldBe MOVIES_SCHEMA.trim() }
@@ -121,7 +121,7 @@ class SchemaTest : FunSpec() {
           }
           """
               .trimIndent()
-              .let(Schema::parse)
+              .let(::Schema)
       withData(
           "CREATE (:A {a: []})" with emptyMap() expect null,
           "CREATE (:A {a: [1, '2', 3.0]})" with emptyMap() expect null,
@@ -166,7 +166,7 @@ class SchemaTest : FunSpec() {
           }
           """
               .trimIndent()
-              .let(Schema::parse)
+              .let(::Schema)
       withData(
           "CREATE (:C {c: \$c})" with mapOf("c" to localDate) expect null,
           "CREATE (:C {c: \$c})" with

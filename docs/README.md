@@ -12,18 +12,18 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
 <!--- TOC -->
 
 * [Design](#design)
-    * [Server](#server)
-    * [Schema](#schema)
-        * [Graph](#graph)
-        * [Nodes](#nodes)
-        * [Relationships](#relationships)
-        * [Properties](#properties)
-        * [Violations](#violations)
-        * [Grammar](#grammar)
+  * [Server](#server)
+  * [Schema](#schema)
+    * [Graph](#graph)
+    * [Nodes](#nodes)
+    * [Relationships](#relationships)
+    * [Properties](#properties)
+    * [Violations](#violations)
+    * [Grammar](#grammar)
 * [Usage](#usage)
 * [Examples](#examples)
-    * [Library](#library)
-    * [CLI](#cli)
+  * [Library](#library)
+  * [Application](#application)
 * [License](#license)
 
 <!--- END -->
@@ -37,8 +37,9 @@ displayed in the diagram below.
 
 ![proxy-server](proxy-server.png)
 
-Incoming requests are dispatched to the *handler* specific to
-the received [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/). [Schema](#schema)
+Proxied messages are passed through the `Handler` chain, enabling the `Server` to dynamically
+transform the incoming and
+outgoing [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/). [Schema](#schema)
 validation is performed by
 intercepting [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) requests and
 analyzing the [Cypher](https://neo4j.com/developer/cypher/) query (and parameters) for schema
@@ -164,7 +165,7 @@ for an exact specification of the [schema](#schema) DSL.
 
 The `graph-guard` library is accessible
 via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard)
-and the `graph-guard-cli` application is published in
+and the `graph-guard-app` application is published in
 the [releases](https://github.com/c-fraser/graph-guard/releases).
 
 > `graph-guard` requires Java 17+.
@@ -204,7 +205,7 @@ queries via the [Bolt proxy server](#server).
 ```kotlin
 val proxy = thread {
   try {
-    Server.create("localhost", 8787, URI(boltUrl), Schema.parse(MOVIES_SCHEMA)).run()
+    Server(URI(boltUrl), Schema(MOVIES_SCHEMA)).run()
   } catch (_: InterruptedException) {}
 }
 Thread.sleep(3.seconds.inWholeMilliseconds) // Wait for the proxy server to initialize
@@ -244,17 +245,17 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 
 <!--- TEST -->
 
-### CLI
+### Application
 
-Run the `graph-guard-cli` application, extracted from
+Run the `graph-guard-app` application, extracted from
 the [shadow](https://github.com/johnrengelman/shadow) distribution, for a local Neo4j database.
 
 > Replace `x.y.z` with the
 > desired [graph-guard release](https://github.com/c-fraser/graph-guard/releases) version.
 
 ```shell
-tar -xvf graph-guard-cli-shadow-x.y.z.tar
-cat <<'EOF' | ./graph-guard-cli-shadow-x.y.z/bin/graph-guard-cli -p 8787 -g bolt://localhost:7687 -s -
+tar -xvf graph-guard-app-shadow-x.y.z.tar
+cat <<'EOF' | ./graph-guard-app-shadow-x.y.z/bin/graph-guard-app -s -
 graph Schema {
   // ...
 }
@@ -262,9 +263,9 @@ EOF
 ```
 
 <!--- 
-./gradlew test --tests "io.github.cfraser.graphguard.ServerTest" -Dgraph-guard.cli.test=true --debug-jvm
-./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist
-cat <<'EOF' | ./cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli  -h localhost -p 8787 -g bolt://localhost:7687 -s -
+./gradlew test --tests 'io.github.cfraser.graphguard.ServerTest' -Dkotest.tags='Local' -Dgraph-guard.app.test='true' --debug-jvm
+./gradlew graph-guard-app:clean graph-guard-app:installShadowDist
+cat <<'EOF' | ./app/build/install/graph-guard-app-shadow/bin/graph-guard-app -g bolt://localhost:7687 -s -
 graph Movies {
   node Person(name: String, born: Integer):
     ACTED_IN(roles: List<String>) -> Movie,

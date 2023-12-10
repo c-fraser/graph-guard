@@ -28,7 +28,7 @@ class ${test.name} : FunSpec() {
     tags(LOCAL)
 <#list cases as case><#assign method = test["mode.${case.param}"]!"custom">
     test("${case.name}") {
-    captureOutput("${case.name}") { ${case.knit.package}.run${case.knit.name}() }<#if method != "custom">.${method}(
+    captureOutput("${case.name}") { run${case.knit.name}() }<#if method != "custom">.${method}(
     <#list case.lines as line>
         "${line?j_string}"<#sep>,</#sep>
     </#list>

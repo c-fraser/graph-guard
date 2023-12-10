@@ -17,7 +17,7 @@ limitations under the License.
 grammar Schema;
 
 @header {
-package io.github.cfraser.graphguard.antlr;
+package io.github.cfraser.graphguard;
 }
 
 start: graph+ EOF;

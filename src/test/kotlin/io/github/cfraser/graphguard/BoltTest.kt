@@ -15,82 +15,38 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
-import io.github.cfraser.graphguard.Bolt.readChunked
-import io.github.cfraser.graphguard.Bolt.writeChunked
+import io.github.cfraser.graphguard.Bolt.toMessage
+import io.github.cfraser.graphguard.Bolt.toStructure
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.writeFully
-import java.nio.ByteBuffer
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withTimeout
 
 class BoltTest : FunSpec() {
 
   init {
-    test("dechunk message") {
-      val message =
-          SelectorManager(coroutineContext)
-              .use { selector ->
-                val address = InetSocketAddress("localhost", 8787)
-                aSocket(selector).tcp().bind(address).use { ss ->
-                  async {
-                        ss.accept().use { socket ->
-                          socket.openReadChannel().readChunked(3.seconds)
-                        }
-                      }
-                      .also { _ ->
-                        aSocket(selector).tcp().connect(address).use { socket ->
-                          val writer = socket.openWriteChannel(autoFlush = true)
-                          for (size in 1..3) {
-                            val data = byteArrayOfSize(size)
-                            writer.writeShort(size.toShort())
-                            writer.writeFully(data)
-                          }
-                          writer.writeFully(byteArrayOf(0x00, 0x00))
-                        }
-                      }
-                }
-              }
-              .await()
-      message shouldBe (byteArrayOfSize(1) + byteArrayOfSize(2) + byteArrayOfSize(3))
-    }
-
-    test("chunk message") {
-      val chunked =
-          SelectorManager(coroutineContext)
-              .use { selector ->
-                val address = InetSocketAddress("localhost", 8787)
-                aSocket(selector).tcp().bind(address).use { ss ->
-                  async {
-                        val buffer = ByteBuffer.allocate(13)
-                        ss.accept().use { socket ->
-                          withTimeout(3.seconds) { socket.openReadChannel().readFully(buffer) }
-                        }
-                        buffer
-                      }
-                      .also { _ ->
-                        aSocket(selector).tcp().connect(address).use { socket ->
-                          socket
-                              .openWriteChannel(autoFlush = true)
-                              .writeChunked(byteArrayOfSize(5), 3)
-                        }
-                      }
-                }
-              }
-              .await()
-      chunked.array() shouldBe
-          (byteArrayOf(0x0, 0x3) +
-              byteArrayOfSize(3) +
-              byteArrayOf(0x00, 0x00) +
-              byteArrayOf(0x0, 0x2) +
-              byteArrayOfSize(2) +
-              byteArrayOf(0x00, 0x00))
+    context("convert message") {
+      withData(
+          Bolt.Begin(emptyMap()) to PackStream.Structure(0x11, listOf(emptyMap<String, Any?>())),
+          Bolt.Commit to PackStream.Structure(0x12, emptyList()),
+          Bolt.Discard(emptyMap()) to PackStream.Structure(0x2f, listOf(emptyMap<String, Any?>())),
+          Bolt.Failure(emptyMap()) to PackStream.Structure(0x7f, listOf(emptyMap<String, Any?>())),
+          Bolt.Goodbye to PackStream.Structure(0x02, emptyList()),
+          Bolt.Hello(emptyMap()) to PackStream.Structure(0x01, listOf(emptyMap<String, Any?>())),
+          Bolt.Ignored to PackStream.Structure(0x7e, emptyList()),
+          Bolt.Logoff to PackStream.Structure(0x6b, emptyList()),
+          Bolt.Logon(emptyMap()) to PackStream.Structure(0x6a, listOf(emptyMap<String, Any?>())),
+          Bolt.Pull(emptyMap()) to PackStream.Structure(0x3f, listOf(emptyMap<String, Any?>())),
+          Bolt.Record(listOf()) to PackStream.Structure(0x71, listOf(listOf<Any?>())),
+          Bolt.Reset to PackStream.Structure(0x0f, emptyList()),
+          Bolt.Rollback to PackStream.Structure(0x13, emptyList()),
+          Bolt.Run("", emptyMap(), emptyMap()) to
+              PackStream.Structure(
+                  0x10, listOf("", emptyMap<String, Any?>(), emptyMap<String, Any?>())),
+          Bolt.Success(emptyMap()) to PackStream.Structure(0x70, listOf(emptyMap<String, Any?>())),
+          Bolt.Telemetry(0) to PackStream.Structure(0x54, listOf(0L))) { (message, structure) ->
+            message.toStructure() shouldBe structure
+            structure.toMessage() shouldBe message
+          }
     }
   }
 }

@@ -234,10 +234,10 @@ internal object PackStream {
   }
 
   /** A [Structure](https://neo4j.com/docs/bolt/current/packstream/#data-type-structure). */
-  data class Structure(val signature: Byte, val fields: List<Any?>) {
+  data class Structure(val id: Byte, val fields: List<Any?>) {
 
     override fun toString(): String {
-      return "${signature.toHex()}: [${fields.joinToString()}]"
+      return "${id.toHex()}: [${fields.joinToString()}]"
     }
   }
 
@@ -389,7 +389,7 @@ internal object PackStream {
         }
         else -> error("Structure size '${value.fields.size}' is invalid")
       }
-      buffer.put(value.signature)
+      buffer.put(value.id)
       value.fields.forEach(::any)
     }
 
@@ -671,11 +671,11 @@ internal object PackStream {
      * Convert the [Structure] to a
      * [type](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#_structures).
      *
-     * Returns *this* [Structure] if the [Structure.signature] is unknown or unsupported.
+     * Returns *this* [Structure] if the [Structure.id] is unknown or unsupported.
      */
     private fun Structure.toType(): Any {
       return try {
-        when (signature) {
+        when (id) {
           DATE -> {
             check(fields.size == 1)
             val epochDay = fields[0] as Long
@@ -700,7 +700,7 @@ internal object PackStream {
             val epochSecondLocal = fields[0] as Long
             val nano = fields[1] as Long
             val zoneId =
-                if (signature == DATE_TIME) {
+                if (id == DATE_TIME) {
                   val offsetSeconds = Math.toIntExact(fields[2] as Long)
                   ZoneOffset.ofTotalSeconds(offsetSeconds)
                 } else {
@@ -726,7 +726,7 @@ internal object PackStream {
           else -> this
         }
       } catch (_: Throwable) {
-        error("Structure (${Char(signature.toInt())}) '$this' is invalid")
+        error("Structure (${Char(id.toInt())}) '$this' is invalid")
       }
     }
 

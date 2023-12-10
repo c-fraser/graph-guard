@@ -15,96 +15,18 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.writeFully
-import java.nio.ByteBuffer
-import kotlin.time.Duration
-import kotlinx.coroutines.withTimeout
-
-/** Utilities for reading and writing [Bolt](https://neo4j.com/docs/bolt/current/bolt/) 5+ data. */
-internal object Bolt {
+/** [Bolt](https://neo4j.com/docs/bolt/current/bolt/) message data. */
+object Bolt {
 
   /**
    * The
    * [Bolt identification](https://neo4j.com/docs/bolt/current/bolt/handshake/#_bolt_identification)
    * bytes.
    */
-  private const val ID = 0x6060b017
-
-  /** The [Message]s indexed by [Message.signature]. */
-  val MESSAGES = Message.entries.associateBy { it.signature }
-
-  /**
-   * A [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages).
-   *
-   * @property signature the [Byte] which identifies the message
-   */
-  @Suppress("unused")
-  enum class Message(val signature: Byte) {
-
-    /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-hello) message. */
-    HELLO(0x01),
-
-    /**
-     * The [GOODBYE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-goodbye) message.
-     */
-    GOODBYE(0x02),
-
-    /** The [LOGON](https://neo4j.com/docs/bolt/current/bolt/message/#messages-logon) message. */
-    LOGON(0x6a),
-
-    /** The [LOGOFF](https://neo4j.com/docs/bolt/current/bolt/message/#messages-logoff) message. */
-    LOGOFF(0x6b),
-
-    /** The [BEGIN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-begin) message. */
-    BEGIN(0x11),
-
-    /** The [COMMIT](https://neo4j.com/docs/bolt/current/bolt/message/#messages-commit) message. */
-    COMMIT(0x12),
-
-    /**
-     * The [ROLLBACK](https://neo4j.com/docs/bolt/current/bolt/message/#messages-rollback) message.
-     */
-    ROLLBACK(0x13),
-
-    /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
-    RESET(0x0f),
-
-    /**
-     * The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message signature.
-     */
-    RUN(0x10),
-
-    /**
-     * The [DISCARD](https://neo4j.com/docs/bolt/current/bolt/message/#messages-discard) message.
-     */
-    DISCARD(0x2f),
-
-    /** The [PULL](https://neo4j.com/docs/bolt/current/bolt/message/#messages-pull) message. */
-    PULL(0x3f),
-
-    /**
-     * The [SUCCESS](https://neo4j.com/docs/bolt/current/bolt/message/#messages-success) message.
-     */
-    SUCCESS(0x70),
-
-    /** The [RECORD](https://neo4j.com/docs/bolt/current/bolt/message/#messages-record) message. */
-    RECORD(0x71),
-
-    /**
-     * The [IGNORED](https://neo4j.com/docs/bolt/current/bolt/message/#messages-ignored) message.
-     */
-    IGNORED(0x7e),
-
-    /**
-     * The [FAILURE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-failure) message.
-     */
-    FAILURE(0x7f)
-  }
+  internal const val ID = 0x6060b017
 
   /** A [Bolt version](https://neo4j.com/docs/bolt/current/bolt-compatibility/). */
-  data class Version(val major: Int, val minor: Int) {
+  internal data class Version(val major: Int, val minor: Int) {
 
     constructor(bytes: Int) : this(bytes and 0x000000ff, (bytes shr 8) and 0x000000ff)
 
@@ -118,69 +40,125 @@ internal object Bolt {
     }
   }
 
-  /** Read and verify the [handshake](https://neo4j.com/docs/bolt/current/bolt/handshake/). */
-  suspend fun ByteReadChannel.verifyHandshake(): ByteArray {
+  /** A [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages). */
+  sealed interface Message
 
-    /**
-     * Verify the handshake [bytes] contains the [ID] and supports Bolt 5+.
-     *
-     * @throws IllegalStateException if the handshake is invalid/unsupported
-     */
-    fun verify(bytes: ByteArray) {
-      val buffer = ByteBuffer.wrap(bytes.copyOf())
-      val id = buffer.getInt()
-      check(id == ID) { "Unexpected identifier '0x${Integer.toHexString(id)}'" }
-      val versions = buildList {
-        repeat(4) { _ ->
-          val version = Version(buffer.getInt())
-          if (version.major >= 5) return else this += "$version"
-        }
-      }
-      error("None of the versions '$versions' are supported")
-    }
+  /** A [Message] received from the proxy client. */
+  sealed interface Request : Message
 
-    val bytes = ByteArray(Int.SIZE_BYTES * 5)
-    readFully(bytes, 0, bytes.size)
-    return bytes.also(::verify)
-  }
+  /** A [Message] received from the graph server. */
+  sealed interface Response : Message
+
+  /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-hello) message. */
+  data class Hello(val extra: Map<String, Any?>) : Request
+
+  /** The [GOODBYE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-goodbye) message. */
+  data object Goodbye : Request
+
+  /** The [LOGON](https://neo4j.com/docs/bolt/current/bolt/message/#messages-logon) message. */
+  data class Logon(val auth: Map<String, Any?>) : Request
+
+  /** The [LOGOFF](https://neo4j.com/docs/bolt/current/bolt/message/#messages-logoff) message. */
+  data object Logoff : Request
+
+  /** The [BEGIN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-begin) message. */
+  data class Begin(val extra: Map<String, Any?>) : Request
+
+  /** The [COMMIT](https://neo4j.com/docs/bolt/current/bolt/message/#messages-commit) message. */
+  data object Commit : Request
 
   /**
-   * Read the [version](https://neo4j.com/docs/bolt/current/bolt/handshake/#_version_negotiation).
+   * The [ROLLBACK](https://neo4j.com/docs/bolt/current/bolt/message/#messages-rollback) message.
    */
-  suspend fun ByteReadChannel.readVersion(): Version {
-    return Version(readInt())
-  }
+  data object Rollback : Request
 
-  /** Read a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking) message. */
-  suspend fun ByteReadChannel.readChunked(timeout: Duration): ByteArray {
-    var bytes = ByteArray(0)
-    withTimeout(timeout) {
-      while (true) {
-        val size = readShort().toUShort().toInt()
-        if (size == 0) {
-          // NoOp chunk (connection keep-alive)
-          if (bytes.isEmpty()) continue
-          // Received all chunks, return the bytes
-          break
-        }
-        val offset = bytes.lastIndex + 1
-        bytes += ByteArray(size)
-        readFully(bytes, offset, size)
-      }
+  /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
+  data object Reset : Request
+
+  /**
+   * The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message signature.
+   */
+  data class Run(
+      val query: String,
+      val parameters: Map<String, Any?>,
+      val extra: Map<String, Any?>
+  ) : Request
+
+  /** The [DISCARD](https://neo4j.com/docs/bolt/current/bolt/message/#messages-discard) message. */
+  data class Discard(val extra: Map<String, Any?>) : Request
+
+  /** The [PULL](https://neo4j.com/docs/bolt/current/bolt/message/#messages-pull) message. */
+  data class Pull(val extra: Map<String, Any?>) : Request
+
+  /**
+   * The [TELEMETRY](https://neo4j.com/docs/bolt/current/bolt/message/#messages-telemetry) message.
+   */
+  data class Telemetry(val api: Long) : Request
+
+  /** The [SUCCESS](https://neo4j.com/docs/bolt/current/bolt/message/#messages-success) message. */
+  data class Success(val metadata: Map<String, Any?>) : Response
+
+  /** The [RECORD](https://neo4j.com/docs/bolt/current/bolt/message/#messages-record) message. */
+  data class Record(val data: List<Any?>) : Response
+
+  /** The [IGNORED](https://neo4j.com/docs/bolt/current/bolt/message/#messages-ignored) message. */
+  data object Ignored : Response
+
+  /** The [FAILURE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-failure) message. */
+  data class Failure(val metadata: Map<String, Any?>) : Response
+
+  /**
+   * Convert the [PackStream.Structure] to a [Message].
+   *
+   * Throws [IllegalStateException] if the [PackStream.Structure.id] doesn't correspond to a
+   * [Bolt.Message].
+   */
+  @Suppress("UNCHECKED_CAST", "CyclomaticComplexMethod")
+  internal fun PackStream.Structure.toMessage(): Message {
+    return when (id) {
+      0x11.toByte() -> Begin(fields[0] as Map<String, Any?>)
+      0x12.toByte() -> Commit
+      0x2f.toByte() -> Discard(fields[0] as Map<String, Any?>)
+      0x7f.toByte() -> Failure(fields[0] as Map<String, Any?>)
+      0x02.toByte() -> Goodbye
+      0x01.toByte() -> Hello(fields[0] as Map<String, Any?>)
+      0x7e.toByte() -> Ignored
+      0x6b.toByte() -> Logoff
+      0x6a.toByte() -> Logon(fields[0] as Map<String, Any?>)
+      0x3f.toByte() -> Pull(fields[0] as Map<String, Any?>)
+      0x71.toByte() -> Record(fields[0] as List<Any?>)
+      0x0f.toByte() -> Reset
+      0x13.toByte() -> Rollback
+      0x10.toByte() ->
+          Run(fields[0] as String, fields[1] as Map<String, Any?>, fields[2] as Map<String, Any?>)
+      0x70.toByte() -> Success(fields[0] as Map<String, Any?>)
+      0x54.toByte() -> Telemetry(fields[0] as Long)
+      else -> error("Unknown message '$this'")
     }
-    return bytes
   }
 
-  /** Write a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking) [message]. */
-  suspend fun ByteWriteChannel.writeChunked(message: ByteArray, maxChunkSize: Int) {
-    message
-        .asSequence()
-        .chunked(maxChunkSize)
-        .map { bytes -> bytes.toByteArray() }
-        .forEach { chunk ->
-          writeShort(chunk.size.toShort())
-          writeFully(chunk)
-          writeFully(byteArrayOf(0x0, 0x0))
+  /** Convert the [Message] to a [PackStream.Structure]. */
+  @Suppress("CyclomaticComplexMethod")
+  internal fun Message.toStructure(): PackStream.Structure {
+    val (id, fields) =
+        when (this) {
+          is Begin -> 0x11.toByte() to listOf(extra)
+          Commit -> 0x12.toByte() to emptyList()
+          is Discard -> 0x2f.toByte() to listOf(extra)
+          is Failure -> 0x7f.toByte() to listOf(metadata)
+          Goodbye -> 0x02.toByte() to emptyList()
+          is Hello -> 0x01.toByte() to listOf(extra)
+          Ignored -> 0x7e.toByte() to emptyList()
+          Logoff -> 0x6b.toByte() to emptyList()
+          is Logon -> 0x6a.toByte() to listOf(auth)
+          is Pull -> 0x3f.toByte() to listOf(extra)
+          is Record -> 0x71.toByte() to listOf(data)
+          Reset -> 0x0f.toByte() to emptyList()
+          Rollback -> 0x13.toByte() to emptyList()
+          is Run -> 0x10.toByte() to listOf(query, parameters, extra)
+          is Success -> 0x70.toByte() to listOf(metadata)
+          is Telemetry -> 0x54.toByte() to listOf(api)
         }
+    return PackStream.Structure(id, fields)
   }
 }

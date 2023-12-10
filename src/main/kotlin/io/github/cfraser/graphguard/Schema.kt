@@ -15,15 +15,14 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
-import io.github.cfraser.graphguard.antlr.SchemaBaseListener
-import io.github.cfraser.graphguard.antlr.SchemaLexer
-import io.github.cfraser.graphguard.antlr.SchemaParser
-import io.github.cfraser.graphguard.antlr.SchemaParser.GraphContext
-import io.github.cfraser.graphguard.antlr.SchemaParser.ListContext
-import io.github.cfraser.graphguard.antlr.SchemaParser.NodeContext
-import io.github.cfraser.graphguard.antlr.SchemaParser.PropertiesContext
-import io.github.cfraser.graphguard.antlr.SchemaParser.RelationshipContext
-import io.github.cfraser.graphguard.antlr.SchemaParser.ValueContext
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
+import io.github.cfraser.graphguard.SchemaParser.GraphContext
+import io.github.cfraser.graphguard.SchemaParser.ListContext
+import io.github.cfraser.graphguard.SchemaParser.NodeContext
+import io.github.cfraser.graphguard.SchemaParser.PropertiesContext
+import io.github.cfraser.graphguard.SchemaParser.RelationshipContext
+import io.github.cfraser.graphguard.SchemaParser.ValueContext
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -36,6 +35,8 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
+import org.jetbrains.annotations.VisibleForTesting
+import org.slf4j.LoggerFactory
 
 /**
  * A [Schema] describes the nodes and relationships in a [Neo4j](https://neo4j.com/) database via
@@ -44,6 +45,24 @@ import org.antlr.v4.runtime.tree.RuleNode
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
 data class Schema internal constructor(val graphs: Set<Graph>) {
+
+  /**
+   * Parse the [text] as a [Schema].
+   *
+   * @throws IllegalArgumentException if the [text] or [Schema] is invalid
+   */
+  constructor(
+      text: String
+  ) : this(
+      CharStreams.fromString(text)
+          .let(::SchemaLexer)
+          .let(::CommonTokenStream)
+          .let(::SchemaParser)
+          .let { parser ->
+            Collector()
+                .also { collector -> ParseTreeWalker.DEFAULT.walk(collector, parser.start()) }
+                .graphs
+          })
 
   /** The [Schema.Node]s in the [graphs] indexed by [Schema.Node.name]. */
   private val nodes: Map<String, Node> = graphs.flatMap(Graph::nodes).associateBy(Node::name)
@@ -64,8 +83,9 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   /**
    * Validate that the *Cypher* [Query] and [parameters] adhere to the [nodes] and [relationships].
    *
-   * Returns an [InvalidQuery] with a [Bolt.Message.FAILURE] message if the [cypher] is invalid.
+   * Returns an [InvalidQuery] with [Bolt.Failure.metadata] if the [cypher] is invalid.
    */
+  @VisibleForTesting
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
   internal fun validate(cypher: String, parameters: Map<String, Any?>): InvalidQuery? {
     val query = Query.parse(cypher) ?: return null
@@ -224,6 +244,30 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     }
   }
 
+  /**
+   * [Schema.Validator] is a [Server.Handler] that validates the [Bolt.Run.query] and
+   * [Bolt.Run.parameters] in a [Bolt.Run] message. If the data in the [PackStream.Structure] is
+   * invalid, according to the [Schema], then a [Bolt.Failure] is returned.
+   *
+   * @param cacheSize the maximum entries in the cache of validated queries
+   */
+  inner class Validator(cacheSize: Long? = null) : Server.Handler {
+
+    /** A [LoadingCache] of validated *Cypher* queries. */
+    private val cache =
+        Caffeine.newBuilder().maximumSize(cacheSize ?: 1024).build<
+            Pair<String, Map<String, Any?>>, InvalidQuery?> { (query, parameters) ->
+          validate(query, parameters)
+        }
+
+    override suspend fun handle(message: Bolt.Message): Bolt.Message {
+      if (message !is Bolt.Run) return message
+      val invalid = cache[message.query to message.parameters] ?: return message
+      LOGGER.warn("Cypher query '{}' is invalid: {}", message.query, invalid.message)
+      return Bolt.Failure(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message))
+    }
+  }
+
   /** An [InvalidQuery] describes a *Cypher* query with a [Schema] violation. */
   internal sealed class InvalidQuery(val message: String) {
 
@@ -261,31 +305,17 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     }
   }
 
-  companion object {
+  private companion object {
 
-    /**
-     * Parse the [text] as a [Schema].
-     *
-     * @throws IllegalArgumentException if the [Schema] is invalid
-     */
-    @JvmStatic
-    fun parse(text: String): Schema {
-      val streams = CharStreams.fromString(text)
-      val lexer = SchemaLexer(streams)
-      val tokens = CommonTokenStream(lexer)
-      val parser = SchemaParser(tokens)
-      val collector = Collector()
-      ParseTreeWalker.DEFAULT.walk(collector, parser.start())
-      return Schema(collector.graphs)
-    }
+    val LOGGER = LoggerFactory.getLogger(Validator::class.java)!!
 
     /** Parenthesize the [Set] of properties. */
-    private fun Set<Property>.parenthesize(): String {
+    fun Set<Property>.parenthesize(): String {
       return if (isEmpty()) "" else "(${joinToString(transform = Property::toString)})"
     }
 
     /** Filter the properties in the [Query] with the [label]. */
-    private fun Query.properties(label: String): Collection<Query.Property> {
+    fun Query.properties(label: String): Collection<Query.Property> {
       return properties.filter { label == it.owner }
     }
 
@@ -293,7 +323,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
      * Filter the mutated properties in the [Query] with the [label], and use the resolved
      * [parameters] to transform each into a [Query.Property].
      */
-    private fun Query.mutatedProperties(
+    fun Query.mutatedProperties(
         label: String,
         parameters: Map<String, Any?>
     ): Collection<Query.Property> {
@@ -329,12 +359,12 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     }
 
     /** Find the [Property] that matches the [Query.Property]. */
-    private fun Set<Property>.matches(property: Query.Property): Property? {
+    fun Set<Property>.matches(property: Query.Property): Property? {
       return find { property.name == it.name }
     }
 
     /** Validate the [property] of the [entity] per the schema [Property] and [parameters]. */
-    private fun Property.validate(
+    fun Property.validate(
         entity: InvalidQuery.Entity,
         property: Query.Property,
         parameters: Map<String, Any?>
@@ -381,8 +411,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   }
 
   /**
-   * [Collector] is a [io.github.cfraser.graphguard.antlr.SchemaListener] that collects [graphs]
-   * while walking the parse tree.
+   * [Collector] is a [io.github.cfraser.graphguard.SchemaListener] that collects [graphs] while
+   * walking the parse tree.
    */
   private class Collector(val graphs: MutableSet<Graph> = mutableSetOf()) : SchemaBaseListener() {
 

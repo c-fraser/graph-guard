@@ -15,8 +15,21 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
+import io.github.cfraser.graphguard.Server.Companion.readChunked
+import io.github.cfraser.graphguard.Server.Companion.writeChunked
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress
+import io.ktor.network.sockets.aSocket
+import io.ktor.network.sockets.openReadChannel
+import io.ktor.network.sockets.openWriteChannel
+import io.ktor.utils.io.writeFully
+import java.nio.ByteBuffer
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeout
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
@@ -24,8 +37,7 @@ import org.neo4j.driver.Values
 class ServerTest : FunSpec() {
 
   init {
-    tags(LOCAL)
-    test("proxy bolt messages") {
+    test("proxy bolt messages").config(tags = setOf(LOCAL)) {
       withNeo4j {
         withServer {
           GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword))
@@ -59,6 +71,66 @@ class ServerTest : FunSpec() {
               }
         }
       }
+    }
+
+    test("dechunk message") {
+      val message =
+          SelectorManager(coroutineContext)
+              .use { selector ->
+                val address = InetSocketAddress("localhost", 8787)
+                aSocket(selector).tcp().bind(address).use { ss ->
+                  async {
+                        ss.accept().use { socket ->
+                          socket.openReadChannel().readChunked(3.seconds)
+                        }
+                      }
+                      .also { _ ->
+                        aSocket(selector).tcp().connect(address).use { socket ->
+                          val writer = socket.openWriteChannel(autoFlush = true)
+                          for (size in 1..3) {
+                            val data = byteArrayOfSize(size)
+                            writer.writeShort(size.toShort())
+                            writer.writeFully(data)
+                          }
+                          writer.writeFully(byteArrayOf(0x00, 0x00))
+                        }
+                      }
+                }
+              }
+              .await()
+      message shouldBe (byteArrayOfSize(1) + byteArrayOfSize(2) + byteArrayOfSize(3))
+    }
+
+    test("chunk message") {
+      val chunked =
+          SelectorManager(coroutineContext)
+              .use { selector ->
+                val address = InetSocketAddress("localhost", 8787)
+                aSocket(selector).tcp().bind(address).use { ss ->
+                  async {
+                        val buffer = ByteBuffer.allocate(13)
+                        ss.accept().use { socket ->
+                          withTimeout(3.seconds) { socket.openReadChannel().readFully(buffer) }
+                        }
+                        buffer
+                      }
+                      .also { _ ->
+                        aSocket(selector).tcp().connect(address).use { socket ->
+                          socket
+                              .openWriteChannel(autoFlush = true)
+                              .writeChunked(byteArrayOfSize(5), 3)
+                        }
+                      }
+                }
+              }
+              .await()
+      chunked.array() shouldBe
+          (byteArrayOf(0x0, 0x3) +
+              byteArrayOfSize(3) +
+              byteArrayOf(0x00, 0x00) +
+              byteArrayOf(0x0, 0x2) +
+              byteArrayOfSize(2) +
+              byteArrayOf(0x00, 0x00))
     }
   }
 }
