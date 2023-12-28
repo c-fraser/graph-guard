@@ -33,13 +33,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.12
-      - name: Install material for mkdocs
+      - name: Install documentation dependencies
         run: pip install mkdocs-material
       - name: Configure git credentials
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-      - name: Setup docs
+      - name: Setup documentation
         run: ./gradlew setupDocs
       - name: Deploy documentation
         run: mkdocs gh-deploy --force
