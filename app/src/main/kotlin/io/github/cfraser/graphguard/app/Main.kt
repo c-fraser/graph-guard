@@ -31,6 +31,7 @@ import com.github.ajalt.clikt.parameters.types.int
 import io.github.cfraser.graphguard.BuildConfig
 import io.github.cfraser.graphguard.Schema
 import io.github.cfraser.graphguard.Server
+import java.net.InetSocketAddress
 import java.net.URI
 
 /** [main] is the entry point for the [Server] application. */
@@ -71,6 +72,7 @@ internal class Command :
           .required()
 
   override fun run() {
-    Server(URI(graphUri), Schema(schema), hostname = hostname, port = port).run()
+    Server(URI(graphUri), Schema(schema).Validator(), address = InetSocketAddress(hostname, port))
+        .run()
   }
 }

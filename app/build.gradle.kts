@@ -35,4 +35,10 @@ buildConfig {
   buildConfigField(String::class.simpleName!!, "VERSION", "\"${rootProject.version}\"")
 }
 
-tasks.withType<ShadowJar> { archiveClassifier.set("") }
+tasks {
+  val shadowJar = withType<ShadowJar> { archiveClassifier.set("") }
+  distZip { mustRunAfter(shadowJar) }
+  distTar { mustRunAfter(shadowJar) }
+  startScripts { mustRunAfter(shadowJar) }
+  startShadowScripts { mustRunAfter(jar, ":spotlessKotlin") }
+}

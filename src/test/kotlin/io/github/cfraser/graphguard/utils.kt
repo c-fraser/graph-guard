@@ -33,10 +33,12 @@ fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>
 
 /** Run the test [block] with a [Server] created by the [initializer]. */
 fun Neo4jContainer<*>.withServer(
-    initializer: Neo4jContainer<*>.() -> Server = { Server(URI(boltUrl), MOVIES_GRAPH_SCHEMA) },
+    initializer: Neo4jContainer<*>.() -> Server = {
+      Server(URI(boltUrl), MOVIES_GRAPH_SCHEMA.Validator())
+    },
     block: () -> Unit
 ) {
-  if (System.getProperty("graph-guard.app.test")?.toBooleanStrictOrNull() == true) {
+  if (System.getProperty("graph-guard-app.test")?.toBooleanStrictOrNull() == true) {
     @Suppress("UNUSED_VARIABLE") val boltUrl = boltUrl
     block()
     return

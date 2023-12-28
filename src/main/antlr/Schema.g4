@@ -13,74 +13,196 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 grammar Schema;
 
-@header {
+@ header
+{
 package io.github.cfraser.graphguard;
 }
+start
+   : graph+ EOF
+   ;
 
-start: graph+ EOF;
+graph
+   : GRAPH name LC (node SEMICOLON)* RC
+   ;
 
-graph: GRAPH name LC (node SEMICOLON)* RC;
+node
+   : NODE name properties? (COLON relationship (COMMA relationship)*)?
+   ;
 
-node: NODE name properties? (COLON relationship (COMMA relationship)*)?;
-relationship: name properties? (UNDIRECTED | DIRECTED) target;
+relationship
+   : name properties? (UNDIRECTED | DIRECTED) target
+   ;
 
-properties: LP (property (COMMA property)*)? RP;
-property: name COLON type;
-type: (value | list) QM?;
-value: VALUE;
-list: LIST LT value QM? GT;
+properties
+   : LP (property (COMMA property)*)? RP
+   ;
 
-name: NAME;
-qualified: QUALIFIED;
-target: name | qualified;
+property
+   : name COLON type
+   ;
 
-LC: '{';
-RC: '}';
-SEMICOLON: ';';
-LP: '(';
-RP: ')';
-COMMA: ',';
-COLON: ':';
-LT: '<';
-GT: '>';
-QM: '?';
-DOT: '.';
-UNDIRECTED: '--';
-DIRECTED: '->';
+type
+   : (value | list) QM?
+   ;
 
-GRAPH: 'graph';
-NODE: 'node';
+value
+   : VALUE
+   ;
 
-VALUE:
-  ANY
-  | BOOLEAN
-  | DATE
-  | DATE_TIME
-  | DURATION
-  | FLOAT
-  | INTEGER
-  | LOCAL_DATE_TIME
-  | LOCAL_TIME
-  | STRING
-  | TIME;
-ANY: 'Any';
-BOOLEAN: 'Boolean';
-DATE : 'Date';
-DATE_TIME: 'DateTime';
-DURATION: 'Duration';
-FLOAT: 'Float';
-INTEGER: 'Integer';
-LOCAL_DATE_TIME: 'LocalDateTime';
-LOCAL_TIME: 'LocalTime';
-STRING: 'String';
-TIME: 'Time';
-LIST: 'List';
+list
+   : LIST LT value QM? GT
+   ;
 
-NAME: [_A-Za-z] [_0-9A-Za-z]*;
-QUALIFIED: NAME DOT NAME;
+name
+   : NAME
+   ;
 
-WHITESPACE: [ \t\n\r]+ -> skip;
-COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
+qualified
+   : QUALIFIED
+   ;
+
+target
+   : name
+   | qualified
+   ;
+
+LC
+   : '{'
+   ;
+
+RC
+   : '}'
+   ;
+
+SEMICOLON
+   : ';'
+   ;
+
+LP
+   : '('
+   ;
+
+RP
+   : ')'
+   ;
+
+COMMA
+   : ','
+   ;
+
+COLON
+   : ':'
+   ;
+
+LT
+   : '<'
+   ;
+
+GT
+   : '>'
+   ;
+
+QM
+   : '?'
+   ;
+
+DOT
+   : '.'
+   ;
+
+UNDIRECTED
+   : '--'
+   ;
+
+DIRECTED
+   : '->'
+   ;
+
+GRAPH
+   : 'graph'
+   ;
+
+NODE
+   : 'node'
+   ;
+
+VALUE
+   : ANY
+   | BOOLEAN
+   | DATE
+   | DATE_TIME
+   | DURATION
+   | FLOAT
+   | INTEGER
+   | LOCAL_DATE_TIME
+   | LOCAL_TIME
+   | STRING
+   | TIME
+   ;
+
+ANY
+   : 'Any'
+   ;
+
+BOOLEAN
+   : 'Boolean'
+   ;
+
+DATE
+   : 'Date'
+   ;
+
+DATE_TIME
+   : 'DateTime'
+   ;
+
+DURATION
+   : 'Duration'
+   ;
+
+FLOAT
+   : 'Float'
+   ;
+
+INTEGER
+   : 'Integer'
+   ;
+
+LOCAL_DATE_TIME
+   : 'LocalDateTime'
+   ;
+
+LOCAL_TIME
+   : 'LocalTime'
+   ;
+
+STRING
+   : 'String'
+   ;
+
+TIME
+   : 'Time'
+   ;
+
+LIST
+   : 'List'
+   ;
+
+NAME
+   : [_A-Za-z] [_0-9A-Za-z]*
+   ;
+
+QUALIFIED
+   : NAME DOT NAME
+   ;
+
+WHITESPACE
+   : [ \t\n\r]+ -> skip
+   ;
+
+COMMENT
+   : '//' ~ [\r\n]* -> channel (HIDDEN)
+   ;
+

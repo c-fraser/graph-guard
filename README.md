@@ -21,6 +21,7 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
     * [Violations](#violations)
     * [Grammar](#grammar)
 * [Usage](#usage)
+  * [API](#api)
 * [Examples](#examples)
   * [Library](#library)
   * [Application](#application)
@@ -37,7 +38,7 @@ displayed in the diagram below.
 
 ![proxy-server](docs/proxy-server.png)
 
-Proxied messages are passed through the `Handler` chain, enabling the `Server` to dynamically
+Proxied messages are passed through the `Plugin`, enabling the `Server` to dynamically
 transform the incoming and
 outgoing [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/). [Schema](#schema)
 validation is performed by
@@ -175,6 +176,10 @@ the [releases](https://github.com/c-fraser/graph-guard/releases).
 > Use [NGINX](https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/) or a
 > cloud load balancer to decrypt *Bolt* traffic for the proxy server.
 
+### API
+
+Refer to the [code documentation](https://c-fraser.github.io/graph-guard/api/).
+
 ## Examples
 
 ### Library
@@ -205,7 +210,7 @@ queries via the [Bolt proxy server](#server).
 ```kotlin
 val proxy = thread {
   try {
-    Server(URI(boltUrl), Schema(MOVIES_SCHEMA)).run()
+    Server(URI(boltUrl), Schema(MOVIES_SCHEMA).Validator()).run()
   } catch (_: InterruptedException) {}
 }
 Thread.sleep(3.seconds.inWholeMilliseconds) // Wait for the proxy server to initialize
@@ -263,7 +268,8 @@ EOF
 ```
 
 <!--- 
-./gradlew test --tests 'io.github.cfraser.graphguard.ServerTest' -Dkotest.tags='Local' -Dgraph-guard.app.test='true' --debug-jvm
+./gradlew test --tests 'io.github.cfraser.graphguard.ServerTest' -Dkotest.tags='Local' -Dgraph-guard-app.test='true' --debug-jvm
+# 
 ./gradlew graph-guard-app:clean graph-guard-app:installShadowDist
 cat <<'EOF' | ./app/build/install/graph-guard-app-shadow/bin/graph-guard-app -g bolt://localhost:7687 -s -
 graph Movies {

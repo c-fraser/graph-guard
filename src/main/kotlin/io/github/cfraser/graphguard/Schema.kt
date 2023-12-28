@@ -47,14 +47,14 @@ import org.slf4j.LoggerFactory
 data class Schema internal constructor(val graphs: Set<Graph>) {
 
   /**
-   * Parse the [text] as a [Schema].
+   * Initialize a [Schema] from the [schemaText].
    *
-   * @throws IllegalArgumentException if the [text] or [Schema] is invalid
+   * @throws IllegalArgumentException if the [schemaText] or [Schema] is invalid
    */
   constructor(
-      text: String
+      schemaText: String
   ) : this(
-      CharStreams.fromString(text)
+      CharStreams.fromString(schemaText)
           .let(::SchemaLexer)
           .let(::CommonTokenStream)
           .let(::SchemaParser)
@@ -245,13 +245,13 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   }
 
   /**
-   * [Schema.Validator] is a [Server.Handler] that validates the [Bolt.Run.query] and
-   * [Bolt.Run.parameters] in a [Bolt.Run] message. If the data in the [PackStream.Structure] is
-   * invalid, according to the [Schema], then a [Bolt.Failure] is returned.
+   * [Schema.Validator] is a [Server.Plugin] that validates the [Bolt.Run.query] and
+   * [Bolt.Run.parameters] in a [Bolt.Run] message. If the data in the [Bolt.Message] is invalid,
+   * according to the [Schema], then a [Bolt.Failure] is returned.
    *
    * @param cacheSize the maximum entries in the cache of validated queries
    */
-  inner class Validator(cacheSize: Long? = null) : Server.Handler {
+  inner class Validator(cacheSize: Long? = null) : Server.Plugin {
 
     /** A [LoadingCache] of validated *Cypher* queries. */
     private val cache =
@@ -260,7 +260,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
           validate(query, parameters)
         }
 
-    override suspend fun handle(message: Bolt.Message): Bolt.Message {
+    override suspend fun intercept(message: Bolt.Message): Bolt.Message {
       if (message !is Bolt.Run) return message
       val invalid = cache[message.query to message.parameters] ?: return message
       LOGGER.warn("Cypher query '{}' is invalid: {}", message.query, invalid.message)

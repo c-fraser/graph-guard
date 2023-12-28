@@ -7,4 +7,12 @@ out
 .vscode
 .DS_Store
 *.hprof
+# generated antlr files
 src/main/java/io/github/cfraser/graphguard/Schema*
+# derivative doc files
+docs/index.md
+docs/api
+# devcontainer runtime metadata
+.devcontainer/*
+!.devcontainer/devcontainer.json
+!.devcontainer/exec.sh

@@ -1,11 +1,11 @@
 complexity:
   LargeClass:
     excludes:
-      - '**/src/test/**/*.kt'
+      - "**/src/test/**/*.kt"
   LongMethod:
     threshold: 67
     excludes:
-      - '**/src/test/**/*.kt'
+      - "**/src/test/**/*.kt"
   LongParameterList:
     functionThreshold: 7
 
@@ -13,11 +13,7 @@ coroutines:
   active: true
   InjectDispatcher:
     excludes:
-      - '**/src/test/**/*.kt'
-
-exceptions:
-  TooGenericExceptionCaught:
-    active: false
+      - "**/src/test/**/*.kt"
 
 style:
   ForbiddenComment:

@@ -2,37 +2,25 @@ name: release
 on:
   workflow_dispatch:
 jobs:
-  test:
-    name: test
+  release:
+    name: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: '0'
+          fetch-depth: 0
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: 17
       - name: Check code
         run: ./gradlew spotlessCheck detektAll
       - name: Execute test
         run: ./gradlew clean test -Dkotest.tags='!Local'
-  release:
-    needs: test
-    name: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: '0'
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: 17
       - name: Execute release
         run: ./gradlew jreleaserFullRelease publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
@@ -41,3 +29,17 @@ jobs:
           SONATYPE_PASSWORD: ${{secrets.SONATYPE_PASSWORD}}
           GPG_SIGNING_KEY: ${{secrets.GPG_SIGNING_KEY}}
           GPG_PASSWORD: ${{secrets.GPG_PASSWORD}}
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - name: Install material for mkdocs
+        run: pip install mkdocs-material
+      - name: Configure git credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: Setup docs
+        run: ./gradlew setupDocs
+      - name: Deploy documentation
+        run: mkdocs gh-deploy --force

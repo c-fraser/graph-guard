@@ -32,7 +32,7 @@ fun runExample03() {
 
 val proxy = thread {
   try {
-    Server(URI(boltUrl), Schema(MOVIES_SCHEMA)).run()
+    Server(URI(boltUrl), Schema(MOVIES_SCHEMA).Validator()).run()
   } catch (_: InterruptedException) {}
 }
 Thread.sleep(3.seconds.inWholeMilliseconds) // Wait for the proxy server to initialize
