@@ -274,24 +274,50 @@ public final class io/github/cfraser/graphguard/Server : java/lang/Runnable {
 	public fun run ()V
 }
 
-public final class io/github/cfraser/graphguard/Server$Accepted : io/github/cfraser/graphguard/Server$Event {
-	public fun <init> (Ljava/net/SocketAddress;)V
-	public final fun component1 ()Ljava/net/SocketAddress;
-	public final fun copy (Ljava/net/SocketAddress;)Lio/github/cfraser/graphguard/Server$Accepted;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Accepted;Ljava/net/SocketAddress;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Accepted;
+public final class io/github/cfraser/graphguard/Server$Connected : io/github/cfraser/graphguard/Server$Event {
+	public fun <init> (Lio/github/cfraser/graphguard/Server$Connection;)V
+	public final fun component1 ()Lio/github/cfraser/graphguard/Server$Connection;
+	public final fun copy (Lio/github/cfraser/graphguard/Server$Connection;)Lio/github/cfraser/graphguard/Server$Connected;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Connected;Lio/github/cfraser/graphguard/Server$Connection;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Connected;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAddress ()Ljava/net/SocketAddress;
+	public final fun getConnection ()Lio/github/cfraser/graphguard/Server$Connection;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/Server$Connected : io/github/cfraser/graphguard/Server$Event {
-	public fun <init> (Ljava/net/SocketAddress;)V
-	public final fun component1 ()Ljava/net/SocketAddress;
-	public final fun copy (Ljava/net/SocketAddress;)Lio/github/cfraser/graphguard/Server$Connected;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Connected;Ljava/net/SocketAddress;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Connected;
+public abstract interface class io/github/cfraser/graphguard/Server$Connection {
+	public abstract fun getAddress ()Ljava/net/InetSocketAddress;
+}
+
+public final class io/github/cfraser/graphguard/Server$Connection$Client : io/github/cfraser/graphguard/Server$Connection {
+	public fun <init> (Ljava/net/InetSocketAddress;)V
+	public final fun component1 ()Ljava/net/InetSocketAddress;
+	public final fun copy (Ljava/net/InetSocketAddress;)Lio/github/cfraser/graphguard/Server$Connection$Client;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Connection$Client;Ljava/net/InetSocketAddress;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Connection$Client;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAddress ()Ljava/net/SocketAddress;
+	public fun getAddress ()Ljava/net/InetSocketAddress;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Server$Connection$Graph : io/github/cfraser/graphguard/Server$Connection {
+	public fun <init> (Ljava/net/InetSocketAddress;)V
+	public final fun component1 ()Ljava/net/InetSocketAddress;
+	public final fun copy (Ljava/net/InetSocketAddress;)Lio/github/cfraser/graphguard/Server$Connection$Graph;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Connection$Graph;Ljava/net/InetSocketAddress;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Connection$Graph;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAddress ()Ljava/net/InetSocketAddress;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Server$Disconnected : io/github/cfraser/graphguard/Server$Event {
+	public fun <init> (Lio/github/cfraser/graphguard/Server$Connection;)V
+	public final fun component1 ()Lio/github/cfraser/graphguard/Server$Connection;
+	public final fun copy (Lio/github/cfraser/graphguard/Server$Connection;)Lio/github/cfraser/graphguard/Server$Disconnected;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Disconnected;Lio/github/cfraser/graphguard/Server$Connection;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Disconnected;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConnection ()Lio/github/cfraser/graphguard/Server$Connection;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -312,18 +338,18 @@ public final class io/github/cfraser/graphguard/Server$Plugin$DefaultImpls {
 }
 
 public final class io/github/cfraser/graphguard/Server$Proxied : io/github/cfraser/graphguard/Server$Event {
-	public fun <init> (Ljava/net/SocketAddress;Lio/github/cfraser/graphguard/Bolt$Message;Ljava/net/SocketAddress;Lio/github/cfraser/graphguard/Bolt$Message;)V
-	public final fun component1 ()Ljava/net/SocketAddress;
+	public fun <init> (Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;)V
+	public final fun component1 ()Lio/github/cfraser/graphguard/Server$Connection;
 	public final fun component2 ()Lio/github/cfraser/graphguard/Bolt$Message;
-	public final fun component3 ()Ljava/net/SocketAddress;
+	public final fun component3 ()Lio/github/cfraser/graphguard/Server$Connection;
 	public final fun component4 ()Lio/github/cfraser/graphguard/Bolt$Message;
-	public final fun copy (Ljava/net/SocketAddress;Lio/github/cfraser/graphguard/Bolt$Message;Ljava/net/SocketAddress;Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Server$Proxied;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Proxied;Ljava/net/SocketAddress;Lio/github/cfraser/graphguard/Bolt$Message;Ljava/net/SocketAddress;Lio/github/cfraser/graphguard/Bolt$Message;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Proxied;
+	public final fun copy (Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Server$Proxied;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Proxied;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Proxied;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDestination ()Ljava/net/SocketAddress;
+	public final fun getDestination ()Lio/github/cfraser/graphguard/Server$Connection;
 	public final fun getReceived ()Lio/github/cfraser/graphguard/Bolt$Message;
 	public final fun getSent ()Lio/github/cfraser/graphguard/Bolt$Message;
-	public final fun getSource ()Ljava/net/SocketAddress;
+	public final fun getSource ()Lio/github/cfraser/graphguard/Server$Connection;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

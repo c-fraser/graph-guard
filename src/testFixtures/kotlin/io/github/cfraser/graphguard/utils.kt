@@ -16,10 +16,14 @@ limitations under the License.
 package io.github.cfraser.graphguard
 
 import io.kotest.core.NamedTag
+import io.kotest.matchers.collections.shouldHaveSize
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.GraphDatabase
+import org.neo4j.driver.Values
+import org.testcontainers.containers.Neo4jContainer
 import java.net.URI
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
-import org.testcontainers.containers.Neo4jContainer
 
 val LOCAL = NamedTag("Local")
 
@@ -31,21 +35,14 @@ fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>
       .use { neo4j -> neo4j.block() }
 }
 
-/** Run the test [block] with a [Server] created by the [initializer]. */
+/** Run the test [block] with a [Server] initialized with the [plugin]. */
 fun Neo4jContainer<*>.withServer(
-    initializer: Neo4jContainer<*>.() -> Server = {
-      Server(URI(boltUrl), MOVIES_GRAPH_SCHEMA.Validator())
-    },
+    plugin: Server.Plugin = MOVIES_GRAPH_SCHEMA.Validator(),
     block: () -> Unit
 ) {
-  if (System.getProperty("graph-guard-app.test")?.toBooleanStrictOrNull() == true) {
-    @Suppress("UNUSED_VARIABLE") val boltUrl = boltUrl
-    block()
-    return
-  }
   val proxy = thread {
     try {
-      initializer().run()
+      Server(URI(boltUrl), plugin).run()
     } catch (_: InterruptedException) {}
   }
   Thread.sleep(1.seconds.inWholeMilliseconds)
@@ -53,6 +50,33 @@ fun Neo4jContainer<*>.withServer(
     block()
   } finally {
     proxy.interrupt()
+  }
+}
+
+/** Run [MoviesGraph] queries through the [server] to the [Neo4jContainer]. */
+fun Neo4jContainer<*>.runMoviesQueries(server: String = "bolt://localhost:8787") {
+  GraphDatabase.driver(server, AuthTokens.basic("neo4j", adminPassword)).use { driver ->
+    driver.session().use { session ->
+      MoviesGraph.CREATE.forEach(session::run)
+      session.run(MoviesGraph.MATCH_TOM_HANKS).list() shouldHaveSize 1
+      session.run(MoviesGraph.MATCH_CLOUD_ATLAS).list() shouldHaveSize 1
+      session.run(MoviesGraph.MATCH_10_PEOPLE).list() shouldHaveSize 10
+      session.run(MoviesGraph.MATCH_NINETIES_MOVIES).list() shouldHaveSize 20
+      session.run(MoviesGraph.MATCH_TOM_HANKS_MOVIES).list() shouldHaveSize 12
+      session.run(MoviesGraph.MATCH_CLOUD_ATLAS_DIRECTOR).list() shouldHaveSize 3
+      session.run(MoviesGraph.MATCH_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 34
+      session.run(MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE).list() shouldHaveSize 10
+      session.run(MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON).list() shouldHaveSize 170
+      session
+          .run(MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO, Values.parameters("name", "Tom Hanks"))
+          .list() shouldHaveSize 1
+      session.run(MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 44
+      session
+          .run(
+              MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND,
+              Values.parameters("name", "Keanu Reeves"))
+          .list() shouldHaveSize 4
+    }
   }
 }
 
@@ -70,7 +94,7 @@ fun listOfSize(size: Int, value: Long = 1): List<Long> {
   return buildList { repeat(size) { _ -> this += value } }
 }
 
-/** The [Schema.Graph] for the [io.github.cfraser.graphguard.knit.MOVIES_SCHEMA]. */
+/** The [Schema.Graph] for the `MOVIES_SCHEMA`. */
 val MOVIES_GRAPH =
     Schema.Graph(
         name = "Movies",
@@ -135,7 +159,7 @@ val MOVIES_GRAPH =
                     relationships = emptySet()),
             ))
 
-/** The [Schema.Graph] for the [io.github.cfraser.graphguard.knit.PLACES_SCHEMA]. */
+/** The [Schema.Graph] for the `PLACES_SCHEMA`. */
 val PLACES_GRAPH =
     Schema.Graph(
         name = "Places",

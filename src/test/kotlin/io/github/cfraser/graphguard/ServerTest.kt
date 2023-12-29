@@ -17,67 +17,118 @@ package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
+import io.kotest.assertions.fail
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.inspectors.forExactly
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldBeOneOf
+import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.writeFully
-import java.nio.ByteBuffer
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
-import org.neo4j.driver.Values
+import java.net.InetSocketAddress
+import java.nio.ByteBuffer
+import kotlin.properties.Delegates.notNull
+import kotlin.time.Duration.Companion.seconds
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 
 class ServerTest : FunSpec() {
 
   init {
     test("proxy bolt messages").config(tags = setOf(LOCAL)) {
+      withNeo4j { withServer { runMoviesQueries() } }
+    }
+
+    test("observe server events").config(tags = setOf(LOCAL)) {
+      val lock = Mutex()
+      val clientAddresses = mutableListOf<InetSocketAddress>()
+      val clientConnections by lazy { clientAddresses.map { Server.Connection.Client(it) } }
+      var graphAddress by notNull<InetSocketAddress>()
+      val graphConnection by lazy { Server.Connection.Graph(graphAddress) }
+      val events = mutableListOf<Server.Event>()
+      val observer =
+          object : Server.Plugin {
+            override suspend fun observe(event: Server.Event) {
+              lock.withLock {
+                when (event) {
+                  is Server.Connected ->
+                      when (event.connection) {
+                        is Server.Connection.Client -> clientAddresses += event.connection.address
+                        is Server.Connection.Graph -> graphAddress = event.connection.address
+                      }
+                  else -> {}
+                }
+                events += event
+              }
+            }
+          }
       withNeo4j {
-        withServer {
+        withServer(plugin = MOVIES_GRAPH_SCHEMA.Validator() then observer) {
           GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword))
               .use { driver ->
                 driver.session().use { session ->
-                  MoviesGraph.CREATE.forEach(session::run)
-                  session.run(MoviesGraph.MATCH_TOM_HANKS).list() shouldHaveSize 1
-                  session.run(MoviesGraph.MATCH_CLOUD_ATLAS).list() shouldHaveSize 1
-                  session.run(MoviesGraph.MATCH_10_PEOPLE).list() shouldHaveSize 10
-                  session.run(MoviesGraph.MATCH_NINETIES_MOVIES).list() shouldHaveSize 20
-                  session.run(MoviesGraph.MATCH_TOM_HANKS_MOVIES).list() shouldHaveSize 12
-                  session.run(MoviesGraph.MATCH_CLOUD_ATLAS_DIRECTOR).list() shouldHaveSize 3
-                  session.run(MoviesGraph.MATCH_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 34
-                  session.run(MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE).list() shouldHaveSize 10
-                  session.run(MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON).list() shouldHaveSize
-                      170
-                  session
-                      .run(
-                          MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO,
-                          Values.parameters("name", "Tom Hanks"))
-                      .list() shouldHaveSize 1
-                  session
-                      .run(MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS)
-                      .list() shouldHaveSize 44
-                  session
-                      .run(
-                          MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND,
-                          Values.parameters("name", "Keanu Reeves"))
-                      .list() shouldHaveSize 4
+                  session.run(MoviesGraph.MATCH_TOM_HANKS).list().shouldBeEmpty()
+                  session.runCatching { run("MATCH (n:N) RETURN n") }
                 }
               }
         }
       }
+      lock.isLocked shouldBe false
+      events.forExactly(1) { it shouldBe Server.Started }
+      events.filterIsInstance<Server.Connected>() shouldContainInOrder
+          clientConnections.flatMap {
+            listOf(Server.Connected(it), Server.Connected(graphConnection))
+          }
+      events.filterIsInstance<Server.Proxied>().forEach { event ->
+        when (val message = event.received) {
+          is Bolt.Hello,
+          is Bolt.Logon,
+          is Bolt.Pull,
+          is Bolt.Reset -> {
+            event.source.address shouldBeOneOf clientConnections.map { it.address }
+            event.destination.address shouldBe graphConnection.address
+            message shouldBe event.sent
+          }
+          is Bolt.Success -> {
+            event.source.address shouldBe graphConnection.address
+            event.destination.address shouldBeOneOf clientConnections.map { it.address }
+            message shouldBe event.sent
+          }
+          is Bolt.Run ->
+              if (message.query.contains("Tom Hanks")) {
+                event.source.address shouldBeOneOf clientConnections.map { it.address }
+                event.destination.address shouldBe graphConnection.address
+                message shouldBe event.sent
+              } else {
+                event.source.address shouldBe event.destination.address
+                event.sent.shouldBeTypeOf<Bolt.Failure>()
+              }
+          else -> fail("Received unexpected '$message'")
+        }
+      }
+      events.filterIsInstance<Server.Disconnected>() shouldContainAll
+          clientConnections.flatMap {
+            listOf(Server.Disconnected(graphConnection), Server.Disconnected(it))
+          }
+      events.forExactly(1) { it shouldBe Server.Stopped }
     }
 
     test("dechunk message") {
       val message =
           SelectorManager(coroutineContext)
               .use { selector ->
-                val address = InetSocketAddress("localhost", 8787)
+                val address = KInetSocketAddress("localhost", 8787)
                 aSocket(selector).tcp().bind(address).use { ss ->
                   async {
                         ss.accept().use { socket ->
@@ -105,7 +156,7 @@ class ServerTest : FunSpec() {
       val chunked =
           SelectorManager(coroutineContext)
               .use { selector ->
-                val address = InetSocketAddress("localhost", 8787)
+                val address = KInetSocketAddress("localhost", 8787)
                 aSocket(selector).tcp().bind(address).use { ss ->
                   async {
                         val buffer = ByteBuffer.allocate(13)

@@ -44,6 +44,7 @@ plugins {
   alias(libs.plugins.kover)
   alias(libs.plugins.compatibility.validator)
   `java-library`
+  `java-test-fixtures`
   antlr
   `maven-publish`
   signing
@@ -55,9 +56,7 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.4.0"
-
-  repositories { mavenCentral() }
+  version = "0.5.0"
 
   configure<JavaPluginExtension> { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
@@ -66,6 +65,17 @@ allprojects project@{
       attributes(
           "Automatic-Module-Name" to "io.github.cfraser.${this@project.name.replace("-", "")}")
     }
+  }
+
+  repositories { mavenCentral() }
+
+  afterEvaluate {
+    dependencies {
+      testImplementation(libs.kotest.assertions)
+      testImplementation(libs.kotest.runner)
+    }
+
+    tasks.withType<Test> { useJUnitPlatform() }
   }
 }
 
@@ -82,12 +92,11 @@ dependencies {
   implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
 
-  testImplementation(libs.kotest.assertions)
+  testFixturesApi(libs.neo4j.java.driver)
+  testFixturesApi(libs.testcontainers)
+  testFixturesApi(libs.testcontainers.neo4j)
+  testFixturesImplementation(libs.kotest.runner)
   testImplementation(libs.kotest.datatest)
-  testImplementation(libs.kotest.runner)
-  testImplementation(libs.neo4j.java.driver)
-  testImplementation(libs.testcontainers)
-  testImplementation(libs.testcontainers.neo4j)
   testImplementation(libs.knit.test)
   testRuntimeOnly(libs.slf4j.nop)
 }
@@ -267,14 +276,6 @@ configure<JReleaserExtension> {
 apiValidation { ignoredProjects.add(app.name) }
 
 tasks {
-  withType<Test> {
-    useJUnitPlatform()
-    systemProperties =
-        System.getProperties().asIterable().associate { it.key.toString() to it.value }
-    /*systemProperties("org.slf4j.simpleLogger.defaultLogLevel" to "debug")
-    testLogging { showStandardStreams = true }*/
-  }
-
   val grammarSrcDir = file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}")
 
   val modifyGrammarSource by creating {

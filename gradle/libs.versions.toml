@@ -24,6 +24,7 @@ kotlinx-coroutines-slf4j = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-network-tls = { module = "io.ktor:ktor-network-tls", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.4.14" }
+logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "7.4" }
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2023.9.1" }
 neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "5.15.0" }

@@ -20,10 +20,8 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -34,16 +32,6 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.core.use
 import io.ktor.utils.io.writeFully
-import java.net.InetSocketAddress
-import java.net.SocketAddress
-import java.net.URI
-import java.nio.ByteBuffer
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
-import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +50,17 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.ByteBuffer
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -74,12 +73,12 @@ import org.slf4j.MDC.MDCCloseable
  * @param plugin the [Server.Plugin] to use to intercept proxied messages and observe server events
  * @property graph the [URI] of the graph database to proxy data to/from
  * @property address the [InetSocketAddress] to bind the [Server] to
- * @property parallelism the number of parallel coroutines used by the [Server],
+ * @property parallelism the number of parallel coroutines used by the [Server]
  */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalContracts::class)
 class Server(
     val graph: URI,
-    plugin: Plugin,
+    plugin: Plugin = object : Plugin {},
     val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
     private val parallelism: Int? = null
 ) : Runnable {
@@ -118,16 +117,16 @@ class Server(
           null -> Dispatchers.IO
           else -> Dispatchers.IO.limitedParallelism(parallelism)
         }) {
-          bindServer { selector, serverSocket ->
+          bind { selector, serverSocket ->
             while (isActive) {
               try {
-                acceptClient(this, serverSocket) { clientAddress, clientReader, clientWriter ->
-                  connectGraph(selector) { graphAddress, graphReader, graphWriter ->
-                    proxySession(
-                        clientAddress,
+                accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
+                  connect(selector) { graphConnection, graphReader, graphWriter ->
+                    proxy(
+                        clientConnection,
                         clientReader,
                         clientWriter,
-                        graphAddress,
+                        graphConnection,
                         graphReader,
                         graphWriter)
                   }
@@ -144,9 +143,7 @@ class Server(
   }
 
   /** Bind the proxy [ServerSocket] to the [address] then run the [block]. */
-  private suspend fun bindServer(
-      block: suspend CoroutineScope.(SelectorManager, ServerSocket) -> Unit
-  ) {
+  private suspend fun bind(block: suspend CoroutineScope.(SelectorManager, ServerSocket) -> Unit) {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graph") {
       try {
@@ -168,46 +165,48 @@ class Server(
    * Accept a client connection from the [serverSocket] then [launch] a coroutine to run the [block]
    * with the [Socket] channels.
    */
-  private suspend fun acceptClient(
+  private suspend fun accept(
       coroutineScope: CoroutineScope,
       serverSocket: ServerSocket,
-      block: suspend (KSocketAddress, ByteReadChannel, ByteWriteChannel) -> Unit
+      block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     val socket = serverSocket.accept()
-    val clientAddress = socket.remoteAddress
+    val clientConnection = Connection.Client(socket.remoteAddress.toInetSocketAddress())
     coroutineScope.launch {
       try {
         socket.withChannels { reader, writer ->
-          LOGGER.debug("Accepted client connection from '{}'", clientAddress)
-          plugin.observe(Accepted(clientAddress.toJavaAddress()))
-          withLoggingContext("graph-guard.client" to "$clientAddress") {
-            block(clientAddress, reader, writer)
+          LOGGER.debug("Accepted connection from '{}'", clientConnection)
+          plugin.observe(Connected(clientConnection))
+          withLoggingContext("graph-guard.client" to "$clientConnection") {
+            block(clientConnection, reader, writer)
           }
         }
       } finally {
-        LOGGER.debug("Closed client connection to '{}'", clientAddress)
+        LOGGER.debug("Closed connection to '{}'", clientConnection)
+        plugin.observe(Disconnected(clientConnection))
       }
     }
   }
 
   /** Connect to the [graph] then run the [block] with the [Socket] channels. */
-  private suspend fun connectGraph(
+  private suspend fun connect(
       selector: SelectorManager,
-      block: suspend (KSocketAddress, ByteReadChannel, ByteWriteChannel) -> Unit
+      block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
     if ("+s" in graph.scheme) socket = socket.tls(coroutineContext = coroutineContext)
-    val graphAddress = socket.remoteAddress
+    val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
     try {
       socket.withChannels { reader, writer ->
-        LOGGER.debug("Connected to graph at '{}'", graphAddress)
-        plugin.observe(Connected(graphAddress.toJavaAddress()))
-        block(graphAddress, reader, writer)
+        LOGGER.debug("Connected to '{}'", graphConnection)
+        plugin.observe(Connected(graphConnection))
+        block(graphConnection, reader, writer)
       }
     } finally {
-      LOGGER.debug("Closed graph connection to '{}'", graphAddress)
+      LOGGER.debug("Closed connection to '{}'", graphConnection)
+      plugin.observe(Disconnected(graphConnection))
     }
   }
 
@@ -216,31 +215,31 @@ class Server(
    * between the *client* and *graph*.
    */
   @Suppress("TooGenericExceptionCaught")
-  private suspend fun proxySession(
-      clientAddress: KSocketAddress,
+  private suspend fun proxy(
+      clientConnection: Connection,
       clientReader: ByteReadChannel,
       clientWriter: ByteWriteChannel,
-      graphAddress: KSocketAddress,
+      graphConnection: Connection,
       graphReader: ByteReadChannel,
       graphWriter: ByteWriteChannel,
   ): Unit = coroutineScope {
     val handshake = clientReader.verifyHandshake()
-    LOGGER.debug("Read handshake from {} '{}'", clientAddress, handshake)
+    LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
     graphWriter.writeFully(handshake)
-    LOGGER.debug("Wrote handshake to {}", graphAddress)
+    LOGGER.debug("Wrote handshake to {}", graphConnection)
     val version = graphReader.readVersion()
-    LOGGER.debug("Read version from {} '{}'", graphAddress, version)
+    LOGGER.debug("Read version from {} '{}'", graphConnection, version)
     clientWriter.writeInt(version.bytes())
-    LOGGER.debug("Wrote version to {}", clientAddress)
-    val requestWriter = graphAddress to graphWriter
-    val responseWriter = clientAddress to clientWriter
+    LOGGER.debug("Wrote version to {}", clientConnection)
+    val requestWriter = graphConnection to graphWriter
+    val responseWriter = clientConnection to clientWriter
     try {
       val incoming =
-          proxy(clientAddress, clientReader) { message ->
+          proxy(clientConnection, clientReader) { message ->
             if (message is Bolt.Request) requestWriter else responseWriter
           }
       val outgoing =
-          proxy(graphAddress, graphReader) { message ->
+          proxy(graphConnection, graphReader) { message ->
             if (message is Bolt.Response) responseWriter else requestWriter
           }
       select {
@@ -264,13 +263,19 @@ class Server(
    * [source] to the *resolved destination*.
    * > Intercept [Bolt.Goodbye] and [cancel] the [CoroutineScope] to end the session.
    */
+  @Suppress("TooGenericExceptionCaught")
   private fun CoroutineScope.proxy(
-      source: KSocketAddress,
+      source: Connection,
       reader: ByteReadChannel,
-      resolver: (Bolt.Message) -> Pair<KSocketAddress, ByteWriteChannel>,
+      resolver: (Bolt.Message) -> Pair<Connection, ByteWriteChannel>,
   ): Job = launch {
     while (isActive) {
-      val message = reader.runCatching { readMessage() }.getOrNull() ?: break
+      val message =
+          try {
+            reader.readMessage()
+          } catch (_: Throwable) {
+            break
+          }
       LOGGER.debug("Read '{}' from {}", message, source)
       val intercepted = plugin.intercept(message)
       if (intercepted == Bolt.Goodbye) {
@@ -278,10 +283,14 @@ class Server(
         return@launch
       }
       val (destination, writer) = resolver(intercepted)
-      writer.writeMessage(intercepted)
+      try {
+        writer.writeMessage(intercepted)
+      } catch (thrown: Throwable) {
+        LOGGER.error("Failed to write '{}' to {}", intercepted, destination)
+        break
+      }
       LOGGER.debug("Wrote '{}' to {}", intercepted, destination)
-      plugin.observe(
-          Proxied(source.toJavaAddress(), message, destination.toJavaAddress(), intercepted))
+      plugin.observe(Proxied(source, message, destination, intercepted))
     }
   }
 
@@ -324,7 +333,7 @@ class Server(
      * @param that the [Server.Plugin] to chain with `this`
      * @return a [Server.Plugin] that invokes `this` then [that]
      */
-    infix fun <T> then(that: Plugin): Plugin {
+    infix fun then(that: Plugin): Plugin {
       @Suppress("VariableNaming") val `this` = this
       return object : Plugin {
         override suspend fun intercept(message: Bolt.Message) =
@@ -345,31 +354,55 @@ class Server(
   data object Started : Event
 
   /**
-   * The [Server] accepted a client connection.
+   * The [Server] established a [connection].
    *
-   * @property address the [SocketAddress] of the client
+   * @property connection the [Server.Connection] metadata
    */
-  data class Accepted(val address: SocketAddress) : Event
+  data class Connected(val connection: Connection) : Event
 
   /**
-   * The [Server] connected to the graph database.
+   * The [Server] closed the [connection].
    *
-   * @property address the [SocketAddress] of the graph
+   * @property connection the [Server.Connection] metadata
    */
-  data class Connected(val address: SocketAddress) : Event
+  data class Disconnected(val connection: Connection) : Event
+
+  /**
+   * A proxy connection.
+   *
+   * @property address the [InetSocketAddress] of the proxy source/destination
+   */
+  sealed interface Connection {
+
+    val address: InetSocketAddress
+
+    /**
+     * A client the [Server] accepted a connection from.
+     *
+     * @property address the [InetSocketAddress] of the client
+     */
+    data class Client(override val address: InetSocketAddress) : Connection
+
+    /**
+     * The graph database the [Server] connected to.
+     *
+     * @property address the [InetSocketAddress] of the graph database
+     */
+    data class Graph(override val address: InetSocketAddress) : Connection
+  }
 
   /**
    * The [Server] proxied the *intercepted* [Bolt.Message] from the [source] to the [destination].
    *
-   * @property source the [SocketAddress] that sent the [received] [Bolt.Message]
+   * @property source the [Connection] that sent the [received] [Bolt.Message]
    * @property received the [Bolt.Message] received from the [source]
-   * @property destination the [SocketAddress] that received the [sent] [Bolt.Message]
+   * @property destination the [Connection] that received the [sent] [Bolt.Message]
    * @property sent the [Bolt.Message] sent to the [destination]
    */
   data class Proxied(
-      val source: SocketAddress,
+      val source: Connection,
       val received: Bolt.Message,
-      val destination: SocketAddress,
+      val destination: Connection,
       val sent: Bolt.Message
   ) : Event
 
@@ -391,6 +424,11 @@ class Server(
       val result = withContext(MDCContext()) { runCatching { block() } }
       reset.runCatching { forEach(MDCCloseable::close) }
       result.getOrThrow()
+    }
+
+    /** Convert the [KSocketAddress] to an [InetSocketAddress]. */
+    private fun KSocketAddress.toInetSocketAddress(): InetSocketAddress {
+      return checkNotNull(toJavaAddress() as? InetSocketAddress) { "Unexpected address '$this'" }
     }
 
     /** Use the opened [ByteReadChannel] and [ByteWriteChannel] for the [Socket]. */

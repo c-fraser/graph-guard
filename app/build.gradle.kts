@@ -28,6 +28,9 @@ dependencies {
   implementation(rootProject)
   implementation(libs.clikt)
   runtimeOnly(libs.logback.classic)
+  runtimeOnly(libs.logback.encoder)
+
+  testImplementation(testFixtures(rootProject))
 }
 
 buildConfig {
@@ -36,6 +39,8 @@ buildConfig {
 }
 
 tasks {
+  withType<Test> { testLogging { showStandardStreams = true } }
+
   val shadowJar = withType<ShadowJar> { archiveClassifier.set("") }
   distZip { mustRunAfter(shadowJar) }
   distTar { mustRunAfter(shadowJar) }
