@@ -133,7 +133,7 @@ class Server(
                 }
               } catch (thrown: Throwable) {
                 when (thrown) {
-                  is CancellationException -> LOGGER.warn("Proxy connection cancelled", thrown)
+                  is CancellationException -> LOGGER.debug("Proxy connection closed", thrown)
                   else -> LOGGER.error("Proxy connection failure", thrown)
                 }
               }
@@ -286,7 +286,7 @@ class Server(
       try {
         writer.writeMessage(intercepted)
       } catch (thrown: Throwable) {
-        LOGGER.error("Failed to write '{}' to {}", intercepted, destination)
+        LOGGER.error("Failed to write '{}' to {}", intercepted, destination, thrown)
         break
       }
       LOGGER.debug("Wrote '{}' to {}", intercepted, destination)

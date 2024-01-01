@@ -14,7 +14,7 @@ fi
 set -euxo pipefail
 
 DEVCONTAINER_DIR=$(dirname "$0")
-WORKSPACE_FOLDER=$(dirname "$DEVCONTAINER_DIR")
+WORKSPACE_DIR=$(dirname "$DEVCONTAINER_DIR")
 
 function cleanup()
 {
@@ -25,8 +25,8 @@ function cleanup()
 trap cleanup EXIT
 
 npx @devcontainers/cli up \
-  --workspace-folder "$WORKSPACE_FOLDER" \
+  --workspace-folder "$WORKSPACE_DIR" \
   --remove-existing-container 'true' \
   | npx fx . \
   > "$DEVCONTAINER_DIR/up.json"
-npx @devcontainers/cli exec --workspace-folder "$WORKSPACE_FOLDER" "$@"
+npx @devcontainers/cli exec --workspace-folder "$WORKSPACE_DIR" "$@"

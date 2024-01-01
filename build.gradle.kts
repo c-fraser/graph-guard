@@ -13,10 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import com.diffplug.gradle.spotless.FormatExtension
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessTask
 import io.github.gradlenexus.publishplugin.NexusPublishExtension
 import io.gitlab.arturbosch.detekt.Detekt
+import kotlinx.knit.KnitPluginExtension
 import kotlinx.validation.KotlinApiBuildTask
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
@@ -35,8 +37,8 @@ buildscript {
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
-  alias(libs.plugins.dokka)
   alias(libs.plugins.spotless)
+  alias(libs.plugins.dokka)
   alias(libs.plugins.detekt)
   alias(libs.plugins.nexus.publish)
   alias(libs.plugins.jreleaser)
@@ -56,14 +58,14 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.5.0"
+  version = "0.6.0"
 
   configure<JavaPluginExtension> { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
   tasks.withType<Jar> {
     manifest {
-      attributes(
-          "Automatic-Module-Name" to "io.github.cfraser.${this@project.name.replace("-", "")}")
+      val module = this@project.name.replaceFirst("-", "").replace("-", ".")
+      attributes("Automatic-Module-Name" to "io.github.cfraser.$module")
     }
   }
 
@@ -146,24 +148,40 @@ configure<SpotlessExtension> {
   antlr4 {
     antlr4Formatter()
     licenseHeader(licenseHeader)
-    target("src/main/antlr/Schema.g4")
+    target("src/**/*.g4")
   }
 
-  json {
-    prettier()
+  fun FormatExtension.pretty() =
+      prettier()
+          .config(
+              mapOf("printWidth" to 100, "tabWidth" to 2, "semi" to false, "singleQuote" to true))
+
+  fun ConfigurableFileTree.excludes() =
+      exclude(
+          "**/bin/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/docs/**",
+          "**/node_modules/**",
+          "**/src/main/resources/web/**")
+
+  typescript {
+    pretty()
+    licenseHeader(licenseHeader, "(import|///)")
     target(
         fileTree(rootProject.rootDir) {
-          include("**/*.json")
-          exclude("**/build/**", "**/docs/**")
+          include("**/*.ts", "**/*.tsx")
+          excludes()
+          exclude("**/vite*")
         })
   }
 
-  yaml {
-    prettier()
+  format("prettier") {
+    pretty()
     target(
         fileTree(rootProject.rootDir) {
-          include("**/*.yml")
-          exclude("**/build/**")
+          include("**/*.cjs", "**/*.css", "**/*.html", "**/*.js", "**/*.json", "**/*.yml")
+          excludes()
         })
   }
 }
@@ -275,6 +293,8 @@ configure<JReleaserExtension> {
 
 apiValidation { ignoredProjects.add(app.name) }
 
+configure<KnitPluginExtension> { files = files("README.md") }
+
 tasks {
   val grammarSrcDir = file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}")
 
@@ -331,8 +351,6 @@ tasks {
 
   spotlessApply { mustRunAfter(setupDocs) }
 
-  apiValidation
-
   val spotlessKotlin by
       getting(SpotlessTask::class) {
         mustRunAfter(
@@ -343,8 +361,8 @@ tasks {
       }
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
-  val spotlessJson by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
-  val spotlessYaml by getting(SpotlessTask::class) { mustRunAfter(spotlessJson) }
+  val spotlessTypescript by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
+  val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessTypescript) }
 
   val detektAll by creating(Detekt::class) { source = kotlinSourceFiles }
 

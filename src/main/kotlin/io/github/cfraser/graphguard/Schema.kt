@@ -23,20 +23,26 @@ import io.github.cfraser.graphguard.SchemaParser.NodeContext
 import io.github.cfraser.graphguard.SchemaParser.PropertiesContext
 import io.github.cfraser.graphguard.SchemaParser.RelationshipContext
 import io.github.cfraser.graphguard.SchemaParser.ValueContext
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.OffsetTime
-import java.time.ZonedDateTime
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
 import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
+import java.time.OffsetTime
+import java.time.ZonedDateTime
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.ZonedDateTime as JZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Boolean as KBoolean
+import kotlin.Float as KFloat
+import kotlin.String as KString
 
 /**
  * A [Schema] describes the nodes and relationships in a [Neo4j](https://neo4j.com/) database via
@@ -52,7 +58,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @throws IllegalArgumentException if the [schemaText] or [Schema] is invalid
    */
   constructor(
-      schemaText: String
+      schemaText: KString
   ) : this(
       CharStreams.fromString(schemaText)
           .let(::SchemaLexer)
@@ -65,7 +71,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
           })
 
   /** The [Schema.Node]s in the [graphs] indexed by [Schema.Node.name]. */
-  private val nodes: Map<String, Node> = graphs.flatMap(Graph::nodes).associateBy(Node::name)
+  private val nodes: Map<KString, Node> = graphs.flatMap(Graph::nodes).associateBy(Node::name)
 
   /** The [Schema.Relationship]s in the [graphs] indexed by [Query.Relationship]. */
   private val relationships: Map<Query.Relationship, Relationship> = buildMap {
@@ -87,7 +93,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    */
   @VisibleForTesting
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
-  internal fun validate(cypher: String, parameters: Map<String, Any?>): InvalidQuery? {
+  internal fun validate(cypher: KString, parameters: Map<KString, KAny?>): InvalidQuery? {
     val query = Query.parse(cypher) ?: return null
     for (queryNode in query.nodes) {
       val entity = InvalidQuery.Entity.Node(queryNode)
@@ -117,7 +123,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   }
 
   /** Validate the entity label and return the unqualified reference. */
-  private fun String.validate(): String {
+  private fun KString.validate(): KString {
     return if ("." in this) {
       val (graph, label) =
           requireNotNull(split(".").takeIf { it.size == 2 }) { "Invalid node reference '$this'" }
@@ -135,9 +141,9 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property name the name of the graph
    * @property nodes the nodes and relationships in the graph
    */
-  data class Graph internal constructor(val name: String, val nodes: Set<Node>) {
+  data class Graph internal constructor(val name: KString, val nodes: Set<Node>) {
 
-    override fun toString(): String {
+    override fun toString(): KString {
       return "graph $name {\n${nodes.joinToString("\n\n", transform = Node::toString)}\n}"
     }
   }
@@ -150,12 +156,12 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    */
   data class Node
   internal constructor(
-      val name: String,
+      val name: KString,
       val properties: Set<Property>,
       val relationships: Set<Relationship>
   ) {
 
-    override fun toString(): String {
+    override fun toString(): KString {
       val relationships =
           ":\n${relationships.joinToString(",\n", transform = Relationship::toString)}"
               .takeUnless { relationships.isEmpty() }
@@ -175,14 +181,14 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    */
   data class Relationship
   internal constructor(
-      val name: String,
-      val source: String,
-      val target: String,
-      val isDirected: Boolean,
+      val name: KString,
+      val source: KString,
+      val target: KString,
+      val isDirected: KBoolean,
       val properties: Set<Property>
   ) {
 
-    override fun toString(): String {
+    override fun toString(): KString {
       val direction = if (isDirected) "->" else "--"
       return "    $name${properties.parenthesize()} $direction $target"
     }
@@ -200,14 +206,14 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    */
   data class Property
   internal constructor(
-      val name: String,
+      val name: KString,
       val type: Type,
-      val isList: Boolean = false,
-      val isNullable: Boolean = false,
-      val allowsNullable: Boolean = false
+      val isList: KBoolean = false,
+      val isNullable: KBoolean = false,
+      val allowsNullable: KBoolean = false
   ) {
 
-    override fun toString(): String {
+    override fun toString(): KString {
       val type =
           if (isList) {
             val nullable = if (allowsNullable) "?" else ""
@@ -225,21 +231,32 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
      *
      * @property clazz the [KClass] of the value for the [Type]
      */
-    enum class Type(internal val clazz: KClass<*>) {
-      ANY(Any::class),
-      BOOLEAN(Boolean::class),
-      DATE(LocalDate::class),
-      DATE_TIME(ZonedDateTime::class),
-      DURATION(Duration::class),
-      FLOAT(Float::class),
-      INTEGER(Long::class),
-      LOCAL_DATE_TIME(LocalDateTime::class),
-      LOCAL_TIME(LocalTime::class),
-      STRING(String::class),
-      TIME(OffsetTime::class);
+    sealed class Type(internal val clazz: KClass<*>) {
 
-      override fun toString(): String {
-        return name.lowercase().replaceFirstChar(Char::uppercase)
+      data object Any : Type(KAny::class)
+
+      data object Boolean : Type(KBoolean::class)
+
+      data object Date : Type(LocalDate::class)
+
+      data object DateTime : Type(ZonedDateTime::class)
+
+      data object Duration : Type(JDuration::class)
+
+      data object Float : Type(KFloat::class)
+
+      data object Integer : Type(Long::class)
+
+      data object LocalDateTime : Type(JLocalDateTime::class)
+
+      data object LocalTime : Type(JLocalTime::class)
+
+      data object String : Type(KString::class)
+
+      data object Time : Type(OffsetTime::class)
+
+      override fun toString(): KString {
+        return "${this::class.simpleName}"
       }
     }
   }
@@ -256,7 +273,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     /** A [LoadingCache] of validated *Cypher* queries. */
     private val cache =
         Caffeine.newBuilder().maximumSize(cacheSize ?: 1024).build<
-            Pair<String, Map<String, Any?>>, InvalidQuery?> { (query, parameters) ->
+            Pair<KString, Map<KString, KAny?>>, InvalidQuery?> { (query, parameters) ->
           validate(query, parameters)
         }
 
@@ -269,26 +286,27 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   }
 
   /** An [InvalidQuery] describes a *Cypher* query with a [Schema] violation. */
-  internal sealed class InvalidQuery(val message: String) {
+  internal sealed class InvalidQuery(val message: KString) {
 
-    sealed class Entity(val name: String) {
+    sealed class Entity(val name: KString) {
 
-      class Node(label: String) : Entity("node $label")
+      class Node(label: KString) : Entity("node $label")
 
-      class Relationship(label: String, source: String?, target: String?) :
+      class Relationship(label: KString, source: KString?, target: KString?) :
           Entity("relationship $label from $source to $target")
     }
 
     class Unknown(entity: Entity) : InvalidQuery("Unknown ${entity.name}")
 
-    class UnknownProperty(entity: Entity, property: String) :
+    class UnknownProperty(entity: Entity, property: KString) :
         InvalidQuery("Unknown property '$property' for ${entity.name}")
 
-    class InvalidProperty(entity: Entity, property: Property, values: List<Any?>) :
+    class InvalidProperty(entity: Entity, property: Property, values: List<KAny?>) :
         InvalidQuery(
             "Invalid query value(s) '${values.joinToString()}' for property '$property' on ${entity.name}")
 
-    override fun equals(other: Any?): Boolean {
+    @Suppress("WrongEqualsTypeParameter")
+    override fun equals(other: KAny?): KBoolean {
       return when {
         this === other -> true
         javaClass != other?.javaClass -> false
@@ -300,7 +318,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       return message.hashCode()
     }
 
-    override fun toString(): String {
+    override fun toString(): KString {
       return "${InvalidQuery::class.simpleName}(message='$message')"
     }
   }
@@ -310,12 +328,12 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     val LOGGER = LoggerFactory.getLogger(Validator::class.java)!!
 
     /** Parenthesize the [Set] of properties. */
-    fun Set<Property>.parenthesize(): String {
+    fun Set<Property>.parenthesize(): KString {
       return if (isEmpty()) "" else "(${joinToString(transform = Property::toString)})"
     }
 
     /** Filter the properties in the [Query] with the [label]. */
-    fun Query.properties(label: String): Collection<Query.Property> {
+    fun Query.properties(label: KString): Collection<Query.Property> {
       return properties.filter { label == it.owner }
     }
 
@@ -324,8 +342,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
      * [parameters] to transform each into a [Query.Property].
      */
     fun Query.mutatedProperties(
-        label: String,
-        parameters: Map<String, Any?>
+        label: KString,
+        parameters: Map<KString, KAny?>
     ): Collection<Query.Property> {
       return mutatedProperties
           .filter { label == it.owner }
@@ -336,18 +354,18 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
                   properties.map { (name, value) ->
                     Query.Property(
                         label,
-                        checkNotNull(name as? String) { "Unexpected parameter name" },
+                        checkNotNull(name as? KString) { "Unexpected parameter name" },
                         setOf(
                             when (value) {
-                              is Boolean,
-                              is Duration,
-                              is LocalDate,
-                              is LocalDateTime,
-                              is LocalTime,
+                              is KBoolean,
+                              is JDuration,
+                              is JLocalDate,
+                              is JLocalDateTime,
+                              is JLocalTime,
                               is Number,
                               is OffsetTime,
-                              is String,
-                              is ZonedDateTime,
+                              is KString,
+                              is JZonedDateTime,
                               null -> Query.Property.Type.Value(value)
                               is List<*> -> Query.Property.Type.Container(value)
                               else -> error("Unexpected parameter value")
@@ -367,10 +385,10 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     fun Property.validate(
         entity: InvalidQuery.Entity,
         property: Query.Property,
-        parameters: Map<String, Any?>
+        parameters: Map<KString, KAny?>
     ): InvalidQuery? {
-      fun List<Any?>.filterNullIf(exclude: Boolean) = if (exclude) filterNotNull() else this
-      fun List<Any?>.isValid(): Boolean {
+      fun List<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
+      fun List<KAny?>.isValid(): KBoolean {
         if (isList && filterNullIf(allowsNullable).any { it !is MutableList<*> }) return false
         if (!isList && filterNotNull().any { it is MutableList<*> }) return false
         return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
@@ -394,7 +412,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
      * Resolve the [Query.Property.Type.Resolvable] values of the [parameters] in the
      * [Query.Property].
      */
-    private fun Query.Property.resolve(parameters: Map<String, Any?>): Set<Any?> {
+    private fun Query.Property.resolve(parameters: Map<KString, KAny?>): Set<KAny?> {
       return values
           .filterIsInstance<Query.Property.Type.Resolvable>()
           .map { resolvable -> resolvable.name.resolve(parameters) }
@@ -403,8 +421,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     }
 
     /** Resolve the value of the name in the [parameters]. */
-    private fun String.resolve(parameters: Map<String, Any?>): Any? {
-      return split(".").foldRight<String, Any?>(parameters) { name, parameter ->
+    private fun KString.resolve(parameters: Map<KString, KAny?>): KAny? {
+      return split(".").foldRight<KString, KAny?>(parameters) { name, parameter ->
         if (parameter is Map<*, *> && name in parameter) parameter[name] else Unit
       }
     }
@@ -452,28 +470,36 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     private companion object {
 
       /** Get the name from the [RuleNode]. */
-      operator fun RuleNode?.unaryPlus(): String {
+      operator fun RuleNode?.unaryPlus(): KString {
         return checkNotNull(this?.text?.takeUnless { it.isBlank() })
       }
 
       /** Get the properties from the [PropertiesContext]. */
+      @Suppress("CyclomaticComplexMethod")
       operator fun PropertiesContext?.unaryPlus(): Set<Property> {
         return this?.property()
             ?.map { ctx ->
               val name = +ctx.name()
               val type =
-                  when (val type = ctx.type()?.run { value() ?: list() }) {
+                  when (val type =
+                      when (val type = ctx.type()?.run { value() ?: list() }) {
                         is ValueContext -> +type
                         is ListContext -> +type.value()
                         else -> error("Unknown property type")
-                      }
-                      .replace(Regex("([a-z])([A-Z]+)")) {
-                        "${it.groupValues[1]}_${it.groupValues[2]}"
-                      }
-                      .uppercase()
-                      .runCatching(Property.Type::valueOf)
-                      .getOrNull()
-                      .let(::checkNotNull)
+                      }) {
+                    "Any" -> Property.Type.Any
+                    "Boolean" -> Property.Type.Boolean
+                    "Date" -> Property.Type.Date
+                    "DateTime" -> Property.Type.DateTime
+                    "Duration" -> Property.Type.Duration
+                    "Float" -> Property.Type.Float
+                    "Integer" -> Property.Type.Integer
+                    "LocalDateTime" -> Property.Type.LocalDateTime
+                    "LocalTime" -> Property.Type.LocalTime
+                    "String" -> Property.Type.String
+                    "Time" -> Property.Type.Time
+                    else -> error("Unexpected property type '$type'")
+                  }
               val isList = ctx.type().list() != null
               val isNullable = ctx.type().QM() != null
               val allowsNullable = ctx.type().list()?.QM() != null

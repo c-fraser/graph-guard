@@ -1,24 +1,24 @@
 site_name: graph-guard
 repo_name: c-fraser/graph-guard
 repo_url: https://github.com/c-fraser/graph-guard
-site_description: "Graph schema validation proxy server"
+site_description: 'Graph schema validation proxy server'
 site_author: c-fraser
-copyright: "Copyright &copy; 2023 c-fraser"
+copyright: 'Copyright &copy; 2023 c-fraser'
 theme:
-  name: "material"
+  name: 'material'
   icon:
     repo: fontawesome/brands/github
   palette:
-    - media: "(prefers-color-scheme: light)"
+    - media: '(prefers-color-scheme: light)'
       scheme: default
-      primary: "blue grey"
+      primary: 'blue grey'
       accent: teal
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
+    - media: '(prefers-color-scheme: dark)'
       scheme: slate
-      primary: "blue grey"
+      primary: 'blue grey'
       accent: teal
       toggle:
         icon: material/weather-sunny

@@ -1,10 +1,10 @@
 name: test
 on:
   push:
-    branches: ["**"]
+    branches: ['**']
     tags-ignore: [v*]
   pull_request:
-    branches: ["**"]
+    branches: ['**']
 jobs:
   test:
     name: test

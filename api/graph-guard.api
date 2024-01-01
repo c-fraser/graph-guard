@@ -222,22 +222,86 @@ public final class io/github/cfraser/graphguard/Schema$Property {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/Schema$Property$Type : java/lang/Enum {
-	public static final field ANY Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field BOOLEAN Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field DATE Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field DATE_TIME Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field DURATION Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field FLOAT Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field INTEGER Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field LOCAL_DATE_TIME Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field LOCAL_TIME Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field STRING Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static final field TIME Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+public abstract class io/github/cfraser/graphguard/Schema$Property$Type {
+	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun toString ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/cfraser/graphguard/Schema$Property$Type;
-	public static fun values ()[Lio/github/cfraser/graphguard/Schema$Property$Type;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$Any : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$Any;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$Boolean : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$Boolean;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$Date : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$Date;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$DateTime : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$DateTime;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$Duration : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$Duration;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$Float : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$Float;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$Integer : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$Integer;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$LocalDateTime : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$LocalDateTime;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$LocalTime : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$LocalTime;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$String : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$String;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/Schema$Property$Type$Time : io/github/cfraser/graphguard/Schema$Property$Type {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Schema$Property$Type$Time;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/Schema$Relationship {

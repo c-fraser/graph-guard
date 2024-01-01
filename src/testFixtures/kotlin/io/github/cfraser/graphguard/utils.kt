@@ -104,8 +104,8 @@ val MOVIES_GRAPH =
                     name = "Person",
                     properties =
                         setOf(
-                            Schema.Property("name", Schema.Property.Type.STRING),
-                            Schema.Property("born", Schema.Property.Type.INTEGER)),
+                            Schema.Property("name", Schema.Property.Type.String),
+                            Schema.Property("born", Schema.Property.Type.Integer)),
                     relationships =
                         setOf(
                             Schema.Relationship(
@@ -116,7 +116,7 @@ val MOVIES_GRAPH =
                                 properties =
                                     setOf(
                                         Schema.Property(
-                                            "roles", Schema.Property.Type.STRING, isList = true)),
+                                            "roles", Schema.Property.Type.String, isList = true)),
                             ),
                             Schema.Relationship(
                                 name = "DIRECTED",
@@ -146,16 +146,16 @@ val MOVIES_GRAPH =
                                 isDirected = true,
                                 properties =
                                     setOf(
-                                        Schema.Property("summary", Schema.Property.Type.STRING),
-                                        Schema.Property("rating", Schema.Property.Type.INTEGER)),
+                                        Schema.Property("summary", Schema.Property.Type.String),
+                                        Schema.Property("rating", Schema.Property.Type.Integer)),
                             ))),
                 Schema.Node(
                     name = "Movie",
                     properties =
                         setOf(
-                            Schema.Property("title", Schema.Property.Type.STRING),
-                            Schema.Property("released", Schema.Property.Type.INTEGER),
-                            Schema.Property("tagline", Schema.Property.Type.STRING)),
+                            Schema.Property("title", Schema.Property.Type.String),
+                            Schema.Property("released", Schema.Property.Type.Integer),
+                            Schema.Property("tagline", Schema.Property.Type.String)),
                     relationships = emptySet()),
             ))
 
@@ -167,7 +167,7 @@ val PLACES_GRAPH =
             setOf(
                 Schema.Node(
                     name = "Theater",
-                    properties = setOf(Schema.Property("name", Schema.Property.Type.STRING)),
+                    properties = setOf(Schema.Property("name", Schema.Property.Type.String)),
                     relationships =
                         setOf(
                             Schema.Relationship(
@@ -178,7 +178,7 @@ val PLACES_GRAPH =
                                 properties =
                                     setOf(
                                         Schema.Property(
-                                            "times", Schema.Property.Type.INTEGER, isList = true)),
+                                            "times", Schema.Property.Type.Integer, isList = true)),
                             )))))
 
 /** The [Schema] for the [MOVIES_GRAPH]. */

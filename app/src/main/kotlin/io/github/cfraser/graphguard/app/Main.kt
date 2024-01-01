@@ -30,8 +30,13 @@ import com.github.ajalt.clikt.parameters.types.int
 import io.github.cfraser.graphguard.BuildConfig
 import io.github.cfraser.graphguard.Schema
 import io.github.cfraser.graphguard.Server
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.http.content.singlePageApplication
+import io.ktor.server.netty.Netty
+import io.ktor.server.routing.routing
 import java.net.InetSocketAddress
 import java.net.URI
+import kotlin.concurrent.thread
 
 /** [main] is the entry point for the [Server] application. */
 fun main(args: Array<String>) {
@@ -47,15 +52,18 @@ internal class Command :
   }
 
   private val hostname by
-      option("-h", "--hostname", help = "The hostname to bind the proxy server to")
-          .default("localhost")
+      option("-h", "--hostname", help = "The hostname to bind the proxy (and web) server to")
+          .default("0.0.0.0")
 
   private val port by
       option("-p", "--port", help = "The port to bind the proxy server to").int().default(8787)
 
+  private val web by
+      option("-w", "--web", help = "The port to find the web server to").int().default(8080)
+
   private val graphUri by
       option("-g", "--graph", help = "The Bolt URI of the graph to guard")
-          .default("bolt://localhost:7687")
+          .default("bolt://127.0.0.1:7687")
           .validate { uri ->
             uri.runCatching(::URI).getOrElse { _ -> fail("Graph URI '$uri' is invalid") }
           }
@@ -77,12 +85,29 @@ internal class Command :
           .int()
 
   override fun run() {
-    val plugin = schema?.let { Schema(it).Validator() } ?: object : Server.Plugin {}
-    Server(
-            URI(graphUri),
-            plugin = plugin,
-            address = InetSocketAddress(hostname, port),
-            parallelism = parallelism)
-        .run()
+    val proxyServer = thread {
+      try {
+        Server(
+                URI(graphUri),
+                plugin = schema?.let { Schema(it).Validator() } ?: object : Server.Plugin {},
+                address = InetSocketAddress(hostname, port),
+                parallelism = parallelism)
+            .run()
+      } catch (_: InterruptedException) {}
+    }
+    try {
+      embeddedServer(Netty, host = hostname, port = web) {
+            routing {
+              singlePageApplication {
+                useResources = true
+                filesPath = "web"
+                defaultPage = "index.html"
+              }
+            }
+          }
+          .start(wait = true)
+    } finally {
+      proxyServer.interrupt()
+    }
   }
 }

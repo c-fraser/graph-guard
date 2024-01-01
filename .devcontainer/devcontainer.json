@@ -6,13 +6,36 @@
       "version": "3.12",
       "installTools": false
     },
+    "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
-      "plugins": "git python gradle-completion",
+      "plugins": "git python node yarn gradle-completion",
       "omzPlugins": "https://github.com/gradle/gradle-completion.git"
     }
   },
   "postCreateCommand": {
+    "fix dubious ownership": "git config --global --add safe.directory ${containerWorkspaceFolder}",
     "install material for mkdocs": "pip install mkdocs-material"
+  },
+  "forwardPorts": [8000, 5173],
+  "portsAttributes": {
+    "8000": {
+      "label": "docs site"
+    },
+    "5173": {
+      "label": "app dev"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/usr/bin/zsh"
+          }
+        }
+      }
+    }
   }
 }

@@ -9,7 +9,7 @@ You may obtain a copy of the License at
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+WITHOUT WARRANTIES OR CONDITIONS OF Any KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
@@ -213,23 +213,23 @@ class SchemaTest : FunSpec() {
         Data(first, second, expected)
 
     val PERSON = Schema.InvalidQuery.Entity.Node("Person")
-    val NAME = Schema.Property("name", Schema.Property.Type.STRING)
+    val NAME = Schema.Property("name", Schema.Property.Type.String)
 
     val A = Schema.InvalidQuery.Entity.Node("A")
-    val A_A = Schema.Property("a", Schema.Property.Type.ANY, isList = true, allowsNullable = true)
+    val A_A = Schema.Property("a", Schema.Property.Type.Any, isList = true, allowsNullable = true)
     val B = Schema.InvalidQuery.Entity.Node("B")
-    val B_B = Schema.Property("b", Schema.Property.Type.ANY, isList = true, isNullable = true)
+    val B_B = Schema.Property("b", Schema.Property.Type.Any, isList = true, isNullable = true)
     val C = Schema.InvalidQuery.Entity.Node("C")
-    val C_C = Schema.Property("c", Schema.Property.Type.DATE)
+    val C_C = Schema.Property("c", Schema.Property.Type.Date)
     val D = Schema.InvalidQuery.Entity.Node("D")
-    val D_D = Schema.Property("d", Schema.Property.Type.TIME)
+    val D_D = Schema.Property("d", Schema.Property.Type.Time)
     val E = Schema.InvalidQuery.Entity.Node("E")
-    val E_E = Schema.Property("e", Schema.Property.Type.LOCAL_TIME)
+    val E_E = Schema.Property("e", Schema.Property.Type.LocalTime)
     val F = Schema.InvalidQuery.Entity.Node("F")
-    val F_F = Schema.Property("f", Schema.Property.Type.DATE_TIME)
+    val F_F = Schema.Property("f", Schema.Property.Type.DateTime)
     val G = Schema.InvalidQuery.Entity.Node("G")
-    val G_G = Schema.Property("g", Schema.Property.Type.LOCAL_DATE_TIME)
+    val G_G = Schema.Property("g", Schema.Property.Type.LocalDateTime)
     val H = Schema.InvalidQuery.Entity.Node("H")
-    val H_H = Schema.Property("h", Schema.Property.Type.DURATION)
+    val H_H = Schema.Property("h", Schema.Property.Type.Duration)
   }
 }
