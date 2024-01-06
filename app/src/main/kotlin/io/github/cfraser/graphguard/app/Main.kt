@@ -27,24 +27,44 @@ import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.cfraser.graphguard.BuildConfig
 import io.github.cfraser.graphguard.Schema
 import io.github.cfraser.graphguard.Server
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.http.content.singlePageApplication
+import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics
+import io.micrometer.core.instrument.binder.system.UptimeMetrics
+import io.micrometer.core.instrument.logging.LoggingMeterRegistry
 import java.net.InetSocketAddress
 import java.net.URI
-import kotlin.concurrent.thread
+import java.time.LocalDateTime
+import org.slf4j.LoggerFactory
 
 /** [main] is the entry point for the [Server] application. */
 fun main(args: Array<String>) {
-  Command().main(args)
+  App().main(args)
 }
 
-/** [Command] runs [Server] with the CLI input. */
-internal class Command :
+/** [App] runs [Server] with the CLI input. */
+internal class App :
     CliktCommand(name = "graph-guard", help = "Graph schema validation proxy server") {
 
   init {
@@ -85,29 +105,72 @@ internal class Command :
           .int()
 
   override fun run() {
-    val proxyServer = thread {
-      try {
-        Server(
-                URI(graphUri),
-                plugin = schema?.let { Schema(it).Validator() } ?: object : Server.Plugin {},
-                address = InetSocketAddress(hostname, port),
-                parallelism = parallelism)
-            .run()
-      } catch (_: InterruptedException) {}
-    }
-    try {
-      embeddedServer(Netty, host = hostname, port = web) {
-            routing {
-              singlePageApplication {
-                useResources = true
-                filesPath = "web"
-                defaultPage = "index.html"
-              }
+    val webServer =
+        embeddedServer(Netty, host = hostname, port = web) {
+              LoggingMeterRegistry().installMetrics()
+              TODO().configureRoutes()
             }
-          }
-          .start(wait = true)
+            .start()
+    @Suppress("HttpUrlsUsage") LOGGER.info("Started web server on http://{}:{}", hostname, port)
+    try {
+      val schemaValidator = schema?.let { Schema(it).Validator() } ?: object : Server.Plugin {}
+      Server(
+              URI(graphUri),
+              plugin = schemaValidator,
+              address = InetSocketAddress(hostname, port),
+              parallelism = parallelism)
+          .run()
     } finally {
-      proxyServer.interrupt()
+      webServer.stop()
+    }
+  }
+
+  /** [App.Service] stores and provides access to [Server] data. */
+  interface Service {
+
+    /** Store a [query] proxied by the [Server]. */
+    suspend fun putQuery(query: Query)
+
+    /** Return the queries proxied by the [Server]. */
+    suspend fun getQueries(): Collection<Query>
+  }
+
+  /** A parameterized [cypher] [Query] intercepted by the [Server]. */
+  data class Query(val cypher: String, val parameters: Map<String, Any?>, val runAt: LocalDateTime)
+
+  private companion object {
+
+    private val LOGGER = LoggerFactory.getLogger(App::class.java)
+
+    /** Install metrics in the [Application] with the [MeterRegistry]. */
+    context(Application)
+    fun MeterRegistry.installMetrics() {
+      install(MicrometerMetrics) {
+        registry = this@installMetrics
+        meterBinders =
+            listOf(
+                ClassLoaderMetrics(),
+                JvmMemoryMetrics(),
+                JvmGcMetrics(),
+                ProcessorMetrics(),
+                JvmThreadMetrics(),
+                FileDescriptorMetrics(),
+                UptimeMetrics())
+      }
+    }
+
+    /** Configure the [Application.routing]. */
+    context(Application)
+    fun Service.configureRoutes() {
+      install(ContentNegotiation) { json() }
+      routing {
+        singlePageApplication {
+          useResources = true
+          filesPath = "web"
+          defaultPage = "index.html"
+        }
+        route("/v0") { get { call.respond(TODO()) } }
+      }
     }
   }
 }

@@ -10,11 +10,11 @@ import kotlin.time.Duration.Companion.seconds
 class MainTest : FunSpec() {
 
   init {
-    test("run server via cli").config(tags = setOf(LOCAL)) {
+    test("run app").config(tags = setOf(LOCAL)) {
       withNeo4j {
         val proxy = thread {
           try {
-            Command().main(arrayOf("-g", boltUrl))
+            App().main(arrayOf("-g", boltUrl))
           } catch (_: InterruptedException) {}
         }
         Thread.sleep(1.seconds.inWholeMilliseconds)

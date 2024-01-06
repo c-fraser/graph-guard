@@ -9,7 +9,7 @@
     "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
-      "plugins": "git python node yarn gradle-completion",
+      "plugins": "git python yarn gradle-completion",
       "omzPlugins": "https://github.com/gradle/gradle-completion.git"
     }
   },

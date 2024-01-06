@@ -1,0 +1,5 @@
+graph GraphGuard {
+  node Query(cypher: String): RAN(at: LocalDateTime) -> Result;
+  node Result(summary: String): WITH -> Parameter;
+  node Parameter(key: String, value: String);
+}

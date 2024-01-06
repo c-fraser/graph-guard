@@ -3,7 +3,7 @@
     <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
   </appender>
   <logger name="io.github.cfraser.graphguard" level="DEBUG"/>
-  <root level="WARN">
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

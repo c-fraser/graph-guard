@@ -15,11 +15,13 @@ limitations under the License.
 */
 import com.github.gradle.node.yarn.task.YarnTask
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   application
   alias(libs.plugins.buildconfig)
+  alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.nodejs)
   alias(libs.plugins.shadow)
 }
@@ -28,9 +30,14 @@ application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
 
 dependencies {
   implementation(rootProject)
+  implementation(libs.caffeine)
   implementation(libs.clikt)
+  implementation(libs.ktor.serialization.kotlinx.json)
+  implementation(libs.ktor.server.content.negotiation)
   implementation(libs.ktor.server.core)
+  implementation(libs.ktor.server.metrics.micrometer)
   implementation(libs.ktor.server.netty)
+  implementation(libs.micrometer.core)
   runtimeOnly(libs.logback.classic)
   runtimeOnly(libs.logback.encoder)
 
@@ -48,6 +55,8 @@ node {
 }
 
 tasks {
+  withType<KotlinCompile> { kotlinOptions { freeCompilerArgs = listOf("-Xcontext-receivers") } }
+
   withType<Test> {
     dependsOn(":spotlessKotlin")
     testLogging { showStandardStreams = true }

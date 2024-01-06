@@ -224,7 +224,7 @@ export default function App() {
   }
   return (
     <main className="p-12">
-      <Title>Dashboard</Title>
+      <Title>Graph Guard</Title>
       <Text>Lorem ipsum dolor sit amet, consetetur sadipscing elitr.</Text>
       <TabGroup className="mt-6">
         <TabList>
