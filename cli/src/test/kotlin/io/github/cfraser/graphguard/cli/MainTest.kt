@@ -1,9 +1,10 @@
-package io.github.cfraser.graphguard.app
+package io.github.cfraser.graphguard.cli
 
 import io.github.cfraser.graphguard.LOCAL
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.style.StringSpec
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
@@ -14,16 +15,18 @@ class MainTest : FunSpec() {
       withNeo4j {
         val proxy = thread {
           try {
-            App().main(arrayOf("-g", boltUrl))
+            Command().main(arrayOf("-g", boltUrl))
           } catch (_: InterruptedException) {}
         }
         Thread.sleep(1.seconds.inWholeMilliseconds)
         try {
-          runMoviesQueries()
+          runMoviesQueries(adminPassword)
         } finally {
           proxy.interrupt()
         }
       }
     }
+
+
   }
 }

@@ -54,8 +54,8 @@ fun Neo4jContainer<*>.withServer(
 }
 
 /** Run [MoviesGraph] queries through the [server] to the [Neo4jContainer]. */
-fun Neo4jContainer<*>.runMoviesQueries(server: String = "bolt://localhost:8787") {
-  GraphDatabase.driver(server, AuthTokens.basic("neo4j", adminPassword)).use { driver ->
+fun runMoviesQueries(password: String, server: String = "bolt://localhost:8787") {
+  GraphDatabase.driver(server, AuthTokens.basic("neo4j", password)).use { driver ->
     driver.session().use { session ->
       MoviesGraph.CREATE.forEach(session::run)
       session.run(MoviesGraph.MATCH_TOM_HANKS).list() shouldHaveSize 1

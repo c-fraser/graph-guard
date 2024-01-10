@@ -280,7 +280,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     override suspend fun intercept(message: Bolt.Message): Bolt.Message {
       if (message !is Bolt.Run) return message
       val invalid = cache[message.query to message.parameters] ?: return message
-      LOGGER.warn("Cypher query '{}' is invalid: {}", message.query, invalid.message)
+      LOGGER.info("Cypher query '{}' is invalid: {}", message.query, invalid.message)
       return Bolt.Failure(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message))
     }
   }

@@ -2,7 +2,7 @@
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
   </appender>
-  <logger name="io.github.cfraser.graphguard" level="DEBUG"/>
+  <logger name="io.github.cfraser.graphguard" level="INFO"/>
   <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>

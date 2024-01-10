@@ -13,32 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import com.github.gradle.node.yarn.task.YarnTask
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   application
   alias(libs.plugins.buildconfig)
-  alias(libs.plugins.kotlin.serialization)
-  alias(libs.plugins.nodejs)
   alias(libs.plugins.shadow)
 }
 
-application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
+application { mainClass.set("io.github.cfraser.graphguard.cli.Main") }
 
 dependencies {
   implementation(rootProject)
-  implementation(libs.caffeine)
   implementation(libs.clikt)
-  implementation(libs.ktor.serialization.kotlinx.json)
-  implementation(libs.ktor.server.content.negotiation)
-  implementation(libs.ktor.server.core)
-  implementation(libs.ktor.server.metrics.micrometer)
-  implementation(libs.ktor.server.netty)
+  implementation(libs.kotlinx.coroutines)
   implementation(libs.micrometer.core)
-  runtimeOnly(libs.logback.classic)
+  implementation(libs.logback.classic)
   runtimeOnly(libs.logback.encoder)
 
   testImplementation(testFixtures(rootProject))
@@ -49,41 +40,13 @@ buildConfig {
   buildConfigField(String::class.simpleName!!, "VERSION", "\"${rootProject.version}\"")
 }
 
-node {
-  download = false
-  nodeProjectDir = file("web")
-}
-
 tasks {
-  withType<KotlinCompile> { kotlinOptions { freeCompilerArgs = listOf("-Xcontext-receivers") } }
-
   withType<Test> {
     dependsOn(":spotlessKotlin")
+    systemProperties =
+        System.getProperties().asIterable().associate { it.key.toString() to it.value }
     testLogging { showStandardStreams = true }
   }
-
-  val yarnBuild by
-      creating(YarnTask::class) {
-        dependsOn(yarn)
-        args = listOf("build")
-        doLast {
-          copy {
-            from(file("web/dist"))
-            into(file("src/main/resources/web"))
-          }
-        }
-      }
-
-  withType<ProcessResources> { dependsOn(yarnBuild) }
-
-  val cleanWeb by creating {
-    doLast {
-      file("src/main/resources/web").deleteRecursively()
-      file("web/dist").deleteRecursively()
-    }
-  }
-
-  clean { finalizedBy(cleanWeb) }
 
   val shadowJar = withType<ShadowJar> { archiveClassifier.set("") }
   distZip { mustRunAfter(shadowJar) }

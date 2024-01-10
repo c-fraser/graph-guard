@@ -58,7 +58,6 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
@@ -150,12 +149,12 @@ class Server(
         SelectorManager(coroutineContext).use { selector ->
           val socket =
               aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
-          LOGGER.debug("Started proxy server on '{}'", socket.localAddress)
+          LOGGER.info("Started proxy server on '{}'", socket.localAddress)
           plugin.observe(Started)
           socket.use { server -> coroutineScope { block(selector, server) } }
         }
       } finally {
-        LOGGER.debug("Stopped proxy server")
+        LOGGER.info("Stopped proxy server")
         plugin.observe(Stopped)
       }
     }
@@ -251,9 +250,6 @@ class Server(
         is CancellationException -> LOGGER.debug("Proxy session closed", thrown)
         else -> LOGGER.error("Proxy session failure", thrown)
       }
-    } finally {
-      // attempt to say goodbye to graph before closing connection
-      graphWriter.runCatching { withTimeout(3.seconds) { writeMessage(Bolt.Goodbye) } }
     }
   }
 
@@ -278,10 +274,6 @@ class Server(
           }
       LOGGER.debug("Read '{}' from {}", message, source)
       val intercepted = plugin.intercept(message)
-      if (intercepted == Bolt.Goodbye) {
-        cancel("${Bolt.Goodbye}")
-        return@launch
-      }
       val (destination, writer) = resolver(intercepted)
       try {
         writer.writeMessage(intercepted)
@@ -291,6 +283,7 @@ class Server(
       }
       LOGGER.debug("Wrote '{}' to {}", intercepted, destination)
       plugin.observe(Proxied(source, message, destination, intercepted))
+      if (intercepted == Bolt.Goodbye) cancel("${Bolt.Goodbye}")
     }
   }
 

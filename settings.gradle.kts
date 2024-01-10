@@ -15,7 +15,7 @@ limitations under the License.
 */
 rootProject.name = "graph-guard"
 
-listOf("app").forEach { path ->
+listOf("cli").forEach { path ->
   include(path)
   project(":$path").apply { name = "${rootProject.name}-$path" }
 }

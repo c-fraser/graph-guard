@@ -157,30 +157,13 @@ configure<SpotlessExtension> {
               mapOf("printWidth" to 100, "tabWidth" to 2, "semi" to false, "singleQuote" to true))
 
   fun ConfigurableFileTree.excludes() =
-      exclude(
-          "**/bin/**",
-          "**/build/**",
-          "**/dist/**",
-          "**/docs/**",
-          "**/node_modules/**",
-          "**/src/main/resources/web/**")
-
-  typescript {
-    pretty()
-    licenseHeader(licenseHeader, "(import|///)")
-    target(
-        fileTree(rootProject.rootDir) {
-          include("**/*.ts", "**/*.tsx")
-          excludes()
-          exclude("**/vite*")
-        })
-  }
+      exclude("**/bin/**", "**/build/**", "**/dist/**", "**/docs/**")
 
   format("prettier") {
     pretty()
     target(
         fileTree(rootProject.rootDir) {
-          include("**/*.cjs", "**/*.css", "**/*.html", "**/*.js", "**/*.json", "**/*.yml")
+          include("**/*.json", "**/*.yml")
           excludes()
         })
   }
@@ -242,9 +225,9 @@ publishing {
   }
 }
 
-val app = project(":graph-guard-app")
-val appDist: Provider<RegularFile> =
-    app.layout.buildDirectory.file("distributions/${app.name}-shadow-$version.tar")
+val cli = project(":graph-guard-cli")
+val cliDist: Provider<RegularFile> =
+    cli.layout.buildDirectory.file("distributions/${cli.name}-shadow-$version.tar")
 
 configure<NexusPublishExtension> publish@{
   this@publish.repositories {
@@ -287,11 +270,11 @@ configure<JReleaserExtension> {
         }
       }
     }
-    distributions { create(app.name) { artifact { path.set(appDist) } } }
+    distributions { create(cli.name) { artifact { path.set(cliDist) } } }
   }
 }
 
-apiValidation { ignoredProjects.add(app.name) }
+apiValidation { ignoredProjects.add(cli.name) }
 
 configure<KnitPluginExtension> { files = files("README.md") }
 
@@ -355,7 +338,7 @@ tasks {
       getting(SpotlessTask::class) {
         mustRunAfter(
             withType<KotlinCompile>(),
-            app.tasks.withType<KotlinCompile>(),
+            cli.tasks.withType<KotlinCompile>(),
             withType<AntlrTask>(),
             withType<KotlinApiBuildTask>())
       }
@@ -374,5 +357,5 @@ tasks {
     config.setFrom(rootDir.resolve("detekt.yml"))
   }
 
-  withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-app:shadowDistTar") }
+  withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-cli:shadowDistTar") }
 }

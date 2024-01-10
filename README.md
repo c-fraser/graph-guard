@@ -24,7 +24,7 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
   * [API](#api)
 * [Examples](#examples)
   * [Library](#library)
-  * [Application](#application)
+  * [CLI](#cli)
 * [License](#license)
 
 <!--- END -->
@@ -166,7 +166,7 @@ for an exact specification of the [schema](#schema) DSL.
 
 The `graph-guard` library is accessible
 via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard)
-and the `graph-guard-app` application is published in
+and the `graph-guard-cli` application is published in
 the [releases](https://github.com/c-fraser/graph-guard/releases).
 
 > `graph-guard` requires Java 17+.
@@ -250,40 +250,18 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 
 <!--- TEST -->
 
-### Application
+### CLI
 
-Run the `graph-guard-app` application, extracted from
+Run the `graph-guard-cli` application, extracted from
 the [shadow](https://github.com/johnrengelman/shadow) distribution, for a local Neo4j database.
 
 > Replace `x.y.z` with the
 > desired [graph-guard release](https://github.com/c-fraser/graph-guard/releases) version.
 
 ```shell
-tar -xvf graph-guard-app-shadow-x.y.z.tar
-cat <<'EOF' | ./graph-guard-app-shadow-x.y.z/bin/graph-guard-app -s -
-graph Schema {
-  // ...
-}
-EOF
+tar -xvf graph-guard-cli-shadow-x.y.z.tar
+./graph-guard-cli-shadow-x.y.z/bin/graph-guard-cli --help
 ```
-
-<!--- 
-./gradlew test --tests 'io.github.cfraser.graphguard.ServerTest' -Dkotest.tags='Local' -Dgraph-guard-app.test='true' --debug-jvm
-# 
-./gradlew graph-guard-app:clean graph-guard-app:installShadowDist
-cat <<'EOF' | ./app/build/install/graph-guard-app-shadow/bin/graph-guard-app -g bolt://localhost:7687 -s -
-graph Movies {
-  node Person(name: String, born: Integer):
-    ACTED_IN(roles: List<String>) -> Movie,
-    DIRECTED -> Movie,
-    PRODUCED -> Movie,
-    WROTE -> Movie,
-    REVIEWED(summary: String, rating: Integer) -> Movie;
-
-  node Movie(title: String, released: Integer, tagline: String);
-}
-EOF
--->
 
 ## License
 

@@ -47,7 +47,7 @@ class ServerTest : FunSpec() {
 
   init {
     test("proxy bolt messages").config(tags = setOf(LOCAL)) {
-      withNeo4j { withServer { runMoviesQueries() } }
+      withNeo4j { withServer { runMoviesQueries(adminPassword) } }
     }
 
     test("observe server events").config(tags = setOf(LOCAL)) {
@@ -93,6 +93,7 @@ class ServerTest : FunSpec() {
       events.filterIsInstance<Server.Proxied>().forEach { event ->
         when (val message = event.received) {
           is Bolt.Hello,
+          is Bolt.Goodbye,
           is Bolt.Logon,
           is Bolt.Pull,
           is Bolt.Reset -> {

@@ -11,7 +11,7 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-set -euxo pipefail
+set -euo pipefail
 
 DEVCONTAINER_DIR=$(dirname "$0")
 WORKSPACE_DIR=$(dirname "$DEVCONTAINER_DIR")
@@ -19,7 +19,7 @@ WORKSPACE_DIR=$(dirname "$DEVCONTAINER_DIR")
 function cleanup()
 {
     CONTAINER_ID=$(npx fx .containerId "$DEVCONTAINER_DIR/up.json")
-    docker rm -f "$CONTAINER_ID"
+    docker rm -f "$CONTAINER_ID" > /dev/null 2>&1
 }
 
 trap cleanup EXIT
