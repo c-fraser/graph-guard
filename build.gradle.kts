@@ -344,8 +344,7 @@ tasks {
       }
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
-  val spotlessTypescript by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
-  val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessTypescript) }
+  val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
 
   val detektAll by creating(Detekt::class) { source = kotlinSourceFiles }
 

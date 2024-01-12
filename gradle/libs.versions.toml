@@ -13,6 +13,7 @@ testcontainers = "1.19.3"
 antlr4 = { module = "org.antlr:antlr4", version = "4.13.1" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.1.8" }
 clikt = { module = "com.github.ajalt.clikt:clikt-jvm", version = "4.2.1" }
+jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "2.16.1" }
 knit = { module = "org.jetbrains.kotlinx:kotlinx-knit", version.ref = "knit" }
 knit-test = { module = "org.jetbrains.kotlinx:kotlinx-knit-test", version.ref = "knit" }
 kotest-assertions = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }

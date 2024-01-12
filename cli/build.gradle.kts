@@ -27,6 +27,7 @@ application { mainClass.set("io.github.cfraser.graphguard.cli.Main") }
 dependencies {
   implementation(rootProject)
   implementation(libs.clikt)
+  implementation(libs.jackson)
   implementation(libs.kotlinx.coroutines)
   implementation(libs.micrometer.core)
   implementation(libs.logback.classic)

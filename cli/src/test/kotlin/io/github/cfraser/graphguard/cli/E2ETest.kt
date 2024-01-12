@@ -33,7 +33,8 @@ import io.kotest.core.spec.style.StringSpec
  *  ./gradlew graph-guard-cli:test \
  *    --tests 'io.github.cfraser.graphguard.cli.E2ETest' \
  *    -Dkotest.tags='Local' \
- *    -Dgraph-guard.e2e.test='true'
+ *    -Dgraph-guard.e2e.test='true' \
+ *    --rerun
  *  docker rm -f "$CONTAINER_ID"
  * ```
  */
