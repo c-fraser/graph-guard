@@ -313,9 +313,11 @@ internal class Command :
     /** Return the [Bolt.Run.parameters] as a styled [String]. */
     private fun Map<String, Any?>.styled(): String {
       val parameters =
-          mapKeys { (key, _) -> key.styled(TextColors.brightMagenta, TextStyles.bold.style) }
+          mapKeys { (key, _) -> key.styled(TextColors.brightMagenta) }
               .toList()
-              .joinToString { (key, value) -> "$key: ${objectMapper.writeValueAsString(value)}" }
+              .joinToString { (key, value) ->
+                "$key: ${objectMapper.writeValueAsString(value).styled(TextColors.green)}"
+              }
       return "${":params".styled(TextColors.brightBlue)} {$parameters}"
     }
 
@@ -323,8 +325,9 @@ internal class Command :
     private fun String.styled(parameters: Map<String, Any?>): String {
       return parameters
           .toList()
-          .fold(this) { query, (key, _) -> query /*.replace(
-                "\$$key", "\$$key".styled(TextColors.brightMagenta, TextStyles.bold.style))*/ }
+          .fold(this) { query, (key, _) ->
+            query.replace("\$$key", "\$$key".styled(TextColors.brightMagenta))
+          }
           .replace(Regex("^.*//.*\$")) { it.value.styled(TextColors.gray) }
           .replace(cypherKeywordsRegex) { it.value.styled(TextColors.brightYellow) }
           .replace(Regex("(-->|<--|--|\\||!|&|\\+|-|\\*|/|%|^|=|<>|=~|<|>|<=|>=)")) {
@@ -336,7 +339,7 @@ internal class Command :
           .replace(Regex("'.*'")) {
             it.value.reset(TextColors.brightYellow).styled(TextColors.green)
           }
-          .replace(Regex("\\b\\d+\\b")) { it.value.styled(TextColors.green) }
+          .replace(Regex("\\b[+-]?[\\d.]?\\d+\\b")) { it.value.styled(TextColors.green) }
           .let {
             Regex("\\s*:(\\w+)\\s*").findAll(it).fold(it) { query, match ->
               val label = checkNotNull(match.groups[1]).value

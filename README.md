@@ -74,7 +74,6 @@ graph Movies {
     PRODUCED -> Movie,
     WROTE -> Movie,
     REVIEWED(summary: String, rating: Integer) -> Movie;
-
   node Movie(title: String, released: Integer, tagline: String);
 }
 ```

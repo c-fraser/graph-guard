@@ -144,7 +144,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   data class Graph internal constructor(val name: KString, val nodes: Set<Node>) {
 
     override fun toString(): KString {
-      return "graph $name {\n${nodes.joinToString("\n\n", transform = Node::toString)}\n}"
+      return "graph $name {\n${nodes.joinToString("\n", transform = Node::toString)}\n}"
     }
   }
 

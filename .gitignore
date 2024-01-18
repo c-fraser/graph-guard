@@ -1,6 +1,7 @@
 bin
 build
 out
+*.out
 .gradle
 .idea
 *.iml
@@ -13,7 +14,8 @@ src/main/java/io/github/cfraser/graphguard/Schema*
 # derivative doc files
 docs/index.md
 docs/api
-# devcontainer runtime metadata
+# runtime metadata
 .devcontainer/*
 !.devcontainer/devcontainer.json
 !.devcontainer/exec.sh
+cli/neo4j.cid

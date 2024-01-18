@@ -8,13 +8,12 @@
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
-      "plugins": "git python gradle-completion",
+      "plugins": "docker python gradle-completion",
       "omzPlugins": "https://github.com/gradle/gradle-completion.git"
     }
   },
   "postCreateCommand": {
-    "fix dubious ownership": "git config --global --add safe.directory ${containerWorkspaceFolder}",
-    "install material for mkdocs": "pip install mkdocs-material"
+    "install devtools": "pip install --upgrade pip && pip install mkdocs-material asciinema"
   },
   "forwardPorts": [8000],
   "portsAttributes": {
