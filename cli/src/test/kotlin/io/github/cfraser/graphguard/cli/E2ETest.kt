@@ -1,6 +1,7 @@
 package io.github.cfraser.graphguard.cli
 
 import io.github.cfraser.graphguard.LOCAL
+import io.github.cfraser.graphguard.knit.runInvalidMoviesQueries
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.kotest.core.spec.style.StringSpec
 
@@ -46,5 +47,6 @@ class E2ETest :
               enabled =
                   System.getProperty("graph-guard.e2e.test")?.toBooleanStrictOrNull() == true) {
                 runMoviesQueries("password")
+                runInvalidMoviesQueries("password")
               }
     })

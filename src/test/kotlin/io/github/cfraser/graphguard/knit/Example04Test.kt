@@ -22,12 +22,12 @@ import io.kotest.core.spec.style.FunSpec
 import kotlinx.knit.test.captureOutput
 import kotlinx.knit.test.verifyOutputLines
 
-class Example03Test : FunSpec() {
+class Example04Test : FunSpec() {
 
   init {
     tags(LOCAL)
-    test("Example03") {
-    captureOutput("Example03") { runExample03() }.verifyOutputLines(
+    test("Example04") {
+    captureOutput("Example04") { runExample04() }.verifyOutputLines(
         "Unknown node TVShow",
         "Unknown property 'budget' for node Movie",
         "Unknown relationship WATCHED from Person to Movie",

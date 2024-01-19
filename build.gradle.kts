@@ -357,4 +357,6 @@ tasks {
   }
 
   withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-cli:shadowDistTar") }
+
+  withType<Test> { mustRunAfter(spotlessKotlin) }
 }

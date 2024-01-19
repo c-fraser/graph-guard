@@ -7,13 +7,14 @@
       "installTools": false
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/rust:1": {},
     "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
-      "plugins": "docker python gradle-completion",
+      "plugins": "python docker rust gradle-completion",
       "omzPlugins": "https://github.com/gradle/gradle-completion.git"
     }
   },
   "postCreateCommand": {
-    "install devtools": "pip install --upgrade pip && pip install mkdocs-material asciinema"
+    "install docs tools": "pip install --upgrade pip && pip install mkdocs-material asciinema && cargo install --git https://github.com/asciinema/agg"
   },
   "forwardPorts": [8000],
   "portsAttributes": {

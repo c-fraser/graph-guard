@@ -22,6 +22,7 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
     * [Grammar](#grammar)
 * [Usage](#usage)
   * [API](#api)
+  * [Download](#download)
 * [Examples](#examples)
   * [Library](#library)
   * [CLI](#cli)
@@ -179,31 +180,73 @@ the [releases](https://github.com/c-fraser/graph-guard/releases).
 
 Refer to the [code documentation](https://c-fraser.github.io/graph-guard/api/).
 
+### Download
+
+Download and run the [CLI](#cli) application.
+
+```shell
+curl -L -O https://github.com/c-fraser/graph-guard/releases/download/v0.0.0/graph-guard-app-shadow-0.0.0.tar
+tar -xvf graph-guard-cli-shadow-0.0.0.tar
+./graph-guard-cli-shadow-0.0.0/bin/graph-guard-cli --help
+```
+
+> Replace `0.0.0` with the
+> desired [graph-guard release](https://github.com/c-fraser/graph-guard/releases) version.
+
 ## Examples
 
 ### Library
 
-<!--- TEST_NAME Example03Test --> 
+<!--- INCLUDE
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.GraphDatabase
+import org.neo4j.driver.exceptions.DatabaseException
+-->
+
+Using the `graph-guard` library, validate [movies](https://github.com/neo4j-graph-examples/movies)
+queries via the [Bolt proxy server](#server).
+
+[//]: # (@formatter:off)
+```kotlin
+fun runInvalidMoviesQueries(password: String) {
+  GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", password)).use { driver ->
+    driver.session().use { session ->
+      /** Run the invalid [query] and print the schema violation message. */
+      fun run(query: String) {
+        try {
+          session.run(query)
+          error("Expected schema violation for query '$query'")
+        } catch (exception: DatabaseException) {
+          println(exception.message)
+        }
+      }
+      run("CREATE (:TVShow {title: 'The Office', released: 2005})")
+      run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
+      run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
+      run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
+      run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
+    }
+  }
+}
+```
+[//]: # (@formatter:on)
+
+<!--- KNIT Example03.kt -->
+<!--- TEST_NAME Example04Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Schema
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.withNeo4j
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.GraphDatabase
-import org.neo4j.driver.exceptions.DatabaseException
 import java.net.URI
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
-fun runExample03() {
+fun runExample04() {
   withNeo4j {
 ----- SUFFIX
   }
 }
 -->
-
-Using the `graph-guard` library, validate [movies](https://github.com/neo4j-graph-examples/movies)
-queries via the [Bolt proxy server](#server).
 
 [//]: # (@formatter:off)
 ```kotlin
@@ -213,29 +256,12 @@ val proxy = thread {
   } catch (_: InterruptedException) {}
 }
 Thread.sleep(3.seconds.inWholeMilliseconds) // Wait for the proxy server to initialize
-GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword)).use { driver ->
-  driver.session().use { session ->
-    /** Run the invalid [query] and print the schema violation message. */
-    fun run(query: String) {
-      try {
-        session.run(query)
-        error("Expected schema violation for query '$query'")
-      } catch (exception: DatabaseException) {
-        println(exception.message)
-      }
-    }
-    run("CREATE (:TVShow {title: 'The Office', released: 2005})")
-    run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
-    run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
-    run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
-    run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
-  }
-}
+runInvalidMoviesQueries(adminPassword)
 proxy.interrupt()
 ```
 [//]: # (@formatter:on)
 
-<!--- KNIT Example03.kt --> 
+<!--- KNIT Example04.kt --> 
 
 The code above prints the following *schema violation* messages.
 
@@ -254,13 +280,9 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 Run the `graph-guard-cli` application, extracted from
 the [shadow](https://github.com/johnrengelman/shadow) distribution, for a local Neo4j database.
 
-> Replace `x.y.z` with the
-> desired [graph-guard release](https://github.com/c-fraser/graph-guard/releases) version.
+![CLI demo](docs/cli/demo.gif)
 
-```shell
-tar -xvf graph-guard-cli-shadow-x.y.z.tar
-./graph-guard-cli-shadow-x.y.z/bin/graph-guard-cli --help
-```
+> Refer to the [demo script](cli/demo.sh).
 
 ## License
 

@@ -20,14 +20,11 @@ package io.github.cfraser.graphguard.knit
 import io.github.cfraser.graphguard.Schema
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.withNeo4j
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.GraphDatabase
-import org.neo4j.driver.exceptions.DatabaseException
 import java.net.URI
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
-fun runExample03() {
+fun runExample04() {
   withNeo4j {
 
 val proxy = thread {
@@ -36,24 +33,7 @@ val proxy = thread {
   } catch (_: InterruptedException) {}
 }
 Thread.sleep(3.seconds.inWholeMilliseconds) // Wait for the proxy server to initialize
-GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword)).use { driver ->
-  driver.session().use { session ->
-    /** Run the invalid [query] and print the schema violation message. */
-    fun run(query: String) {
-      try {
-        session.run(query)
-        error("Expected schema violation for query '$query'")
-      } catch (exception: DatabaseException) {
-        println(exception.message)
-      }
-    }
-    run("CREATE (:TVShow {title: 'The Office', released: 2005})")
-    run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
-    run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
-    run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
-    run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
-  }
-}
+runInvalidMoviesQueries(adminPassword)
 proxy.interrupt()
   }
 }

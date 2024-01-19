@@ -30,14 +30,8 @@ sleep 10 && \
     --rerun \
   > /dev/null 2>&1 &
 ./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist > /dev/null 2>&1
-cat <<'EOF' | timeout 15 ./cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --styled -s -
-graph Movies {
-  node Person(name: String, born: Integer):
-    ACTED_IN(roles: List<String>) -> Movie,
-    DIRECTED -> Movie,
-    PRODUCED -> Movie,
-    WROTE -> Movie,
-    REVIEWED(summary: String, rating: Integer) -> Movie;
-  node Movie(title: String, released: Integer, tagline: String);
-}
-EOF
+# asciinema rec docs/cli/demo.cast --overwrite
+python3 -c "import pathlib, re; print(re.search(r'\"{3}([\s\S]*?)\"{3}', pathlib.Path('$PROJECT_DIR/src/testFixtures/kotlin/io/github/cfraser/graphguard/knit/Example01.kt').read_text(), re.RegexFlag.MULTILINE)[1])" \
+  | timeout 15 ./cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --styled -s -
+# exit
+# agg --idle-time-limit 1 docs/cli/demo.cast docs/cli/demo.gif
