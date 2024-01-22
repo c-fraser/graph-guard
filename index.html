@@ -625,14 +625,10 @@ cloud load balancer to decrypt <em>Bolt</em> traffic for the proxy server.</p>
 <p>Refer to the <a href="https://c-fraser.github.io/graph-guard/api/">code documentation</a>.</p>
 <h3 id="download">Download</h3>
 <p>Download and run the <a href="#cli">CLI</a> application.</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-L<span class="w"> </span>-O<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/download/v0.0.0/graph-guard-app-shadow-0.0.0.tar
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-cli-shadow-0.0.0.tar
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>./graph-guard-cli-shadow-0.0.0/bin/graph-guard-cli<span class="w"> </span>--help
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-OL<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-cli-shadow.tar
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>./graph-guard-cli-shadow/bin/graph-guard-cli<span class="w"> </span>--help
 </span></code></pre></div>
-<blockquote>
-<p>Replace <code>0.0.0</code> with the
-desired <a href="https://github.com/c-fraser/graph-guard/releases">graph-guard release</a> version.</p>
-</blockquote>
 <h2 id="examples">Examples</h2>
 <h3 id="library">Library</h3>
 <!--- INCLUDE
@@ -702,12 +698,8 @@ fun runExample04() {
 <!--- TEST -->
 
 <h3 id="cli">CLI</h3>
-<p>Run the <code>graph-guard-cli</code> application, extracted from
-the <a href="https://github.com/johnrengelman/shadow">shadow</a> distribution, for a local Neo4j database.</p>
-<p><img alt="CLI demo" src="cli/demo.gif" /></p>
-<blockquote>
-<p>Refer to the <a href="cli/demo.sh">demo script</a>.</p>
-</blockquote>
+<p>Refer to the <a href="https://c-fraser.github.io/graph-guard/cli/">demo</a>
+and <a href="https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh">source</a>.</p>
 <h2 id="license">License</h2>
 <div class="language-text highlight"><pre><span></span><code>Copyright 2023 c-fraser
 
