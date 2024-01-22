@@ -49,7 +49,12 @@ tasks {
     testLogging { showStandardStreams = true }
   }
 
-  val shadowJar = withType<ShadowJar> { archiveClassifier.set("") }
+  val shadowJar =
+      withType<ShadowJar> {
+        archiveBaseName.set(null as String?)
+        archiveClassifier.set(null as String?)
+        archiveVersion.set(null as String?)
+      }
   distZip { mustRunAfter(shadowJar) }
   distTar { mustRunAfter(shadowJar) }
   startScripts { mustRunAfter(shadowJar, ":spotlessKotlin") }

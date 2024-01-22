@@ -58,7 +58,7 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.6.0"
+  version = "0.6.1"
 
   configure<JavaPluginExtension> { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
@@ -225,10 +225,6 @@ publishing {
   }
 }
 
-val cli = project(":graph-guard-cli")
-val cliDist: Provider<RegularFile> =
-    cli.layout.buildDirectory.file("distributions/${cli.name}-shadow-$version.tar")
-
 configure<NexusPublishExtension> publish@{
   this@publish.repositories {
     sonatype {
@@ -239,6 +235,9 @@ configure<NexusPublishExtension> publish@{
     }
   }
 }
+
+val cli = project(":graph-guard-cli")
+val cliDist: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
 
 configure<JReleaserExtension> {
   project {
@@ -311,8 +310,47 @@ tasks {
     }
   }
 
+  val setupAsciinemaPlayer by creating {
+    val css = file("docs/cli/asciinema-player.css")
+    val js = file("docs/cli/asciinema-player.min.js")
+    onlyIf { !css.exists() && !js.exists() }
+    doLast {
+      arrayOf(css, js).forEach { file ->
+        exec {
+          commandLine(
+              "curl",
+              "-L",
+              "-o",
+              file,
+              "https://github.com/asciinema/asciinema-player/releases/download/v3.6.3/${file.name}")
+        }
+      }
+      file("docs/cli/index.html")
+          .writeText(
+              """<!DOCTYPE html>
+              <html lang='en'>
+              <head>
+                <meta charset='UTF-8'>
+                <title>graph-guard-cli demo</title>
+                <link rel='stylesheet' type='text/css' href='asciinema-player.css'/>
+              </head>
+              <body>
+              <div id='demo'></div>
+              <script src='asciinema-player.min.js'></script>
+              <script>
+                AsciinemaPlayer.create(
+                    'demo.cast',
+                    document.getElementById('demo'),
+                    {autoPlay: true, loop: true, idleTimeLimit: 3});
+              </script>
+              </body>
+              </html>"""
+                  .trimIndent())
+    }
+  }
+
   val setupDocs by creating {
-    dependsOn(dokkaHtml)
+    dependsOn(setupAsciinemaPlayer, dokkaHtml)
     doLast {
       copy {
         from(dokkaHtml.get().outputDirectory)
@@ -356,7 +394,18 @@ tasks {
     config.setFrom(rootDir.resolve("detekt.yml"))
   }
 
-  withType<JReleaserFullReleaseTask> { dependsOn(":graph-guard-cli:shadowDistTar") }
+  val releaseCli by creating {
+    dependsOn(":graph-guard-cli:shadowDistTar")
+    doLast {
+      cli.layout.buildDirectory
+          .file("distributions/${cli.name}-shadow-$version.tar")
+          .map(RegularFile::getAsFile)
+          .get()
+          .copyTo(cliDist.map(RegularFile::getAsFile).get())
+    }
+  }
+
+  withType<JReleaserFullReleaseTask> { dependsOn(releaseCli) }
 
   withType<Test> { mustRunAfter(spotlessKotlin) }
 }

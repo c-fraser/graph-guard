@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Record demo:
+#   asciinema rec docs/cli/demo.cast --overwrite
+# Generate demo gif:
+#   agg -v --idle-time-limit 1 docs/cli/demo.cast docs/cli/demo.gif
+
 if [ $# -gt 0 ]; then
     echo 'Execute queries proxied through the CLI application to a Neo4J container.'
     echo ''
@@ -30,8 +35,5 @@ sleep 10 && \
     --rerun \
   > /dev/null 2>&1 &
 ./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist > /dev/null 2>&1
-# asciinema rec docs/cli/demo.cast --overwrite
 python3 -c "import pathlib, re; print(re.search(r'\"{3}([\s\S]*?)\"{3}', pathlib.Path('$PROJECT_DIR/src/testFixtures/kotlin/io/github/cfraser/graphguard/knit/Example01.kt').read_text(), re.RegexFlag.MULTILINE)[1])" \
   | timeout 15 ./cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --styled -s -
-# exit
-# agg --idle-time-limit 1 docs/cli/demo.cast docs/cli/demo.gif

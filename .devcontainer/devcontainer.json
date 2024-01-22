@@ -14,7 +14,8 @@
     }
   },
   "postCreateCommand": {
-    "install docs tools": "pip install --upgrade pip && pip install mkdocs-material asciinema && cargo install --git https://github.com/asciinema/agg"
+    "install mkdocs-material and asciinema": "pip install --upgrade pip && pip install mkdocs-material asciinema"
+    // "install agg": "cargo install --git https://github.com/asciinema/agg"
   },
   "forwardPorts": [8000],
   "portsAttributes": {

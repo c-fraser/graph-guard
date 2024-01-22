@@ -14,6 +14,8 @@ src/main/java/io/github/cfraser/graphguard/Schema*
 # derivative doc files
 docs/index.md
 docs/api
+docs/cli/*
+!docs/cli/demo.cast
 # runtime metadata
 .devcontainer/*
 !.devcontainer/devcontainer.json

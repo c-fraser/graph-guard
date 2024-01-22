@@ -185,13 +185,10 @@ Refer to the [code documentation](https://c-fraser.github.io/graph-guard/api/).
 Download and run the [CLI](#cli) application.
 
 ```shell
-curl -L -O https://github.com/c-fraser/graph-guard/releases/download/v0.0.0/graph-guard-app-shadow-0.0.0.tar
-tar -xvf graph-guard-cli-shadow-0.0.0.tar
-./graph-guard-cli-shadow-0.0.0/bin/graph-guard-cli --help
+curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
+tar -xvf graph-guard-cli-shadow.tar
+./graph-guard-cli-shadow/bin/graph-guard-cli --help
 ```
-
-> Replace `0.0.0` with the
-> desired [graph-guard release](https://github.com/c-fraser/graph-guard/releases) version.
 
 ## Examples
 
@@ -277,12 +274,8 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 
 ### CLI
 
-Run the `graph-guard-cli` application, extracted from
-the [shadow](https://github.com/johnrengelman/shadow) distribution, for a local Neo4j database.
-
-![CLI demo](docs/cli/demo.gif)
-
-> Refer to the [demo script](cli/demo.sh).
+Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
+and [source](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh).
 
 ## License
 
