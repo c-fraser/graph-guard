@@ -58,7 +58,7 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.6.1"
+  version = "0.6.2"
 
   configure<JavaPluginExtension> { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
@@ -89,7 +89,6 @@ dependencies {
   implementation(libs.kotlinx.coroutines)
   implementation(libs.kotlinx.coroutines.slf4j)
   implementation(libs.ktor.network)
-  implementation(libs.ktor.network.tls)
   implementation(libs.caffeine)
   implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)

@@ -26,7 +26,6 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.sockets.toJavaAddress
-import io.ktor.network.tls.tls
 import io.ktor.util.network.hostname
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
@@ -81,6 +80,10 @@ class Server(
     val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
     private val parallelism: Int? = null
 ) : Runnable {
+
+  init {
+    check("+s" !in graph.scheme) { "${Server::class.simpleName} doesn't support TLS" }
+  }
 
   /**
    * The [Server.Plugin] used by the [Server].
@@ -194,8 +197,7 @@ class Server(
       block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
-    if ("+s" in graph.scheme) socket = socket.tls(coroutineContext = coroutineContext)
+    val socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
     val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
     try {
       socket.withChannels { reader, writer ->
@@ -456,7 +458,6 @@ class Server(
         }
         error("None of the versions '$versions' are supported")
       }
-
       val bytes = ByteArray(Int.SIZE_BYTES * 5)
       readFully(bytes, 0, bytes.size)
       return bytes.also(::verify)

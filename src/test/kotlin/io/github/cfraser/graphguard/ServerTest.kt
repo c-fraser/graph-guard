@@ -18,6 +18,7 @@ package io.github.cfraser.graphguard
 import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
 import io.kotest.assertions.fail
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.inspectors.forExactly
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -38,6 +39,7 @@ import kotlinx.coroutines.withTimeout
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import java.net.InetSocketAddress
+import java.net.URI
 import java.nio.ByteBuffer
 import kotlin.properties.Delegates.notNull
 import kotlin.time.Duration.Companion.seconds
@@ -46,6 +48,8 @@ import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 class ServerTest : FunSpec() {
 
   init {
+    test("TLS unsupported") { shouldThrow<IllegalStateException> { Server(URI("bolt+s://localhost:7687")) } }
+
     test("proxy bolt messages").config(tags = setOf(LOCAL)) {
       withNeo4j { withServer { runMoviesQueries(adminPassword) } }
     }

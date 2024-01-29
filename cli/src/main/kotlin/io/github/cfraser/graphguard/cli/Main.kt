@@ -99,9 +99,11 @@ internal class Command :
     var plugin = schema?.let { Schema(it).Validator() } ?: object : Server.Plugin {}
     when (val output = output) {
       null -> {}
-      Debug -> rootLogger.level = Level.DEBUG
+      Debug -> {
+        logger("io.github.cfraser.graphguard").level = Level.DEBUG
+      }
       is Styled -> {
-        rootLogger.detachAppender("STDOUT")
+        logger(Logger.ROOT_LOGGER_NAME).detachAppender("STDOUT")
         plugin = plugin then output
         output.printBanner()
       }
@@ -364,12 +366,9 @@ internal class Command :
 
   private companion object {
 
-    /** Get the *root* [Logger] or throw an [IllegalStateException]. */
-    val rootLogger: Logger
-      get() {
-        return checkNotNull(LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger) {
-          "Failed to get root logger"
-        }
-      }
+    /** Get the [Logger] with the [name] or throw an [IllegalStateException]. */
+    fun logger(name: String): Logger {
+      return checkNotNull(LoggerFactory.getLogger(name) as? Logger) { "Failed to get root logger" }
+    }
   }
 }

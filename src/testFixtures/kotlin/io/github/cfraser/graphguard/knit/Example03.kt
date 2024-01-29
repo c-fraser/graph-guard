@@ -18,11 +18,15 @@ limitations under the License.
 package io.github.cfraser.graphguard.knit
 
 import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.Config
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.exceptions.DatabaseException
 
 fun runInvalidMoviesQueries(password: String) {
-  GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", password)).use { driver ->
+    GraphDatabase.driver(
+          "bolt://localhost:8787",
+          AuthTokens.basic("neo4j", password),
+          Config.builder().withoutEncryption().build()).use { driver ->
     driver.session().use { session ->
       /** Run the invalid [query] and print the schema violation message. */
       fun run(query: String) {
