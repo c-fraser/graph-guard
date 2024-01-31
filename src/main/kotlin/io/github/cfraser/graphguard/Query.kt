@@ -15,13 +15,9 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
-import io.github.cfraser.graphguard.Query.Property.Type.Container
-import io.github.cfraser.graphguard.Query.Property.Type.Resolvable
-import io.github.cfraser.graphguard.Query.Property.Type.Value
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
-import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
+import org.neo4j.cypherdsl.core.FunctionInvocation
+import org.neo4j.cypherdsl.core.KeyValueMapEntry
 import org.neo4j.cypherdsl.core.ListExpression
 import org.neo4j.cypherdsl.core.Literal
 import org.neo4j.cypherdsl.core.NodeBase
@@ -40,6 +36,7 @@ import org.neo4j.cypherdsl.parser.CypherParser
 import org.neo4j.cypherdsl.parser.ExpressionCreatedEventType
 import org.neo4j.cypherdsl.parser.Options
 import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
+import kotlin.jvm.optionals.getOrNull
 
 /**
  * A [Cypher](https://neo4j.com/docs/cypher-manual/current/introduction/) [Query].
@@ -65,8 +62,8 @@ internal data class Query(
     /** A type of [Property] value. */
     sealed interface Type {
 
-      /** The [value] of a [Property]. */
-      data class Value(val value: Any?) : Type
+      /** The [cypher] [value] of a [Property]. */
+      data class Value(val value: Any?, val cypher: String? = null) : Type
 
       /** The [values] in a [Property] [Container]. */
       data class Container(val values: List<Any?>) : Type
@@ -193,48 +190,76 @@ internal data class Query(
     /** Get the node/relationship properties in the *Cypher* [Statement]. */
     private val Statement.properties: Set<Property>
       get() {
+        val options = mutableMapOf<String, Set<String?>>()
         val propertyTypes =
             catalog.allPropertyFilters
-                .mapKeys { (property, _) ->
-                  "${property.owningToken.firstOrNull()?.value.orEmpty()}.${property.name}"
+                .map { (property, filters) ->
+                  "${property.owningToken.firstOrNull()?.value.orEmpty()}.${property.name}" to
+                      filters.collectOptions(options).mapTypes().toSet()
                 }
-                .mapValues { (_, filters) ->
-                  filters
-                      .mapNotNull { filter ->
-                        when (val expression = filter.right) {
-                          is NullLiteral -> Value(null)
-                          is Literal<*> -> Value(expression._content)
-                          is ListExpression ->
-                              buildList {
-                                    expression.accept { visitable ->
-                                      when (visitable) {
-                                        is NullLiteral -> this += null
-                                        is Literal<*> -> this += visitable._content
-                                      }
-                                    }
-                                  }
-                                  .let(::Container)
-                          is Parameter<*> -> Resolvable(expression.name)
-                          else -> null
-                        }
-                      }
-                      .toSet()
-                }
+                .toMap()
         return catalog.properties
-            .map { property ->
+            .mapNotNull { property ->
               val owner = property.owningToken.firstOrNull()?.value
               val name = property.name
-              Property(owner, name, propertyTypes["$owner.$name"].orEmpty())
+              val types = propertyTypes.getOrDefault("$owner.$name", emptySet())
+              val values = options.getOrDefault(name, emptySet())
+              if (types
+                  .filterIsInstance<Property.Type.Value>()
+                  .mapNotNull(Property.Type.Value::cypher)
+                  .any { value -> value in values })
+                  null
+              else Property(owner, name, types)
             }
             .toSet()
       }
 
-    /** Get the content of the [Literal] using [MethodHandles.lookup]. */
-    private val Literal<*>._content: Any?
-      get() {
-        val type = MethodType.methodType(Any::class.java)
-        val handle = MethodHandles.lookup().findVirtual(this::class.java, "getContent", type)
-        return handle.invoke(this)
+    /**
+     * Collect the [options] used in [FunctionInvocation]s within the
+     * [StatementCatalog.PropertyFilter]s.
+     */
+    private fun Collection<StatementCatalog.PropertyFilter>.collectOptions(
+        options: MutableMap<String, Set<String?>>
+    ): Collection<StatementCatalog.PropertyFilter> {
+      return onEach { filter ->
+        when (val expression = filter.right) {
+          is FunctionInvocation -> {
+            expression.accept { visitable ->
+              when (visitable) {
+                is KeyValueMapEntry -> {
+                  options.compute(visitable.key) { _, values ->
+                    (values ?: emptySet()) + visitable.value.cypher()
+                  }
+                }
+              }
+            }
+          }
+        }
       }
+    }
+
+    /** Convert each [StatementCatalog.PropertyFilter] to a [Property.Type]. */
+    private fun Collection<StatementCatalog.PropertyFilter>.mapTypes(): List<Property.Type> {
+      return mapNotNull { filter ->
+        when (val expression = filter.right) {
+          is NullLiteral -> Property.Type.Value(null, expression.cypher())
+          is Literal<*> -> Property.Type.Value(expression.content, expression.cypher())
+          is ListExpression ->
+              buildList {
+                    expression.accept { visitable ->
+                      when (visitable) {
+                        is NullLiteral -> this += null
+                        is Literal<*> -> this += visitable.content
+                      }
+                    }
+                  }
+                  .let { Property.Type.Container(it) }
+          is Parameter<*> -> Property.Type.Resolvable(expression.name)
+          is FunctionInvocation ->
+              Property.Type.Resolvable(expression.cypher() ?: "${expression.functionName}()")
+          else -> null
+        }
+      }
+    }
   }
 }

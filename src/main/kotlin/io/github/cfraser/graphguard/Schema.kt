@@ -303,7 +303,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
 
     class InvalidProperty(entity: Entity, property: Property, values: List<KAny?>) :
         InvalidQuery(
-            "Invalid query value(s) '${values.joinToString()}' for property '$property' on ${entity.name}")
+            @Suppress("MaxLineLength")
+            "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.name}")
 
     @Suppress("WrongEqualsTypeParameter")
     override fun equals(other: KAny?): KBoolean {
@@ -326,6 +327,19 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   private companion object {
 
     val LOGGER = LoggerFactory.getLogger(Validator::class.java)!!
+
+    /**
+     * [Map] of the [Query.Property.Type.Resolvable.name] of an invoked function to a synthetic
+     * value.
+     */
+    val RESOLVABLE_FUNCTIONS =
+        mapOf(
+            "date()" to LocalDate.now(),
+            "datetime()" to ZonedDateTime.now(),
+            "duration()" to JDuration.ZERO,
+            "localdatetime()" to JLocalDateTime.now(),
+            "localtime()" to JLocalTime.now(),
+            "time()" to OffsetTime.now())
 
     /** Parenthesize the [Set] of properties. */
     fun Set<Property>.parenthesize(): KString {
@@ -387,44 +401,52 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
         property: Query.Property,
         parameters: Map<KString, KAny?>
     ): InvalidQuery? {
-      fun List<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
-      fun List<KAny?>.isValid(): KBoolean {
-        if (isList && filterNullIf(allowsNullable).any { it !is MutableList<*> }) return false
-        if (!isList && filterNotNull().any { it is MutableList<*> }) return false
-        return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
-            .filterNullIf(isNullable)
-            .all(type.clazz::isInstance)
-      }
+      val resolvable = parameters + RESOLVABLE_FUNCTIONS
+      // retain the unresolved value so function invocations can be returned as received
       val values =
           property.values
               .map {
                 when (it) {
-                  is Query.Property.Type.Value -> it.value
-                  is Query.Property.Type.Container -> it.values
-                  else -> Unit
+                  is Query.Property.Type.Value -> it to it.value
+                  is Query.Property.Type.Container -> it to it.values
+                  is Query.Property.Type.Resolvable -> it to it.name.resolve(resolvable)
                 }
               }
-              .filter { it !is Unit } + property.resolve(parameters)
-      return if (values.isValid()) null else InvalidQuery.InvalidProperty(entity, this, values)
+              .filter { (_, value) -> value !is Unit }
+              .distinct()
+      return if (values.map { (_, value) -> value }.isValid()) null
+      else
+          InvalidQuery.InvalidProperty(
+              entity,
+              this,
+              // return the unresolved function invocation so the synthetic value remains internal
+              values.map { (unresolved, resolved) ->
+                if (unresolved is Query.Property.Type.Resolvable && "(" in unresolved.name)
+                    unresolved.name
+                else resolved
+              })
     }
 
     /**
-     * Resolve the [Query.Property.Type.Resolvable] values of the [parameters] in the
-     * [Query.Property].
+     * Resolve the value of the [Query.Property.Type.Resolvable.name] (*expected*) in the
+     * [resolvable] map.
+     * > [Unit] is returned if `this` property isn't [resolvable].
      */
-    private fun Query.Property.resolve(parameters: Map<KString, KAny?>): Set<KAny?> {
-      return values
-          .filterIsInstance<Query.Property.Type.Resolvable>()
-          .map { resolvable -> resolvable.name.resolve(parameters) }
-          .filter { it !is Unit }
-          .toSet()
-    }
-
-    /** Resolve the value of the name in the [parameters]. */
-    private fun KString.resolve(parameters: Map<KString, KAny?>): KAny? {
-      return split(".").foldRight<KString, KAny?>(parameters) { name, parameter ->
+    fun KString.resolve(resolvable: Map<KString, KAny?>): KAny? {
+      return split(".").foldRight<KString, KAny?>(resolvable) { name, parameter ->
         if (parameter is Map<*, *> && name in parameter) parameter[name] else Unit
       }
+    }
+
+    /** Determine if `this` [List] of [Property] value(s) is valid. */
+    context(Property)
+    fun List<KAny?>.isValid(): KBoolean {
+      fun List<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
+      if (isList && filterNullIf(allowsNullable).any { it !is MutableList<*> }) return false
+      if (!isList && filterNotNull().any { it is MutableList<*> }) return false
+      return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
+          .filterNullIf(isNullable)
+          .all(type.clazz::isInstance)
     }
   }
 

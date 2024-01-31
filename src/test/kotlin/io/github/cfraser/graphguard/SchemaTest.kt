@@ -75,14 +75,14 @@ class SchemaTest : FunSpec() {
               null,
           MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO with
               mapOf("name" to null) expect
-              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf("Kevin Bacon", null)),
+              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf(null, "Kevin Bacon")),
           MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO with
               mapOf("name" to 123) expect
-              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf("Kevin Bacon", 123)),
+              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf(123, "Kevin Bacon")),
           MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO with
               mapOf("name" to listOf("Tom Hanks")) expect
               Schema.InvalidQuery.InvalidProperty(
-                  PERSON, NAME, listOf("Kevin Bacon", listOf("Tom Hanks"))),
+                  PERSON, NAME, listOf(listOf("Tom Hanks"), "Kevin Bacon")),
           MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS with emptyMap() expect null,
           MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND with
               mapOf("name" to "Keanu Reeves") expect
@@ -99,7 +99,7 @@ class SchemaTest : FunSpec() {
           MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND with
               mapOf("name" to listOf("Keanu Reeves")) expect
               Schema.InvalidQuery.InvalidProperty(
-                  PERSON, NAME, listOf("Tom Hanks", listOf("Keanu Reeves"))),
+                  PERSON, NAME, listOf(listOf("Keanu Reeves"), "Tom Hanks")),
           MoviesGraph.MERGE_KEANU with emptyMap() expect null,
           MoviesGraph.MERGE_KEANU with mapOf("properties" to mapOf("born" to 1963L)) expect null,
           MoviesGraph.MERGE_KEANU with
@@ -153,7 +153,7 @@ class SchemaTest : FunSpec() {
       val localTime = LocalTime.now()
       val zonedDateTime = ZonedDateTime.now()
       val localDateTime = LocalDateTime.now()
-      val duration = Duration.ofSeconds(1)
+      val duration = Duration.ZERO
       val schema =
           """
           graph G {
@@ -169,30 +169,61 @@ class SchemaTest : FunSpec() {
               .let(::Schema)
       withData(
           "CREATE (:C {c: \$c})" with mapOf("c" to localDate) expect null,
+          "CREATE (:C {c: time()})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(C, C_C, listOf("time()")),
           "CREATE (:C {c: \$c})" with
               mapOf("c" to offsetTime) expect
               Schema.InvalidQuery.InvalidProperty(C, C_C, listOf(offsetTime)),
           "CREATE (:D {d: \$d})" with mapOf("d" to offsetTime) expect null,
+          "CREATE (:D {d: localtime()})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(D, D_D, listOf("localtime()")),
           "CREATE (:D {d: \$d})" with
               mapOf("d" to localTime) expect
               Schema.InvalidQuery.InvalidProperty(D, D_D, listOf(localTime)),
           "CREATE (:E {e: \$e})" with mapOf("e" to localTime) expect null,
+          "CREATE (:E {e: datetime()})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(E, E_E, listOf("datetime()")),
           "CREATE (:E {e: \$e})" with
               mapOf("e" to zonedDateTime) expect
               Schema.InvalidQuery.InvalidProperty(E, E_E, listOf(zonedDateTime)),
           "CREATE (:F {f: \$f})" with mapOf("f" to zonedDateTime) expect null,
+          "CREATE (:F {f: localdatetime()})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(F, F_F, listOf("localdatetime()")),
           "CREATE (:F {f: \$f})" with
               mapOf("f" to localDateTime) expect
               Schema.InvalidQuery.InvalidProperty(F, F_F, listOf(localDateTime)),
           "CREATE (:G {g: \$g})" with mapOf("g" to localDateTime) expect null,
+          "CREATE (:G {g: date()})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(G, G_G, listOf("date()")),
           "CREATE (:G {g: \$g})" with
               mapOf("g" to localDate) expect
               Schema.InvalidQuery.InvalidProperty(G, G_G, listOf(localDate)),
           "CREATE (:H {h: \$h})" with mapOf("h" to duration) expect null,
+          "CREATE (:H {h: date()})" with
+              emptyMap() expect
+              Schema.InvalidQuery.InvalidProperty(H, H_H, listOf("date()")),
           "CREATE (:H {h: \$h})" with
               mapOf("h" to "") expect
-              Schema.InvalidQuery.InvalidProperty(H, H_H, listOf(""))) {
-              (query, parameters, expected) ->
+              Schema.InvalidQuery.InvalidProperty(H, H_H, listOf("")),
+          *listOf(
+                  "C" to "date",
+                  "D" to "time",
+                  "E" to "localtime",
+                  "F" to "datetime",
+                  "G" to "localdatetime",
+                  "H" to "duration")
+              .flatMap { (id, fn) ->
+                TIMES.filter { time -> time.startsWith("$fn(") }
+                    .map { time ->
+                      "CREATE (:$id {${id.lowercase()}: $time})" with emptyMap() expect null
+                    }
+              }
+              .toTypedArray()) { (query, parameters, expected) ->
             schema.validate(query, parameters) shouldBe expected
           }
     }

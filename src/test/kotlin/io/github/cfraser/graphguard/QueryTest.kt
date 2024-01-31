@@ -19,6 +19,7 @@ import io.kotest.assertions.fail
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldNotBe
@@ -130,6 +131,19 @@ class QueryTest : FunSpec() {
             }
             parsed.mutatedProperties shouldContainExactlyInAnyOrder query.mutatedProperties
           }
+    }
+
+    context("resolvable function invocation") {
+      withData(TIMES) { value: String ->
+        val parsed = (Query.parse("CREATE (:N {n: $value})") shouldNotBe null)!!
+        val values =
+            parsed.properties.flatMap { property ->
+              property.values.mapNotNull { value ->
+                if (value is Query.Property.Type.Resolvable) value.name else null
+              }
+            }
+        values shouldContainExactly setOf(value)
+      }
     }
   }
 

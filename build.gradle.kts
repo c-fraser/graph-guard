@@ -58,7 +58,7 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.6.2"
+  version = "0.6.3"
 
   configure<JavaPluginExtension> { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
@@ -299,7 +299,10 @@ tasks {
     outputDirectory = grammarSrcDir
   }
 
-  withType<KotlinCompile> { dependsOn(withType<AntlrTask>()) }
+  withType<KotlinCompile> {
+    dependsOn(withType<AntlrTask>())
+    kotlinOptions { freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers") }
+  }
   named("sourcesJar") { dependsOn(withType<AntlrTask>()) }
 
   withType<DokkaTask> {
