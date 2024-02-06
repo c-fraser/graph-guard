@@ -227,6 +227,78 @@ class SchemaTest : FunSpec() {
             schema.validate(query, parameters) shouldBe expected
           }
     }
+
+    context("validate scalar, mathematical, and string functions") {
+      val schema =
+          """
+          graph G {
+            node I(i: Boolean);
+            node J(j: Integer);
+            node K(k: Float);
+            node L(l: String);
+            node M(m: List<String>);
+          }
+          """
+              .trimIndent()
+              .let(::Schema)
+      withData(
+          """
+          CREATE (:I {i: toBoolean('true')})
+          CREATE (:I {i: isNaN(0/0.0)})
+          CREATE (:J {j: char_length('')})
+          CREATE (:J {j: character_length('')})
+          MATCH (n) CREATE (:J {j: id(n)})
+          MATCH p = (a)-->(b)-->(c) CREATE (:J {j: length(p)})
+          CREATE (:J {j: size([])})
+          CREATE (:J {j: timestamp()})
+          CREATE (:J {j: toInteger('0')})
+          CREATE (:J {j: abs(5-7)})
+          CREATE (:J {j: sign(7)})
+          CREATE (:K {k: toFloat('0.0')})
+          CREATE (:K {k: ceil(0.1)})
+          CREATE (:K {k: floor(0.9)})
+          CREATE (:K {k: rand()})
+          CREATE (:K {k: round(3.141592)})
+          CREATE (:K {k: e()})
+          CREATE (:K {k: exp(2)})
+          CREATE (:K {k: log(27)})
+          CREATE (:K {k: log10(27)})
+          CREATE (:K {k: sqrt(256)})
+          CREATE (:K {k: acos(0.5)})
+          CREATE (:K {k: asin(0.5)})
+          CREATE (:K {k: atan(0.5)})
+          CREATE (:K {k: atan2(0.5)})
+          CREATE (:K {k: cos(0.5)})
+          CREATE (:K {k: cot(0.5)})
+          CREATE (:K {k: degrees(3.14159)})
+          CREATE (:K {k: haversin(0.5)})
+          CREATE (:K {k: pi()})
+          CREATE (:K {k: radians(180)})
+          CREATE (:K {k: sin(0.5)})
+          CREATE (:K {k: tan(0.5)})
+          MATCH (n) CREATE (:L {l: elementId(n)})
+          CREATE (:L {l: randomUUID()})
+          MATCH (n)-[r]->() CREATE (:L {l: type(r)})
+          CREATE (:L {l: valueType(0)})
+          CREATE (:L {l: left('')})
+          CREATE (:L {l: ltrim('')})
+          CREATE (:L {l: replace('abc', 'b', 'c')})
+          CREATE (:L {l: reverse('')})
+          CREATE (:L {l: right('')})
+          CREATE (:L {l: rtrim('')})
+          CREATE (:L {l: substring('abc', 1, 2)})
+          CREATE (:L {l: toLower('')})
+          CREATE (:L {l: toString(0)})
+          CREATE (:L {l: toUpper('')})
+          CREATE (:L {l: trim('')})
+          CREATE (:M {m: split('a,b,c', ',')})
+          """
+              .lines()
+              .map(String::trim)
+              .filterNot(String::isBlank)) { query ->
+            schema.validate(query, emptyMap()) shouldBe null
+          }
+    }
   }
 
   @IsStableType

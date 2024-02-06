@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.OffsetTime
 import java.time.ZonedDateTime
+import kotlin.Any
 import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
 import java.time.Duration as JDuration
@@ -243,7 +244,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
 
       data object Duration : Type(JDuration::class)
 
-      data object Float : Type(KFloat::class)
+      data object Float : Type(Double::class)
 
       data object Integer : Type(Long::class)
 
@@ -331,15 +332,86 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
     /**
      * [Map] of the [Query.Property.Type.Resolvable.name] of an invoked function to a synthetic
      * value.
+     * > Includes [scalar](https://neo4j.com/docs/cypher-manual/current/functions/scalar/), [mathematical](https://neo4j.com/docs/cypher-manual/current/functions/mathematical-numeric/),
+     * > [string](https://neo4j.com/docs/cypher-manual/current/functions/string/), and
+     * > [temporal](https://neo4j.com/docs/cypher-manual/current/functions/temporal/) functions.
      */
-    val RESOLVABLE_FUNCTIONS =
-        mapOf(
-            "date()" to LocalDate.now(),
-            "datetime()" to ZonedDateTime.now(),
-            "duration()" to JDuration.ZERO,
-            "localdatetime()" to JLocalDateTime.now(),
-            "localtime()" to JLocalTime.now(),
-            "time()" to OffsetTime.now())
+    val RESOLVABLE_FUNCTIONS: Map<KString, Any> = buildMap {
+      val boolean = false
+      val integer = 0L
+      val float = 0.0
+      val string = ""
+      val date = LocalDate.now()
+      val datetime = ZonedDateTime.now()
+      val localdatetime = JLocalDateTime.now()
+      val localtime = JLocalTime.now()
+      val time = OffsetTime.now()
+      val duration = JDuration.ZERO
+
+      this += "char_length()" to integer
+      this += "character_length()" to integer
+      this += "elementId()" to string
+      this += "id()" to integer
+      this += "length()" to integer
+      this += "randomUUID()" to string
+      this += "size()" to integer
+      this += "timestamp()" to integer
+      this += "toBoolean()" to boolean
+      this += "toFloat()" to float
+      this += "toInteger()" to integer
+      this += "type()" to string
+      this += "valueType()" to string
+      this += "abs()" to integer
+      this += "ceil()" to float
+      this += "floor()" to float
+      this += "isNaN()" to boolean
+      this += "rand()" to float
+      this += "round()" to float
+      this += "sign()" to integer
+      this += "e()" to float
+      this += "exp()" to float
+      this += "log()" to float
+      this += "log10()" to float
+      this += "sqrt()" to float
+      this += "acos()" to float
+      this += "asin()" to float
+      this += "atan()" to float
+      this += "atan2()" to float
+      this += "cos()" to float
+      this += "cot()" to float
+      this += "degrees()" to float
+      this += "haversin()" to float
+      this += "pi()" to float
+      this += "radians()" to float
+      this += "sin()" to float
+      this += "tan()" to float
+      this += "left()" to string
+      this += "ltrim()" to string
+      this += "replace()" to string
+      this += "reverse()" to string
+      this += "right()" to string
+      this += "rtrim()" to string
+      this += "split()" to listOf(string)
+      this += "substring()" to string
+      this += "toLower()" to string
+      this += "toString()" to string
+      this += "toUpper()" to string
+      this += "trim()" to string
+      arrayOf("", ".transaction", ".statement", ".realtime").forEach { clock ->
+        this +=
+            listOf(
+                "date$clock()" to date,
+                "datetime$clock()" to datetime,
+                "localdatetime$clock()" to localdatetime,
+                "localtime$clock()" to localtime,
+                "time$clock()" to time)
+      }
+      this += "duration()" to duration
+      this += "duration.between()" to duration
+      this += "duration.inMonths()" to duration
+      this += "duration.inDays()" to duration
+      this += "duration.inSeconds()" to duration
+    }
 
     /** Parenthesize the [Set] of properties. */
     fun Set<Property>.parenthesize(): KString {
