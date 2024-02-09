@@ -256,7 +256,7 @@ configure<JReleaserExtension> {
     authors.set(listOf("c-fraser"))
     license.set("Apache-2.0")
     extraProperties.put("inceptionYear", "2023")
-    description.set("Graph schema validation proxy server")
+    description.set("Extensible graph proxy server")
     links { homepage.set("https://github.com/c-fraser/${rootProject.name}") }
   }
 
@@ -346,11 +346,14 @@ tasks {
       docs.writeText(
           docs
               .readText()
+              // remove project header
+              .replace("# graph-guard${System.lineSeparator()}", "# ${System.lineSeparator()}")
               // unqualify docs references
               .replace(Regex("\\(docs/.*\\)")) { it.value.replace("docs/", "") }
               // remove inline TOC
               .replace(
-                  Regex("<!--- TOC -->[^<!-]*<!--- END -->[\\n|\\r|\\n\\r]", RegexOption.MULTILINE),
+                  Regex(
+                      "<!--- TOC -->[\\s\\S]*<!--- END -->[\\n|\\r|\\n\\r]", RegexOption.MULTILINE),
                   ""))
     }
   }
