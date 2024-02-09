@@ -562,7 +562,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
         return checkNotNull(this?.text?.takeUnless { it.isBlank() })
       }
 
-      /** Get the properties from the [PropertiesContext]. */
+      /** Get the properties from the [SchemaParser.PropertiesContext]. */
       @Suppress("CyclomaticComplexMethod")
       operator fun SchemaParser.PropertiesContext?.unaryPlus(): Set<Property> {
         return this?.property()
