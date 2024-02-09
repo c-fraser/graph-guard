@@ -85,7 +85,6 @@ allprojects project@{
 
   plugins.withType<DokkaPlugin> {
     tasks.withType<DokkaTask> {
-      dependsOn(*rootProject.allprojects.flatMap { it.tasks.withType<AntlrTask>() }.toTypedArray())
       pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
         footerMessage = "Copyright &copy; 2023 c-fraser"
       }

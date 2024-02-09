@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -67,4 +68,6 @@ tasks {
     kotlinOptions { freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers") }
   }
   named("sourcesJar") { dependsOn(withType<AntlrTask>()) }
+
+  withType<DokkaTask> { mustRunAfter(withType<AntlrTask>()) }
 }
