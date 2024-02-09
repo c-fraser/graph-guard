@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.7">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.8">
     
     
       
@@ -305,17 +305,27 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Design">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#server" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugins" class="md-nav__link">
     <span class="md-ellipsis">
-      Server
+      Plugins
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#schema-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schema validation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema validation">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#schema" class="md-nav__link">
@@ -324,8 +334,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Schema">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#graph" class="md-nav__link">
@@ -402,18 +411,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#api" class="md-nav__link">
+  <a href="#documentation" class="md-nav__link">
     <span class="md-ellipsis">
-      API
+      Documentation
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#download" class="md-nav__link">
+  <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
-      Download
+      CLI
     </span>
   </a>
   
@@ -425,28 +434,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
+  <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
-      Examples
+      Example
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Examples">
+    <nav class="md-nav" aria-label="Example">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#library" class="md-nav__link">
+  <a href="#demo" class="md-nav__link">
     <span class="md-ellipsis">
-      Library
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      CLI
+      Demo
     </span>
   </a>
   
@@ -498,31 +498,63 @@
 <a href="https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard"><img alt="Maven Central" src="https://img.shields.io/maven-central/v/io.github.c-fraser/graph-guard.svg" /></a>
 <a href="https://javadoc.io/doc/io.github.c-fraser/graph-guard"><img alt="Javadoc" src="https://javadoc.io/badge2/io.github.c-fraser/graph-guard/javadoc.svg" /></a>
 <a href="https://www.apache.org/licenses/LICENSE-2.0"><img alt="Apache License 2.0" src="https://img.shields.io/badge/License-Apache2-blue.svg" /></a></p>
-<p><code>graph-guard</code> is a <a href="https://neo4j.com/docs/bolt/current/bolt/">Bolt</a> proxy server that performs
-realtime schema validation for <a href="https://neo4j.com/">Neo4j</a> 5+ (compatible databases).</p>
+<p><code>graph-guard</code> is an extensible <a href="https://neo4j.com/docs/bolt/current/bolt/">Bolt</a> proxy server
+for <a href="https://neo4j.com/">Neo4j</a> 5+ (compatible databases).</p>
+<!--- TOC -->
+
+<ul>
+<li><a href="#design">Design</a></li>
+<li><a href="#plugins">Plugins</a></li>
+<li><a href="#schema-validation">Schema validation</a><ul>
+<li><a href="#schema">Schema</a></li>
+<li><a href="#graph">Graph</a></li>
+<li><a href="#nodes">Nodes</a></li>
+<li><a href="#relationships">Relationships</a></li>
+<li><a href="#properties">Properties</a></li>
+<li><a href="#violations">Violations</a></li>
+<li><a href="#grammar">Grammar</a></li>
+</ul>
+</li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#cli">CLI</a></li>
+<li><a href="#example">Example</a></li>
+<li><a href="#demo">Demo</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<!--- END -->
+
 <h2 id="design">Design</h2>
-<h3 id="server">Server</h3>
-<p>The proxy <code>Server</code> proxies <a href="https://neo4j.com/docs/bolt/current/bolt/message/">Bolt messages</a> as
-displayed in the diagram below.</p>
+<p>The <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html">Server</a>
+proxies <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/index.html">Bolt</a>
+messages as displayed in the diagram below.</p>
 <p><img alt="proxy-server" src="proxy-server.png" /></p>
-<p>Proxied messages are passed through the <code>Plugin</code>, enabling the <code>Server</code> to dynamically
-transform the incoming and
-outgoing <a href="https://neo4j.com/docs/bolt/current/bolt/message/">Bolt messages</a>. <a href="#schema">Schema</a>
-validation is performed by
-intercepting <a href="https://neo4j.com/docs/bolt/current/bolt/message/#messages-run">RUN</a> requests and
-analyzing the <a href="https://neo4j.com/developer/cypher/">Cypher</a> query (and parameters) for schema
-<a href="#violations">violations</a>. If the intercepted query is determined to be <em>invalid</em> according to the
-schema, then
-a <a href="https://neo4j.com/docs/bolt/current/bolt/message/#messages-failure">FAILURE</a> response is sent to
-the <em>client</em>.</p>
-<h3 id="schema">Schema</h3>
+<p>Proxied messages are intercepted by
+the <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html">Plugin</a>,
+enabling
+the <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html">Server</a>
+to dynamically transform the incoming and outgoing data.</p>
+<h2 id="plugins">Plugins</h2>
+<p><code>graph-guard-plugins</code> contains
+various <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html">Plugin</a>
+implementations to
+augment <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html">Server</a>
+functionality.</p>
+<h3 id="schema-validation">Schema validation</h3>
+<p><a href="https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html">Schema.Validator</a>
+is a <a href="#plugins">plugin</a> that performs realtime <a href="#schema">schema</a> validation by
+intercepting <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-run/index.html">RUN</a>
+requests then analyzing the <a href="https://neo4j.com/developer/cypher/">Cypher</a> query (and parameters) for
+schema <a href="#violations">violations</a>. If the intercepted query is determined to be <em>invalid</em> according
+to the schema, then
+a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-failure/index.html">FAILURE</a>
+response is sent to the <em>client</em>.</p>
+<h4 id="schema">Schema</h4>
 <p>A schema describes the nodes and relationships in a graph. The schema is defined
-using <code>graph-guard</code>'s DSL language, demonstrated below for
+using a custom DSL language, demonstrated below for
 the <a href="https://github.com/neo4j-graph-examples/movies">movies</a> graph.</p>
 <!--- INCLUDE
-import io.github.cfraser.graphguard.MOVIES_GRAPH
-
-/** The schema DSL for the [MOVIES_GRAPH]. */
+/** The schema DSL for the *movies* graph. */
 const val MOVIES_SCHEMA =
     """
 ----- SUFFIX
@@ -564,8 +596,8 @@ const val PLACES_SCHEMA =
 have <a href="#properties">properties</a> and/or <a href="#relationships">relationship definitions</a>.</p>
 <h4 id="relationships">Relationships</h4>
 <p>Relationships are defined relative to the <em>source</em> <a href="#nodes">node</a>. A relationship definition must
-have a name, direction (<code>-&gt;</code> for directed, or <code>--</code> for undirected), and target node, and may also
-have <a href="#properties">properties</a>. A relationship must have a unique <em>name</em> + <em>source</em> + <em>target</em>.</p>
+have a name, direction (<code>-&gt;</code> for directed, or <code>--</code> for undirected), and target node. A relationship
+must have a unique <code>(source)-[name]-(target)</code>, and may also have <a href="#properties">properties</a>.</p>
 <h4 id="properties">Properties</h4>
 <p>A node or relationship may have <em>typed</em> properties. The supported property types are listed below.</p>
 <blockquote>
@@ -595,8 +627,7 @@ supported <a href="https://neo4j.com/docs/cypher-manual/current/values-and-types
 <p>A property can be designated as nullable by including the <code>?</code> suffix on the type, for
 example <code>String?</code> and <code>List&lt;Any?&gt;</code>.</p>
 <h4 id="violations">Violations</h4>
-<p>The <a href="#server">server</a>'s the <em>Cypher</em> query validation checks for and prevents the
-following <a href="#schema">schema</a> violations.</p>
+<p>The Cypher query validation prevents the following <a href="#schema">schema</a> violations.</p>
 <ul>
 <li><code>"Unknown ${entity}"</code> - a query has a node or relationship not defined in the schema</li>
 <li><code>"Unknown property '${property}' for ${entity}"</code> - a query has a property (on a node or
@@ -610,27 +641,28 @@ the (<a href="https://github.com/antlr/antlr4">antlr4</a>)
 <a href="https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4">grammar</a>
 for an exact specification of the <a href="#schema">schema</a> DSL.</p>
 <h2 id="usage">Usage</h2>
-<p>The <code>graph-guard</code> library is accessible
-via <a href="https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard">Maven Central</a>
+<p>The <code>graph-guard</code> libraries are accessible
+via <a href="https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard*">Maven Central</a>
 and the <code>graph-guard-cli</code> application is published in
 the <a href="https://github.com/c-fraser/graph-guard/releases">releases</a>.</p>
 <blockquote>
 <p><code>graph-guard</code> requires Java 17+.</p>
-<p><code>graph-guard</code> doesn't currently support TLS (because
+<p><code>Server</code> doesn't currently support TLS (because
 of <a href="https://youtrack.jetbrains.com/issue/KTOR-694">ktor-network</a> limitations).
 Use <a href="https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/">NGINX</a> or a
 cloud load balancer to decrypt <em>Bolt</em> traffic for the proxy server.</p>
 </blockquote>
-<h3 id="api">API</h3>
-<p>Refer to the <a href="https://c-fraser.github.io/graph-guard/api/">code documentation</a>.</p>
-<h3 id="download">Download</h3>
-<p>Download and run the <a href="#cli">CLI</a> application.</p>
+<h3 id="documentation">Documentation</h3>
+<p>Refer to the <a href="https://c-fraser.github.io/graph-guard/api/">graph-guard</a>
+and <a href="https://c-fraser.github.io/graph-guard/api/plugins/">graph-guard-plugins</a> code
+documentation.</p>
+<h3 id="cli">CLI</h3>
+<p>Download and run the <code>graph-guard-cli</code> application.</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-OL<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-cli-shadow.tar
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>./graph-guard-cli-shadow/bin/graph-guard-cli<span class="w"> </span>--help
 </span></code></pre></div>
-<h2 id="examples">Examples</h2>
-<h3 id="library">Library</h3>
+<h2 id="example">Example</h2>
 <!--- INCLUDE
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.Config
@@ -638,8 +670,8 @@ import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.exceptions.DatabaseException
 -->
 
-<p>Using the <code>graph-guard</code> library, validate <a href="https://github.com/neo4j-graph-examples/movies">movies</a>
-queries via the <a href="#server">Bolt proxy server</a>.</p>
+<p>Using the <code>graph-guard</code> libraries, validate <a href="https://github.com/neo4j-graph-examples/movies">movies</a>
+queries via the <a href="#design">Bolt proxy server</a>.</p>
 <div class="language-kotlin highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">runInvalidMoviesQueries</span><span class="p">(</span><span class="n">password</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">GraphDatabase</span><span class="p">.</span><span class="na">driver</span><span class="p">(</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">          </span><span class="s">&quot;bolt://localhost:8787&quot;</span><span class="p">,</span>
@@ -667,7 +699,7 @@ queries via the <a href="#server">Bolt proxy server</a>.</p>
 <!--- KNIT Example03.kt -->
 <!--- TEST_NAME Example04Test -->
 <!--- INCLUDE
-import io.github.cfraser.graphguard.Schema
+import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.withNeo4j
 import java.net.URI
@@ -701,9 +733,9 @@ fun runExample04() {
 </span></code></pre></div>
 <!--- TEST -->
 
-<h3 id="cli">CLI</h3>
+<h3 id="demo">Demo</h3>
 <p>Refer to the <a href="https://c-fraser.github.io/graph-guard/cli/">demo</a>
-and <a href="https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh">source</a>.</p>
+(and <a href="https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh">source script</a>).</p>
 <h2 id="license">License</h2>
 <div class="language-text highlight"><pre><span></span><code>Copyright 2023 c-fraser
 
@@ -772,7 +804,7 @@ limitations under the License.
     <script id="__config" type="application/json">{"base": ".", "features": ["toc.integrate", "content.code.copy", "content.code.select"], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.caa56a14.min.js"></script>
+      <script src="assets/javascripts/bundle.8fd75fb4.min.js"></script>
       
     
   </body>
