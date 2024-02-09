@@ -365,7 +365,8 @@ tasks {
                 .flatMap {
                   it.tasks.withType<KotlinCompile>() +
                       it.tasks.withType<AntlrTask>() +
-                      it.tasks.withType<KotlinApiBuildTask>()
+                      it.tasks.withType<KotlinApiBuildTask>() +
+                      it.tasks.withType<Test>()
                 }
                 .toTypedArray())
       }
@@ -395,6 +396,4 @@ tasks {
   }
 
   withType<JReleaserFullReleaseTask> { dependsOn(releaseCli) }
-
-  withType<Test> { mustRunAfter(spotlessKotlin) }
 }

@@ -44,7 +44,6 @@ buildConfig {
 
 tasks {
   withType<Test> {
-    dependsOn(":spotlessKotlin")
     systemProperties =
         System.getProperties().asIterable().associate { it.key.toString() to it.value }
     testLogging { showStandardStreams = true }
