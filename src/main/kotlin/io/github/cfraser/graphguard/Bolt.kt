@@ -75,9 +75,7 @@ object Bolt {
   /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
   data object Reset : Request
 
-  /**
-   * The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message signature.
-   */
+  /** The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message. */
   data class Run(
       val query: String,
       val parameters: Map<String, Any?>,

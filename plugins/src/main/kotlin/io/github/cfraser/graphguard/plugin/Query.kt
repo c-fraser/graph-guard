@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package io.github.cfraser.graphguard
+package io.github.cfraser.graphguard.plugin
 
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation

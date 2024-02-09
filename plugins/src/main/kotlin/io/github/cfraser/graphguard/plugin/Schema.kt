@@ -13,21 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package io.github.cfraser.graphguard
+package io.github.cfraser.graphguard.plugin
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
-import io.github.cfraser.graphguard.SchemaParser.GraphContext
-import io.github.cfraser.graphguard.SchemaParser.ListContext
-import io.github.cfraser.graphguard.SchemaParser.NodeContext
-import io.github.cfraser.graphguard.SchemaParser.PropertiesContext
-import io.github.cfraser.graphguard.SchemaParser.RelationshipContext
-import io.github.cfraser.graphguard.SchemaParser.ValueContext
+import io.github.cfraser.graphguard.Bolt
+import io.github.cfraser.graphguard.Server
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
-import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.OffsetTime
@@ -42,7 +37,6 @@ import java.time.LocalTime as JLocalTime
 import java.time.ZonedDateTime as JZonedDateTime
 import kotlin.Any as KAny
 import kotlin.Boolean as KBoolean
-import kotlin.Float as KFloat
 import kotlin.String as KString
 
 /**
@@ -92,7 +86,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    *
    * Returns an [InvalidQuery] with [Bolt.Failure.metadata] if the [cypher] is invalid.
    */
-  @VisibleForTesting
+  /*@VisibleForTesting*/
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
   internal fun validate(cypher: KString, parameters: Map<KString, KAny?>): InvalidQuery? {
     val query = Query.parse(cypher) ?: return null
@@ -523,25 +517,25 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   }
 
   /**
-   * [Collector] is a [io.github.cfraser.graphguard.SchemaListener] that collects [graphs] while
-   * walking the parse tree.
+   * [Collector] is a [io.github.cfraser.graphguard.plugin.SchemaListener] that collects [graphs]
+   * while walking the parse tree.
    */
   private class Collector(val graphs: MutableSet<Graph> = mutableSetOf()) : SchemaBaseListener() {
 
     private var graph by notNull<Graph>()
     private var node by notNull<Node>()
 
-    override fun enterGraph(ctx: GraphContext) {
+    override fun enterGraph(ctx: SchemaParser.GraphContext) {
       graph = Graph(+ctx.name(), emptySet())
     }
 
-    override fun enterNode(ctx: NodeContext) {
+    override fun enterNode(ctx: SchemaParser.NodeContext) {
       val name = +ctx.name()
       val properties = +ctx.properties()
       node = Node(name, properties, emptySet())
     }
 
-    override fun enterRelationship(ctx: RelationshipContext) {
+    override fun enterRelationship(ctx: SchemaParser.RelationshipContext) {
       val name = +ctx.name()
       val source = node.name
       val target = +ctx.target()
@@ -553,11 +547,11 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
                   node.relationships + Relationship(name, source, target, directed, properties))
     }
 
-    override fun exitNode(ctx: NodeContext?) {
+    override fun exitNode(ctx: SchemaParser.NodeContext?) {
       graph = graph.copy(nodes = graph.nodes + node)
     }
 
-    override fun exitGraph(ctx: GraphContext) {
+    override fun exitGraph(ctx: SchemaParser.GraphContext) {
       graphs += graph
     }
 
@@ -570,15 +564,15 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
 
       /** Get the properties from the [PropertiesContext]. */
       @Suppress("CyclomaticComplexMethod")
-      operator fun PropertiesContext?.unaryPlus(): Set<Property> {
+      operator fun SchemaParser.PropertiesContext?.unaryPlus(): Set<Property> {
         return this?.property()
             ?.map { ctx ->
               val name = +ctx.name()
               val type =
                   when (val type =
                       when (val type = ctx.type()?.run { value() ?: list() }) {
-                        is ValueContext -> +type
-                        is ListContext -> +type.value()
+                        is SchemaParser.ValueContext -> +type
+                        is SchemaParser.ListContext -> +type.value()
                         else -> error("Unknown property type")
                       }) {
                     "Any" -> Property.Type.Any

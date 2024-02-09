@@ -645,9 +645,23 @@ class PackStreamTest : FunSpec() {
     }
   }
 
-  private companion object {
+  companion object {
 
-    fun <T> verify(expected: T, packer: PackStream.Packer.(T) -> PackStream.Packer) {
+    fun byteArrayOfSize(size: Int, byte: Byte = 0x3f): ByteArray {
+      val bytes = ByteArray(size)
+      bytes.indices.forEach { i -> bytes[i] = byte }
+      return bytes
+    }
+
+    private fun stringOfSize(size: Int, char: Char = 'a'): String {
+      return buildString { repeat(size) { _ -> append(char) } }
+    }
+
+    private fun listOfSize(size: Int, value: Long = 1): List<Long> {
+      return buildList { repeat(size) { _ -> this += value } }
+    }
+
+    private fun <T> verify(expected: T, packer: PackStream.Packer.(T) -> PackStream.Packer) {
       PackStream.pack { packer(expected) }.unpack { any() } shouldBe expected
     }
   }

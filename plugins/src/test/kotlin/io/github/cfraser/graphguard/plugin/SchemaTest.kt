@@ -13,8 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF Any KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package io.github.cfraser.graphguard
+package io.github.cfraser.graphguard.plugin
 
+import io.github.cfraser.graphguard.MoviesGraph
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.knit.PLACES_SCHEMA
 import io.kotest.core.spec.style.FunSpec
@@ -218,7 +219,7 @@ class SchemaTest : FunSpec() {
                   "G" to "localdatetime",
                   "H" to "duration")
               .flatMap { (id, fn) ->
-                TIMES.filter { time -> time.startsWith("$fn(") }
+                QueryTest.TIMES.filter { time -> time.startsWith("$fn(") }
                     .map { time ->
                       "CREATE (:$id {${id.lowercase()}: $time})" with emptyMap() expect null
                     }
@@ -309,6 +310,101 @@ class SchemaTest : FunSpec() {
   )
 
   private companion object {
+
+    /** The [Schema.Graph] for the `MOVIES_SCHEMA`. */
+    val MOVIES_GRAPH =
+        Schema.Graph(
+            name = "Movies",
+            nodes =
+                setOf(
+                    Schema.Node(
+                        name = "Person",
+                        properties =
+                            setOf(
+                                Schema.Property("name", Schema.Property.Type.String),
+                                Schema.Property("born", Schema.Property.Type.Integer)),
+                        relationships =
+                            setOf(
+                                Schema.Relationship(
+                                    name = "ACTED_IN",
+                                    source = "Person",
+                                    target = "Movie",
+                                    isDirected = true,
+                                    properties =
+                                        setOf(
+                                            Schema.Property(
+                                                "roles",
+                                                Schema.Property.Type.String,
+                                                isList = true)),
+                                ),
+                                Schema.Relationship(
+                                    name = "DIRECTED",
+                                    source = "Person",
+                                    target = "Movie",
+                                    isDirected = true,
+                                    properties = emptySet(),
+                                ),
+                                Schema.Relationship(
+                                    name = "PRODUCED",
+                                    source = "Person",
+                                    target = "Movie",
+                                    isDirected = true,
+                                    properties = emptySet(),
+                                ),
+                                Schema.Relationship(
+                                    name = "WROTE",
+                                    source = "Person",
+                                    target = "Movie",
+                                    isDirected = true,
+                                    properties = emptySet(),
+                                ),
+                                Schema.Relationship(
+                                    name = "REVIEWED",
+                                    source = "Person",
+                                    target = "Movie",
+                                    isDirected = true,
+                                    properties =
+                                        setOf(
+                                            Schema.Property("summary", Schema.Property.Type.String),
+                                            Schema.Property(
+                                                "rating", Schema.Property.Type.Integer)),
+                                ))),
+                    Schema.Node(
+                        name = "Movie",
+                        properties =
+                            setOf(
+                                Schema.Property("title", Schema.Property.Type.String),
+                                Schema.Property("released", Schema.Property.Type.Integer),
+                                Schema.Property("tagline", Schema.Property.Type.String)),
+                        relationships = emptySet()),
+                ))
+
+    /** The [Schema.Graph] for the `PLACES_SCHEMA`. */
+    val PLACES_GRAPH =
+        Schema.Graph(
+            name = "Places",
+            nodes =
+                setOf(
+                    Schema.Node(
+                        name = "Theater",
+                        properties = setOf(Schema.Property("name", Schema.Property.Type.String)),
+                        relationships =
+                            setOf(
+                                Schema.Relationship(
+                                    name = "SHOWING",
+                                    source = "Theater",
+                                    target = "Movies.Movie",
+                                    isDirected = true,
+                                    properties =
+                                        setOf(
+                                            Schema.Property(
+                                                "times",
+                                                Schema.Property.Type.Integer,
+                                                isList = true)),
+                                )))))
+
+    /** The [Schema] for the [MOVIES_GRAPH] and [PLACES_GRAPH]. */
+    val MOVIES_AND_PLACES_GRAPH_SCHEMA = Schema(setOf(MOVIES_GRAPH, PLACES_GRAPH))
 
     infix fun String.with(parameters: Map<String, Any?>) = this to parameters
 

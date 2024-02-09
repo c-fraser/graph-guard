@@ -65,9 +65,6 @@ import io.ktor.network.sockets.SocketAddress as KSocketAddress
  * [Neo4j](https://neo4j.com/) (5+ compatible) database and performs dynamic message transformation
  * through the [plugin].
  *
- * Initialize a [Server] that performs realtime [Schema] validation of intercepted queries via the
- * [Schema.Validator].
- *
  * @param plugin the [Server.Plugin] to use to intercept proxied messages and observe server events
  * @property graph the [URI] of the graph database to proxy data to/from
  * @property address the [InetSocketAddress] to bind the [Server] to

@@ -4,7 +4,6 @@ import io.github.cfraser.graphguard.LOCAL
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.core.spec.style.StringSpec
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
@@ -26,7 +25,5 @@ class MainTest : FunSpec() {
         }
       }
     }
-
-
   }
 }

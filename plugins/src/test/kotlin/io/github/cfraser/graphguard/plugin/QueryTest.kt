@@ -13,8 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package io.github.cfraser.graphguard
+package io.github.cfraser.graphguard.plugin
 
+import io.github.cfraser.graphguard.MoviesGraph
 import io.kotest.assertions.fail
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.IsStableType
@@ -147,35 +148,129 @@ class QueryTest : FunSpec() {
     }
   }
 
-  private companion object {
+  companion object {
 
-    const val PERSON = "Person"
-    const val MOVIE = "Movie"
+    /**
+     * Cypher for
+     * [temporal functions](https://neo4j.com/docs/cypher-manual/current/functions/temporal/).
+     */
+    val TIMES =
+        """
+        date()
+        date({timezone: 'America/New York'})
+        date({year: 1984, month: 10, day: 11})
+        date({year: 1984, month: 10})
+        date({year: 1984, week: 10, dayOfWeek: 3})
+        date({year: 1984, week: 10})
+        date({year: 1984, quarter: 3, dayOfQuarter: 45})
+        date({year: 1984, quarter: 3})
+        date({year: 1984, ordinalDay: 202})
+        date({year: 1984})
+        date('2015-07-21')
+        date('2015-07')
+        date('201507')
+        date('2015-W30-2')
+        date('2015202')
+        date('2015')
+        datetime()
+        datetime({timezone: 'America/New York'})
+        datetime({year: 1984, month: 10, day: 11, hour: 12, minute: 31, second: 14, millisecond: 123, microsecond: 456, nanosecond: 789})
+        datetime({year: 1984, month: 10, day: 11, hour: 12, minute: 31, second: 14, millisecond: 645, timezone: '+01:00'})
+        datetime({year: 1984, month: 10, day: 11, hour: 12, minute: 31, second: 14, nanosecond: 645876123, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, month: 10, day: 11, hour: 12, minute: 31, second: 14, timezone: '+01:00'})
+        datetime({year: 1984, month: 10, day: 11, hour: 12, minute: 31, second: 14})
+        datetime({year: 1984, month: 10, day: 11, hour: 12, minute: 31, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, month: 10, day: 11, hour: 12, timezone: '+01:00'})
+        datetime({year: 1984, month: 10, day: 11, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, minute: 31, second: 14, millisecond: 645})
+        datetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, minute: 31, second: 14, microsecond: 645876, timezone: '+01:00'})
+        datetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, minute: 31, second: 14, nanosecond: 645876123, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, minute: 31, second: 14, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, minute: 31, second: 14})
+        datetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, timezone: '+01:00'})
+        datetime({year: 1984, week: 10, dayOfWeek: 3, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, quarter: 3, dayOfQuarter: 45, hour: 12, minute: 31, second: 14, microsecond: 645876})
+        datetime({year: 1984, quarter: 3, dayOfQuarter: 45, hour: 12, minute: 31, second: 14, timezone: '+01:00'})
+        datetime({year: 1984, quarter: 3, dayOfQuarter: 45, hour: 12, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, quarter: 3, dayOfQuarter: 45})
+        datetime({year: 1984, ordinalDay: 202, hour: 12, minute: 31, second: 14, millisecond: 645})
+        datetime({year: 1984, ordinalDay: 202, hour: 12, minute: 31, second: 14, timezone: '+01:00'})
+        datetime({year: 1984, ordinalDay: 202, timezone: 'Europe/Stockholm'})
+        datetime({year: 1984, ordinalDay: 202})
+        datetime('2015-07-21T21:40:32.142+0100')
+        datetime('2015-W30-2T214032.142Z')
+        datetime('2015T214032-0100')
+        datetime('20150721T21:40-01:30')
+        datetime('2015-W30T2140-02')
+        datetime('2015202T21+18:00')
+        datetime('2015-07-21T21:40:32.142[Europe/London]')
+        datetime('2015-07-21T21:40:32.142-04[America/New_York]')
+        localdatetime()
+        localdatetime({timezone: 'America/New York'})
+        localdatetime({year: 1984, month: 10, day: 11, hour: 12, minute: 31, second: 14, millisecond: 123, microsecond: 456, nanosecond: 789})
+        localdatetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, minute: 31, second: 14, millisecond: 645})
+        localdatetime({year: 1984, quarter: 3, dayOfQuarter: 45, hour: 12, minute: 31, second: 14, nanosecond: 645876123})
+        localdatetime({year: 1984, ordinalDay: 202, hour: 12, minute: 31, second: 14, microsecond: 645876})
+        localdatetime('2015-07-21T21:40:32.142')
+        localdatetime('2015-W30-2T214032.142')
+        localdatetime('2015-202T21:40:32')
+        localdatetime('2015202T21')
+        localtime()
+        localtime({timezone: 'America/New York'})
+        localtime({hour: 12, minute: 31, second: 14, nanosecond: 789, millisecond: 123, microsecond: 456})
+        localtime({hour: 12, minute: 31, second: 14})
+        localtime({hour: 12})
+        localtime('21:40:32.142')
+        localtime('214032.142')
+        localtime('21:40')
+        localtime('21')
+        time()
+        time({timezone: 'America/New York'})
+        time({hour: 12, minute: 31, second: 14, millisecond: 123, microsecond: 456, nanosecond: 789})
+        time({hour: 12, minute: 31, second: 14, nanosecond: 645876123})
+        time({hour: 12, minute: 31, second: 14, microsecond: 645876, timezone: '+01:00'})
+        time({hour: 12, minute: 31, timezone: '+01:00'})
+        time({hour: 12, timezone: '+01:00'})
+        time('21:40:32.142+0100')
+        time('214032.142Z')
+        time('21:40:32+01:00')
+        time('214032-0100')
+        time('21:40-01:30')
+        time('2140-00:00')
+        time('2140-02')
+        time('22+18:00')
+        """
+            .lines()
+            .map(String::trim)
+            .filterNot(String::isBlank)
 
-    val NAME = "name" of null
-    val ROLES = "roles" of null
+    private const val PERSON = "Person"
+    private const val MOVIE = "Movie"
 
-    val PERSON_NAME = "name" of PERSON
-    val PERSON_BORN = "born" of PERSON
-    val MOVIE_TITLE = "title" of MOVIE
-    val MOVIE_RELEASED = "released" of MOVIE
-    val MOVIE_TAGLINE = "tagline" of MOVIE
-    val ACTED_IN_ROLES = "roles" of "ACTED_IN"
-    val REVIEWED_SUMMARY = "summary" of "REVIEWED"
-    val REVIEWED_RATING = "rating" of "REVIEWED"
+    private val NAME = "name" of null
+    private val ROLES = "roles" of null
 
-    val ACTED_IN = Query.Relationship("ACTED_IN", PERSON, MOVIE)
-    val PERSON_ACTED_IN = Query.Relationship("ACTED_IN", PERSON, null)
-    val DIRECTED = Query.Relationship("DIRECTED", PERSON, MOVIE)
-    val PRODUCED = Query.Relationship("PRODUCED", PERSON, MOVIE)
-    val WROTE = Query.Relationship("WROTE", PERSON, MOVIE)
-    val REVIEWED = Query.Relationship("REVIEWED", PERSON, MOVIE)
+    private val PERSON_NAME = "name" of PERSON
+    private val PERSON_BORN = "born" of PERSON
+    private val MOVIE_TITLE = "title" of MOVIE
+    private val MOVIE_RELEASED = "released" of MOVIE
+    private val MOVIE_TAGLINE = "tagline" of MOVIE
+    private val ACTED_IN_ROLES = "roles" of "ACTED_IN"
+    private val REVIEWED_SUMMARY = "summary" of "REVIEWED"
+    private val REVIEWED_RATING = "rating" of "REVIEWED"
 
-    infix fun String.of(owner: String?): Query.Property {
+    private val ACTED_IN = Query.Relationship("ACTED_IN", PERSON, MOVIE)
+    private val PERSON_ACTED_IN = Query.Relationship("ACTED_IN", PERSON, null)
+    private val DIRECTED = Query.Relationship("DIRECTED", PERSON, MOVIE)
+    private val PRODUCED = Query.Relationship("PRODUCED", PERSON, MOVIE)
+    private val WROTE = Query.Relationship("WROTE", PERSON, MOVIE)
+    private val REVIEWED = Query.Relationship("REVIEWED", PERSON, MOVIE)
+
+    private infix fun String.of(owner: String?): Query.Property {
       return Query.Property(owner, this, emptySet())
     }
 
-    infix fun Query.Property.with(value: Any): Query.Property {
+    private infix fun Query.Property.with(value: Any): Query.Property {
       return when (value) {
         is List<*> -> copy(values = setOf(Query.Property.Type.Container(value)))
         is Set<*> ->
@@ -198,15 +293,15 @@ class QueryTest : FunSpec() {
       }
     }
 
-    infix fun Query.Property.with(value: KClass<*>): Query.Property {
+    private infix fun Query.Property.with(value: KClass<*>): Query.Property {
       return copy(values = setOf(Query.Property.Type.Value(value)))
     }
 
-    infix fun Query.Property.with(values: List<KClass<*>>): Query.Property {
+    private infix fun Query.Property.with(values: List<KClass<*>>): Query.Property {
       return copy(values = setOf(Query.Property.Type.Container(values)))
     }
 
-    fun Set<Query.Property>.types(): Set<Query.Property> {
+    private fun Set<Query.Property>.types(): Set<Query.Property> {
       fun Query.Property.Type.type(): Query.Property.Type {
         return when (this) {
           is Query.Property.Type.Value -> Query.Property.Type.Value(value!!::class)
@@ -221,7 +316,7 @@ class QueryTest : FunSpec() {
       return map(Query.Property::types).toSet()
     }
 
-    fun Set<Query.Property.Type>.values(): Set<Any?> {
+    private fun Set<Query.Property.Type>.values(): Set<Any?> {
       return flatMap { type ->
             when (type) {
               is Query.Property.Type.Value -> setOf(type.value)

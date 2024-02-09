@@ -9,8 +9,6 @@ out
 .DS_Store
 *.hprof
 *.log
-# generated antlr files
-src/main/java/io/github/cfraser/graphguard/Schema*
 # derivative doc files
 docs/index.md
 docs/api
@@ -21,3 +19,5 @@ docs/cli/*
 !.devcontainer/devcontainer.json
 !.devcontainer/exec.sh
 cli/neo4j.cid
+# generated antlr files
+plugins/src/main/java

@@ -6,14 +6,15 @@
 [![Javadoc](https://javadoc.io/badge2/io.github.c-fraser/graph-guard/javadoc.svg)](https://javadoc.io/doc/io.github.c-fraser/graph-guard)
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-`graph-guard` is a [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server that performs
-realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
+`graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server
+for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
 
 <!--- TOC -->
 
 * [Design](#design)
-  * [Server](#server)
-  * [Schema](#schema)
+* [Plugins](#plugins)
+  * [Schema validation](#schema-validation)
+    * [Schema](#schema)
     * [Graph](#graph)
     * [Nodes](#nodes)
     * [Relationships](#relationships)
@@ -21,45 +22,55 @@ realtime schema validation for [Neo4j](https://neo4j.com/) 5+ (compatible databa
     * [Violations](#violations)
     * [Grammar](#grammar)
 * [Usage](#usage)
-  * [API](#api)
-  * [Download](#download)
-* [Examples](#examples)
-  * [Library](#library)
+  * [Documentation](#documentation)
   * [CLI](#cli)
+* [Example](#example)
+  * [Demo](#demo)
 * [License](#license)
 
 <!--- END -->
 
 ## Design
 
-### Server
-
-The proxy `Server` proxies [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/) as
-displayed in the diagram below.
+The [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
+proxies [Bolt](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/index.html)
+messages as displayed in the diagram below.
 
 ![proxy-server](docs/proxy-server.png)
 
-Proxied messages are passed through the `Plugin`, enabling the `Server` to dynamically
-transform the incoming and
-outgoing [Bolt messages](https://neo4j.com/docs/bolt/current/bolt/message/). [Schema](#schema)
-validation is performed by
-intercepting [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) requests and
-analyzing the [Cypher](https://neo4j.com/developer/cypher/) query (and parameters) for schema
-[violations](#violations). If the intercepted query is determined to be *invalid* according to the
-schema, then
-a [FAILURE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-failure) response is sent to
-the *client*.
+Proxied messages are intercepted by
+the [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html),
+enabling
+the [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
+to dynamically transform the incoming and outgoing data.
 
-### Schema
+## Plugins
+
+`graph-guard-plugins` contains
+various [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
+implementations to
+augment [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
+functionality.
+
+### Schema validation
+
+[Schema.Validator](https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
+is a [plugin](#plugins) that performs realtime [schema](#schema) validation by
+intercepting [RUN](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-run/index.html)
+requests then analyzing the [Cypher](https://neo4j.com/developer/cypher/) query (and parameters) for
+schema [violations](#violations). If the intercepted query is determined to be *invalid* according
+to the schema, then
+a [FAILURE](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-failure/index.html)
+response is sent to the *client*.
+
+#### Schema
 
 A schema describes the nodes and relationships in a graph. The schema is defined
-using `graph-guard`'s DSL language, demonstrated below for
+using a custom DSL language, demonstrated below for
 the [movies](https://github.com/neo4j-graph-examples/movies) graph.
 
 <!--- INCLUDE
-import io.github.cfraser.graphguard.MOVIES_GRAPH
-
-/** The schema DSL for the [MOVIES_GRAPH]. */
+/** The schema DSL for the *movies* graph. */
 const val MOVIES_SCHEMA =
     """
 ----- SUFFIX
@@ -112,8 +123,8 @@ have [properties](#properties) and/or [relationship definitions](#relationships)
 #### Relationships
 
 Relationships are defined relative to the *source* [node](#nodes). A relationship definition must
-have a name, direction (`->` for directed, or `--` for undirected), and target node, and may also
-have [properties](#properties). A relationship must have a unique *name* + *source* + *target*.
+have a name, direction (`->` for directed, or `--` for undirected), and target node. A relationship
+must have a unique `(source)-[name]-(target)`, and may also have [properties](#properties).
 
 #### Properties
 
@@ -146,8 +157,7 @@ example `String?` and `List<Any?>`.
 
 #### Violations
 
-The [server](#server)'s the *Cypher* query validation checks for and prevents the
-following [schema](#schema) violations.
+The Cypher query validation prevents the following [schema](#schema) violations.
 
 - `"Unknown ${entity}"` - a query has a node or relationship not defined in the schema
 - `"Unknown property '${property}' for ${entity}"` - a query has a property (on a node or
@@ -164,25 +174,27 @@ for an exact specification of the [schema](#schema) DSL.
 
 ## Usage
 
-The `graph-guard` library is accessible
-via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard)
+The `graph-guard` libraries are accessible
+via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard*)
 and the `graph-guard-cli` application is published in
 the [releases](https://github.com/c-fraser/graph-guard/releases).
 
 > `graph-guard` requires Java 17+.
 
-> `graph-guard` doesn't currently support TLS (because
+> `Server` doesn't currently support TLS (because
 > of [ktor-network](https://youtrack.jetbrains.com/issue/KTOR-694) limitations).
 > Use [NGINX](https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/) or a
 > cloud load balancer to decrypt *Bolt* traffic for the proxy server.
 
-### API
+### Documentation
 
-Refer to the [code documentation](https://c-fraser.github.io/graph-guard/api/).
+Refer to the [graph-guard](https://c-fraser.github.io/graph-guard/api/)
+and [graph-guard-plugins](https://c-fraser.github.io/graph-guard/api/plugins/) code
+documentation.
 
-### Download
+### CLI
 
-Download and run the [CLI](#cli) application.
+Download and run the `graph-guard-cli` application.
 
 ```shell
 curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
@@ -190,9 +202,7 @@ tar -xvf graph-guard-cli-shadow.tar
 ./graph-guard-cli-shadow/bin/graph-guard-cli --help
 ```
 
-## Examples
-
-### Library
+## Example
 
 <!--- INCLUDE
 import org.neo4j.driver.AuthTokens
@@ -201,8 +211,8 @@ import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.exceptions.DatabaseException
 -->
 
-Using the `graph-guard` library, validate [movies](https://github.com/neo4j-graph-examples/movies)
-queries via the [Bolt proxy server](#server).
+Using the `graph-guard` libraries, validate [movies](https://github.com/neo4j-graph-examples/movies)
+queries via the [Bolt proxy server](#design).
 
 [//]: # (@formatter:off)
 ```kotlin
@@ -235,7 +245,7 @@ fun runInvalidMoviesQueries(password: String) {
 <!--- KNIT Example03.kt -->
 <!--- TEST_NAME Example04Test --> 
 <!--- INCLUDE
-import io.github.cfraser.graphguard.Schema
+import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.withNeo4j
 import java.net.URI
@@ -276,10 +286,10 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 
 <!--- TEST -->
 
-### CLI
+### Demo
 
 Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
-and [source](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh).
+(and [source script](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh)).
 
 ## License
 

@@ -17,6 +17,8 @@ package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
+import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
+import io.github.cfraser.graphguard.plugin.Schema
 import io.kotest.assertions.fail
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -48,7 +50,9 @@ import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 class ServerTest : FunSpec() {
 
   init {
-    test("TLS unsupported") { shouldThrow<IllegalStateException> { Server(URI("bolt+s://localhost:7687")) } }
+    test("TLS unsupported") {
+      shouldThrow<IllegalStateException> { Server(URI("bolt+s://localhost:7687")) }
+    }
 
     test("proxy bolt messages").config(tags = setOf(LOCAL)) {
       withNeo4j { withServer { runMoviesQueries(adminPassword) } }
@@ -78,7 +82,7 @@ class ServerTest : FunSpec() {
             }
           }
       withNeo4j {
-        withServer(plugin = MOVIES_GRAPH_SCHEMA.Validator() then observer) {
+        withServer(plugin = Schema(MOVIES_SCHEMA).Validator() then observer) {
           GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword))
               .use { driver ->
                 driver.session().use { session ->
@@ -144,7 +148,7 @@ class ServerTest : FunSpec() {
                         aSocket(selector).tcp().connect(address).use { socket ->
                           val writer = socket.openWriteChannel(autoFlush = true)
                           for (size in 1..3) {
-                            val data = byteArrayOfSize(size)
+                            val data = PackStreamTest.byteArrayOfSize(size)
                             writer.writeShort(size.toShort())
                             writer.writeFully(data)
                           }
@@ -154,7 +158,10 @@ class ServerTest : FunSpec() {
                 }
               }
               .await()
-      message shouldBe (byteArrayOfSize(1) + byteArrayOfSize(2) + byteArrayOfSize(3))
+      message shouldBe
+          (PackStreamTest.byteArrayOfSize(1) +
+              PackStreamTest.byteArrayOfSize(2) +
+              PackStreamTest.byteArrayOfSize(3))
     }
 
     test("chunk message") {
@@ -174,7 +181,7 @@ class ServerTest : FunSpec() {
                         aSocket(selector).tcp().connect(address).use { socket ->
                           socket
                               .openWriteChannel(autoFlush = true)
-                              .writeChunked(byteArrayOfSize(5), 3)
+                              .writeChunked(PackStreamTest.byteArrayOfSize(5), 3)
                         }
                       }
                 }
@@ -182,10 +189,10 @@ class ServerTest : FunSpec() {
               .await()
       chunked.array() shouldBe
           (byteArrayOf(0x0, 0x3) +
-              byteArrayOfSize(3) +
+              PackStreamTest.byteArrayOfSize(3) +
               byteArrayOf(0x00, 0x00) +
               byteArrayOf(0x0, 0x2) +
-              byteArrayOfSize(2) +
+              PackStreamTest.byteArrayOfSize(2) +
               byteArrayOf(0x00, 0x00))
     }
   }

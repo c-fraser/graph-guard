@@ -38,8 +38,8 @@ import com.github.ajalt.mordant.rendering.TextStyles
 import com.github.ajalt.mordant.terminal.Terminal
 import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.BuildConfig
-import io.github.cfraser.graphguard.Schema
 import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.plugin.Schema
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory

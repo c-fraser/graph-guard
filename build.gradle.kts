@@ -22,6 +22,7 @@ import kotlinx.knit.KnitPluginExtension
 import kotlinx.validation.KotlinApiBuildTask
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
+import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
@@ -47,7 +48,6 @@ plugins {
   alias(libs.plugins.compatibility.validator)
   `java-library`
   `java-test-fixtures`
-  antlr
   `maven-publish`
   signing
 }
@@ -58,9 +58,12 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.6.4"
+  version = "0.7.0"
 
-  configure<JavaPluginExtension> { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
+  configure<JavaPluginExtension> {
+    toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
+    withSourcesJar()
+  }
 
   tasks.withType<Jar> {
     manifest {
@@ -79,27 +82,94 @@ allprojects project@{
 
     tasks.withType<Test> { useJUnitPlatform() }
   }
+
+  plugins.withType<DokkaPlugin> {
+    tasks.withType<DokkaTask> {
+      dependsOn(*rootProject.allprojects.flatMap { it.tasks.withType<AntlrTask>() }.toTypedArray())
+      pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+        footerMessage = "Copyright &copy; 2023 c-fraser"
+      }
+    }
+  }
+
+  plugins.withType<MavenPublishPlugin> {
+    configure<PublishingExtension> {
+      val javadocJar by
+          this@project.tasks.registering(Jar::class) {
+            val dokkaJavadoc by this@project.tasks.getting(DokkaTask::class)
+            dependsOn(dokkaJavadoc)
+            archiveClassifier.set("javadoc")
+            from(dokkaJavadoc.outputDirectory.get())
+          }
+
+      publications {
+        create<MavenPublication>("maven") {
+          from(this@project.components["java"])
+          artifact(javadocJar)
+          pom {
+            name.set(this@project.name)
+            description.set("${this@project.name}-${this@project.version}")
+            url.set("https://github.com/c-fraser/${rootProject.name}")
+            inceptionYear.set("2023")
+
+            issueManagement {
+              system.set("GitHub")
+              url.set("https://github.com/c-fraser/${rootProject.name}/issues")
+            }
+
+            licenses {
+              license {
+                name.set("The Apache Software License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("repo")
+              }
+            }
+
+            developers {
+              developer {
+                id.set("c-fraser")
+                name.set("Chris Fraser")
+              }
+            }
+
+            scm {
+              url.set("https://github.com/c-fraser/${rootProject.name}")
+              connection.set("scm:git:git://github.com/c-fraser/${rootProject.name}.git")
+              developerConnection.set(
+                  "scm:git:ssh://git@github.com/c-fraser/${rootProject.name}.git")
+            }
+          }
+        }
+      }
+
+      plugins.withType<SigningPlugin> {
+        configure<SigningExtension> {
+          publications.withType<MavenPublication>().all mavenPublication@{
+            useInMemoryPgpKeys(System.getenv("GPG_SIGNING_KEY"), System.getenv("GPG_PASSWORD"))
+            sign(this@mavenPublication)
+          }
+        }
+      }
+    }
+  }
 }
 
-java { withSourcesJar() }
-
 dependencies {
-  antlr(libs.antlr4)
-  implementation(kotlin("reflect"))
   implementation(libs.kotlinx.coroutines)
   implementation(libs.kotlinx.coroutines.slf4j)
   implementation(libs.ktor.network)
-  implementation(libs.caffeine)
-  implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
 
+  testImplementation(libs.kotest.datatest)
+  testImplementation(libs.knit.test)
+  testRuntimeOnly(libs.slf4j.nop)
+
+  testFixturesApi(rootProject)
+  testFixturesApi(project(":graph-guard-plugins"))
   testFixturesApi(libs.neo4j.java.driver)
   testFixturesApi(libs.testcontainers)
   testFixturesApi(libs.testcontainers.neo4j)
   testFixturesImplementation(libs.kotest.runner)
-  testImplementation(libs.kotest.datatest)
-  testImplementation(libs.knit.test)
-  testRuntimeOnly(libs.slf4j.nop)
 }
 
 val kotlinSourceFiles by lazy {
@@ -147,7 +217,7 @@ configure<SpotlessExtension> {
   antlr4 {
     antlr4Formatter()
     licenseHeader(licenseHeader)
-    target("src/**/*.g4")
+    target("**/src/antlr/*.g4")
   }
 
   fun FormatExtension.pretty() =
@@ -165,62 +235,6 @@ configure<SpotlessExtension> {
           include("**/*.json", "**/*.yml")
           excludes()
         })
-  }
-}
-
-publishing {
-  val javadocJar by
-      tasks.registering(Jar::class) {
-        val dokkaJavadoc by tasks.getting(DokkaTask::class)
-        dependsOn(dokkaJavadoc)
-        archiveClassifier.set("javadoc")
-        from(dokkaJavadoc.outputDirectory.get())
-      }
-
-  publications {
-    create<MavenPublication>("maven") {
-      from(project.components["java"])
-      artifact(javadocJar)
-      pom {
-        name.set(rootProject.name)
-        description.set("${rootProject.name}-${project.version}")
-        url.set("https://github.com/c-fraser/${rootProject.name}")
-        inceptionYear.set("2023")
-
-        issueManagement {
-          system.set("GitHub")
-          url.set("https://github.com/c-fraser/${rootProject.name}/issues")
-        }
-
-        licenses {
-          license {
-            name.set("The Apache Software License, Version 2.0")
-            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-            distribution.set("repo")
-          }
-        }
-
-        developers {
-          developer {
-            id.set("c-fraser")
-            name.set("Chris Fraser")
-          }
-        }
-
-        scm {
-          url.set("https://github.com/c-fraser/${rootProject.name}")
-          connection.set("scm:git:git://github.com/c-fraser/${rootProject.name}.git")
-          developerConnection.set("scm:git:ssh://git@github.com/c-fraser/${rootProject.name}.git")
-        }
-      }
-    }
-  }
-
-  signing {
-    publications.withType<MavenPublication>().all mavenPublication@{
-      useInMemoryPgpKeys(System.getenv("GPG_SIGNING_KEY"), System.getenv("GPG_PASSWORD"))
-      sign(this@mavenPublication)
-    }
   }
 }
 
@@ -272,46 +286,11 @@ configure<JReleaserExtension> {
   }
 }
 
-apiValidation { ignoredProjects.add(cli.name) }
+apiValidation { ignoredProjects += listOf(cli.name) }
 
 configure<KnitPluginExtension> { files = files("README.md") }
 
 tasks {
-  val grammarSrcDir = file("src/main/java/io/github/cfraser/${rootProject.name.replace("-", "")}")
-
-  val modifyGrammarSource by creating {
-    mustRunAfter(withType<AntlrTask>())
-    doLast {
-      fileTree(grammarSrcDir) { include("*.java") }
-          .forEach { file ->
-            file.writeText(
-                file
-                    .readText()
-                    // reduce visibility of generated types
-                    .replace("public class", "class")
-                    .replace("public interface", "interface"))
-          }
-    }
-  }
-
-  generateGrammarSource {
-    finalizedBy(modifyGrammarSource)
-    outputDirectory = grammarSrcDir
-  }
-
-  withType<KotlinCompile> {
-    dependsOn(withType<AntlrTask>())
-    kotlinOptions { freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers") }
-  }
-  named("sourcesJar") { dependsOn(withType<AntlrTask>()) }
-
-  withType<DokkaTask> {
-    dependsOn(withType<AntlrTask>())
-    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
-      footerMessage = "Copyright &copy; 2023 c-fraser"
-    }
-  }
-
   val setupAsciinemaPlayer by creating {
     val css = file("docs/cli/asciinema-player.css")
     val js = file("docs/cli/asciinema-player.min.js")
@@ -352,11 +331,16 @@ tasks {
   }
 
   val setupDocs by creating {
-    dependsOn(setupAsciinemaPlayer, dokkaHtml)
+    dependsOn(setupAsciinemaPlayer, dokkaHtml, ":graph-guard-plugins:dokkaHtml")
     doLast {
       copy {
         from(dokkaHtml.get().outputDirectory)
         into(layout.projectDirectory.dir("docs/api"))
+      }
+      copy {
+        val validatorDocs by project(":graph-guard-plugins").tasks.named<DokkaTask>("dokkaHtml")
+        from(validatorDocs.outputDirectory)
+        into(layout.projectDirectory.dir("docs/api/plugins"))
       }
       val docs = rootDir.resolve("docs/index.md")
       rootDir.resolve("README.md").copyTo(docs, overwrite = true)
@@ -377,10 +361,13 @@ tasks {
   val spotlessKotlin by
       getting(SpotlessTask::class) {
         mustRunAfter(
-            withType<KotlinCompile>(),
-            cli.tasks.withType<KotlinCompile>(),
-            withType<AntlrTask>(),
-            withType<KotlinApiBuildTask>())
+            *rootProject.allprojects
+                .flatMap {
+                  it.tasks.withType<KotlinCompile>() +
+                      it.tasks.withType<AntlrTask>() +
+                      it.tasks.withType<KotlinApiBuildTask>()
+                }
+                .toTypedArray())
       }
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
