@@ -256,7 +256,7 @@ configure<JReleaserExtension> {
     authors.set(listOf("c-fraser"))
     license.set("Apache-2.0")
     extraProperties.put("inceptionYear", "2023")
-    description.set("Extensible graph proxy server")
+    description.set("Extensible graph database proxy server")
     links { homepage.set("https://github.com/c-fraser/${rootProject.name}") }
   }
 

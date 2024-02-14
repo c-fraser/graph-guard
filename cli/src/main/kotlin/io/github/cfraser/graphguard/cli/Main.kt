@@ -55,7 +55,7 @@ fun main(args: Array<String>) {
 
 /** [Command] runs [Server] with the CLI input. */
 internal class Command :
-    CliktCommand(name = "graph-guard", help = "Extensible graph proxy server") {
+    CliktCommand(name = "graph-guard", help = "Extensible graph database proxy server") {
 
   init {
     versionOption(BuildConfig.VERSION)
