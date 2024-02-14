@@ -27,7 +27,11 @@ plugins {
 dependencies {
   antlr(libs.antlr4)
   implementation(rootProject)
+  implementation(kotlin("scripting-common"))
+  implementation(kotlin("scripting-jvm"))
+  implementation(kotlin("scripting-jvm-host"))
   implementation(kotlin("reflect"))
+  implementation(libs.kotlinx.coroutines)
   implementation(libs.caffeine)
   implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
@@ -67,6 +71,8 @@ tasks {
     dependsOn(withType<AntlrTask>())
     kotlinOptions { freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers") }
   }
+
+  withType<Jar> { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
   named("sourcesJar") { dependsOn(withType<AntlrTask>()) }
 
   withType<DokkaTask> { mustRunAfter(withType<AntlrTask>()) }

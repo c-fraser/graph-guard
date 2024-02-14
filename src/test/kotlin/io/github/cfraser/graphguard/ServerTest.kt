@@ -17,6 +17,7 @@ package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
+import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.plugin.Schema
 import io.kotest.assertions.fail
@@ -65,22 +66,21 @@ class ServerTest : FunSpec() {
       var graphAddress by notNull<InetSocketAddress>()
       val graphConnection by lazy { Server.Connection.Graph(graphAddress) }
       val events = mutableListOf<Server.Event>()
-      val observer =
-          object : Server.Plugin {
-            override suspend fun observe(event: Server.Event) {
-              lock.withLock {
-                when (event) {
-                  is Server.Connected ->
-                      when (event.connection) {
-                        is Server.Connection.Client -> clientAddresses += event.connection.address
-                        is Server.Connection.Graph -> graphAddress = event.connection.address
-                      }
-                  else -> {}
-                }
-                events += event
-              }
+      val observer = plugin {
+        observe { event ->
+          lock.withLock {
+            when (event) {
+              is Server.Connected ->
+                  when (event.connection) {
+                    is Server.Connection.Client -> clientAddresses += event.connection.address
+                    is Server.Connection.Graph -> graphAddress = event.connection.address
+                  }
+              else -> {}
             }
+            events += event
           }
+        }
+      }
       withNeo4j {
         withServer(plugin = Schema(MOVIES_SCHEMA).Validator() then observer) {
           GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword))

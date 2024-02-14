@@ -39,6 +39,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.BuildConfig
 import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Schema
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -96,7 +97,7 @@ internal class Command :
           option("--styled", help = "Enable styled output").flag().convert { Styled() })
 
   override fun run() {
-    var plugin = schema?.let { Schema(it).Validator() } ?: object : Server.Plugin {}
+    var plugin = schema?.let { Schema(it).Validator() } ?: plugin {}
     when (val output = output) {
       null -> {}
       Debug -> {

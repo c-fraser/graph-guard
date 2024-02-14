@@ -15,6 +15,7 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
+import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
 import org.neo4j.driver.AuthTokens
@@ -36,10 +37,7 @@ fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>
 }
 
 /** Run the test [block] with a [Server] initialized with the [plugin]. */
-fun Neo4jContainer<*>.withServer(
-    plugin: Server.Plugin = object : Server.Plugin {},
-    block: () -> Unit
-) {
+fun Neo4jContainer<*>.withServer(plugin: Server.Plugin = plugin {}, block: () -> Unit) {
   val proxy = thread {
     try {
       Server(URI(boltUrl), plugin).run()

@@ -73,7 +73,7 @@ import io.ktor.network.sockets.SocketAddress as KSocketAddress
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalContracts::class)
 class Server(
     val graph: URI,
-    plugin: Plugin = object : Plugin {},
+    plugin: Plugin = Plugin.DSL.plugin {},
     val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
     private val parallelism: Int? = null
 ) : Runnable {
@@ -89,14 +89,14 @@ class Server(
    * being propagated, to avoid proxy [Server] instability.
    */
   private val plugin =
-      object : Plugin {
-        override suspend fun intercept(message: Bolt.Message) =
-            plugin
-                .runCatching { intercept(message) }
-                .onFailure { LOGGER.error("Failed to intercept '{}'", message, it) }
-                .getOrDefault(message)
-
-        override suspend fun observe(event: Event) {
+      Plugin.DSL.plugin {
+        intercept { message ->
+          plugin
+              .runCatching { intercept(message) }
+              .onFailure { LOGGER.error("Failed to intercept '{}'", message, it) }
+              .getOrDefault(message)
+        }
+        observe { event ->
           plugin
               .runCatching { observe(event) }
               .onFailure { LOGGER.error("Failed to observe '{}'", event, it) }
@@ -327,13 +327,80 @@ class Server(
      */
     infix fun then(that: Plugin): Plugin {
       @Suppress("VariableNaming") val `this` = this
-      return object : Plugin {
-        override suspend fun intercept(message: Bolt.Message) =
-            that.intercept(`this`.intercept(message))
-
-        override suspend fun observe(event: Event) {
+      return DSL.plugin {
+        intercept { message -> that.intercept(`this`.intercept(message)) }
+        observe { event ->
           `this`.observe(event)
           that.observe(event)
+        }
+      }
+    }
+
+    /** [Server.Plugin.DSL] to build a [Server.Plugin] with the [Server.Plugin.Builder]. */
+    object DSL {
+
+      /**
+       * Build a [Server.Plugin] with the [builder] function.
+       *
+       * ```kotlin
+       * val printer = plugin {
+       *  intercept { message -> message.also(::println) }
+       *  observe { event -> println(event) }
+       * }
+       * ```
+       *
+       * @param builder the function that builds the [Server.Plugin]
+       * @return the built [Server.Plugin]
+       */
+      fun plugin(builder: Builder.() -> Unit): Plugin {
+        return Builder().apply(builder).build()
+      }
+    }
+
+    /**
+     * [Server.Plugin.Builder] builds a [Server.Plugin].
+     *
+     * @property interceptor the [Server.Plugin.intercept] function
+     * @property observer the [Server.Plugin.observe] function
+     */
+    class Builder internal constructor() {
+
+      private var interceptor: (suspend (Bolt.Message) -> Bolt.Message)? = null
+      private var observer: (suspend (Event) -> Unit)? = null
+
+      /**
+       * Set the [Server.Plugin.intercept] implementation.
+       *
+       * @param interceptor the [Server.Plugin.intercept] function to use
+       * @throws IllegalStateException if [Server.Plugin.intercept] has already been set
+       */
+      fun intercept(interceptor: suspend (Bolt.Message) -> Bolt.Message) {
+        check(this.interceptor == null)
+        this.interceptor = interceptor
+      }
+
+      /**
+       * Set the [Server.Plugin.observe] implementation.
+       *
+       * @param observer the [Server.Plugin.observe] function to use
+       * @throws IllegalStateException if [Server.Plugin.observe] has already been set
+       */
+      fun observe(observer: suspend (Event) -> Unit) {
+        check(this.observer == null)
+        this.observer = observer
+      }
+
+      /** Build the [Server.Plugin] with [interceptor] and [observer]. */
+      internal fun build(): Plugin {
+        val interceptor = interceptor ?: { it }
+        val observer = observer ?: {}
+        return object : Plugin {
+
+          /** Intercept the [message] with the [interceptor]. */
+          override suspend fun intercept(message: Bolt.Message) = interceptor(message)
+
+          /** Observe the [event] with the [observer]. */
+          override suspend fun observe(event: Event) = observer(event)
         }
       }
     }

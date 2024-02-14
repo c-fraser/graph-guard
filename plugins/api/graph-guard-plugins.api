@@ -161,3 +161,16 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Validator : io/git
 	public fun then (Lio/github/cfraser/graphguard/Server$Plugin;)Lio/github/cfraser/graphguard/Server$Plugin;
 }
 
+public abstract class io/github/cfraser/graphguard/plugin/Script {
+	public static final field Companion Lio/github/cfraser/graphguard/plugin/Script$Companion;
+	public fun <init> ()V
+}
+
+public final class io/github/cfraser/graphguard/plugin/Script$Companion {
+	public final fun evaluate (Ljava/lang/String;)Lio/github/cfraser/graphguard/Server$Plugin;
+}
+
+public final class io/github/cfraser/graphguard/plugin/Script$Context {
+	public final fun plugin (Lkotlin/jvm/functions/Function1;)V
+}
+
