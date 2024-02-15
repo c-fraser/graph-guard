@@ -41,6 +41,7 @@ import io.github.cfraser.graphguard.BuildConfig
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.plugin.Script
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -75,15 +76,6 @@ internal class Command :
             uri.runCatching(::URI).getOrElse { _ -> fail("Graph URI '$uri' is invalid") }
           }
 
-  private val schema by
-      mutuallyExclusiveOptions(
-          option("-s", "--schema", help = "The input stream with the graph schema text")
-              .inputStream()
-              .convert { stream -> stream.use { it.readBytes().toString(Charsets.UTF_8) } },
-          option("-f", "--schema-file", help = "The file with the graph schema")
-              .file(mustExist = true, mustBeReadable = true, canBeDir = false)
-              .convert { it.readText() })
-
   private val parallelism by
       option(
               "-n",
@@ -91,13 +83,33 @@ internal class Command :
               help = "The number of parallel coroutines used by the proxy server")
           .int()
 
+  private val schema by
+      mutuallyExclusiveOptions(
+          option("-s", help = "The input stream with the graph schema text")
+              .inputStream()
+              .convert { stream -> stream.use { it.readBytes().toString(Charsets.UTF_8) } },
+          option("--schema", help = "The graph schema file")
+              .file(mustExist = true, mustBeReadable = true, canBeDir = false)
+              .convert { it.readText() })
+
+  private val script by
+      mutuallyExclusiveOptions(
+          option("-k", help = "The input stream with the plugin script text")
+              .inputStream()
+              .convert { stream -> stream.use { it.readBytes().toString(Charsets.UTF_8) } },
+          option("--script", help = "The plugin script file")
+              .file(mustExist = true, mustBeReadable = true, canBeDir = false)
+              .convert { it.readText() })
+
   private val output by
       mutuallyExclusiveOptions(
           option("--debug", help = "Enable debug logging").flag().convert { Debug },
           option("--styled", help = "Enable styled output").flag().convert { Styled() })
 
   override fun run() {
-    var plugin = schema?.let { Schema(it).Validator() } ?: plugin {}
+    var plugin =
+        listOfNotNull(schema?.let { Schema(it).Validator() }, script?.let(Script::evaluate))
+            .fold(plugin {}, Server.Plugin::then)
     when (val output = output) {
       null -> {}
       Debug -> {

@@ -21,11 +21,10 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Properties](#properties)
     * [Violations](#violations)
     * [Grammar](#grammar)
+  * [Script](#script)
 * [Usage](#usage)
   * [Documentation](#documentation)
   * [CLI](#cli)
-* [Example](#example)
-  * [Demo](#demo)
 * [License](#license)
 
 <!--- END -->
@@ -63,6 +62,87 @@ to the schema, then
 a [FAILURE](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-failure/index.html)
 response is sent to the *client*.
 
+For example, validate [movies](https://github.com/neo4j-graph-examples/movies) queries via
+the [Server](#design), using the [graph-guard](#usage) libraries.
+
+<!--- INCLUDE
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.Config
+import org.neo4j.driver.GraphDatabase
+import org.neo4j.driver.exceptions.DatabaseException
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+fun runInvalidMoviesQueries(password: String) {
+    GraphDatabase.driver(
+          "bolt://localhost:8787",
+          AuthTokens.basic("neo4j", password),
+          Config.builder().withoutEncryption().build()).use { driver ->
+    driver.session().use { session ->
+      /** Run the invalid [query] and print the schema violation message. */
+      fun run(query: String) {
+        try {
+          session.run(query)
+          error("Expected schema violation for query '$query'")
+        } catch (exception: DatabaseException) {
+          println(exception.message)
+        }
+      }
+      run("CREATE (:TVShow {title: 'The Office', released: 2005})")
+      run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
+      run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
+      run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
+      run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
+    }
+  }
+}
+```
+[//]: # (@formatter:on)
+
+<!--- KNIT Example01.kt -->
+<!--- TEST_NAME Example02Test --> 
+<!--- INCLUDE
+import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.withNeo4j
+import java.net.URI
+import kotlin.concurrent.thread
+
+fun runExample02() {
+  withNeo4j {
+----- SUFFIX
+  }
+}
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+val proxy = thread {
+  try {
+    Server(URI(boltUrl), Schema(MOVIES_SCHEMA).Validator()).run()
+  } catch (_: InterruptedException) {}
+}
+Thread.sleep(1_000) // Wait for the proxy server to initialize
+runInvalidMoviesQueries(adminPassword)
+proxy.interrupt()
+```
+[//]: # (@formatter:on)
+
+<!--- KNIT Example02.kt --> 
+
+The code above prints the following *schema violation* messages.
+
+```text
+Unknown node TVShow
+Unknown property 'budget' for node Movie
+Unknown relationship WATCHED from Person to Movie
+Unknown property 'studio' for relationship PRODUCED from Person to Movie
+Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
+```
+
+<!--- TEST -->
+
 #### Schema
 
 A schema describes the nodes and relationships in a graph. The schema is defined
@@ -90,7 +170,7 @@ graph Movies {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example01.kt --> 
+<!--- KNIT Example03.kt --> 
 
 #### Graph
 
@@ -113,7 +193,7 @@ graph Places {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example02.kt --> 
+<!--- KNIT Example04.kt --> 
 
 #### Nodes
 
@@ -172,6 +252,70 @@ the ([antlr4](https://github.com/antlr/antlr4))
 [grammar](https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4)
 for an exact specification of the [schema](#schema) DSL.
 
+### Script
+
+[Script.evaluate](https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html)
+enables [plugins](#plugins) to be compiled and loaded from
+a [Kotlin script](https://kotlinlang.org/docs/custom-script-deps-tutorial.html).
+The [Script.Context](https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-script/-context/index.html)
+exposes
+a [DSL](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html)
+to build [plugins](#plugins).
+
+For example, use a [plugin script](#script) with the [Server](#design).
+
+<!--- TEST_NAME Example05Test --> 
+<!--- INCLUDE
+import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.plugin.Script
+import io.github.cfraser.graphguard.runMoviesQueries
+import io.github.cfraser.graphguard.withNeo4j
+import java.net.URI
+import kotlin.concurrent.thread
+
+fun runExample05() {
+  withNeo4j {
+----- SUFFIX
+  }
+}
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+val script = """
+import java.util.concurrent.atomic.AtomicInteger
+
+plugin { 
+  val messages = AtomicInteger()
+  intercept { message ->
+    if (messages.getAndIncrement() == 0) println(message::class.simpleName)
+    message
+  }
+}
+"""
+val proxy = thread {
+  try {
+    Server(URI(boltUrl), Script.evaluate(script)).run()
+  } catch (_: InterruptedException) {}
+}
+Thread.sleep(10_000) // Wait for the proxy server to initialize
+runMoviesQueries(adminPassword)
+proxy.interrupt()
+```
+[//]: # (@formatter:on)
+
+> Script compilation and evaluation takes longer, thus the 10 second `Thread.sleep`.
+
+<!--- KNIT Example05.kt --> 
+
+The code above prints the following message.
+
+```text
+Hello
+```
+
+<!--- TEST -->
+
 ## Usage
 
 The `graph-guard` libraries are accessible
@@ -202,94 +346,8 @@ tar -xvf graph-guard-cli-shadow.tar
 ./graph-guard-cli-shadow/bin/graph-guard-cli --help
 ```
 
-## Example
-
-<!--- INCLUDE
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.Config
-import org.neo4j.driver.GraphDatabase
-import org.neo4j.driver.exceptions.DatabaseException
--->
-
-Using the `graph-guard` libraries, validate [movies](https://github.com/neo4j-graph-examples/movies)
-queries via the [Bolt proxy server](#design).
-
-[//]: # (@formatter:off)
-```kotlin
-fun runInvalidMoviesQueries(password: String) {
-    GraphDatabase.driver(
-          "bolt://localhost:8787",
-          AuthTokens.basic("neo4j", password),
-          Config.builder().withoutEncryption().build()).use { driver ->
-    driver.session().use { session ->
-      /** Run the invalid [query] and print the schema violation message. */
-      fun run(query: String) {
-        try {
-          session.run(query)
-          error("Expected schema violation for query '$query'")
-        } catch (exception: DatabaseException) {
-          println(exception.message)
-        }
-      }
-      run("CREATE (:TVShow {title: 'The Office', released: 2005})")
-      run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
-      run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
-      run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
-      run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
-    }
-  }
-}
-```
-[//]: # (@formatter:on)
-
-<!--- KNIT Example03.kt -->
-<!--- TEST_NAME Example04Test --> 
-<!--- INCLUDE
-import io.github.cfraser.graphguard.plugin.Schema
-import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
-import kotlin.concurrent.thread
-import kotlin.time.Duration.Companion.seconds
-
-fun runExample04() {
-  withNeo4j {
------ SUFFIX
-  }
-}
--->
-
-[//]: # (@formatter:off)
-```kotlin
-val proxy = thread {
-  try {
-    Server(URI(boltUrl), Schema(MOVIES_SCHEMA).Validator()).run()
-  } catch (_: InterruptedException) {}
-}
-Thread.sleep(3.seconds.inWholeMilliseconds) // Wait for the proxy server to initialize
-runInvalidMoviesQueries(adminPassword)
-proxy.interrupt()
-```
-[//]: # (@formatter:on)
-
-<!--- KNIT Example04.kt --> 
-
-The code above prints the following *schema violation* messages.
-
-```text
-Unknown node TVShow
-Unknown property 'budget' for node Movie
-Unknown relationship WATCHED from Person to Movie
-Unknown property 'studio' for relationship PRODUCED from Person to Movie
-Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
-```
-
-<!--- TEST -->
-
-### Demo
-
-Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
-(and [source script](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh)).
+> Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
+> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh)).
 
 ## License
 
