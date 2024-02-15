@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Extensible graph proxy server">
+        <meta name="description" content="Extensible graph database proxy server">
       
       
         <meta name="author" content="c-fraser">
@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.8">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.9">
     
     
       
@@ -395,6 +395,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#script" class="md-nav__link">
+    <span class="md-ellipsis">
+      Script
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -423,30 +432,6 @@
   <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       CLI
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Example">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#demo" class="md-nav__link">
-    <span class="md-ellipsis">
-      Demo
     </span>
   </a>
   
@@ -525,6 +510,75 @@ schema <a href="#violations">violations</a>. If the intercepted query is determi
 to the schema, then
 a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-failure/index.html">FAILURE</a>
 response is sent to the <em>client</em>.</p>
+<p>For example, validate <a href="https://github.com/neo4j-graph-examples/movies">movies</a> queries via
+the <a href="#design">Server</a>, using the <a href="#usage">graph-guard</a> libraries.</p>
+<!--- INCLUDE
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.Config
+import org.neo4j.driver.GraphDatabase
+import org.neo4j.driver.exceptions.DatabaseException
+-->
+
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">runInvalidMoviesQueries</span><span class="p">(</span><span class="n">password</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="n">GraphDatabase</span><span class="p">.</span><span class="na">driver</span><span class="p">(</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">          </span><span class="s">&quot;bolt://localhost:8787&quot;</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">          </span><span class="n">AuthTokens</span><span class="p">.</span><span class="na">basic</span><span class="p">(</span><span class="s">&quot;neo4j&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">password</span><span class="p">),</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">          </span><span class="n">Config</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">withoutEncryption</span><span class="p">().</span><span class="na">build</span><span class="p">()).</span><span class="na">use</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">driver</span><span class="w"> </span><span class="o">-&gt;</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="n">driver</span><span class="p">.</span><span class="na">session</span><span class="p">().</span><span class="na">use</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">-&gt;</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="cm">/** Run the invalid [query] and print the schema violation message. */</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="kd">fun</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">query</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">          </span><span class="n">session</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">          </span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Expected schema violation for query &#39;</span><span class="si">$</span><span class="n">query</span><span class="s">&#39;&quot;</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">exception</span><span class="p">:</span><span class="w"> </span><span class="n">DatabaseException</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">          </span><span class="n">println</span><span class="p">(</span><span class="n">exception</span><span class="p">.</span><span class="na">message</span><span class="p">)</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;CREATE (:TVShow {title: &#39;The Office&#39;, released: 2005})&quot;</span><span class="p">)</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;MATCH (theMatrix:Movie {title: &#39;The Matrix&#39;}) SET theMatrix.budget = 63000000&quot;</span><span class="p">)</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;MERGE (:Person {name: &#39;Chris Fraser&#39;})-[:WATCHED]-&gt;(:Movie {title: &#39;The Matrix&#39;})&quot;</span><span class="p">)</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;MATCH (:Person)-[produced:PRODUCED]-&gt;(:Movie {title: &#39;The Matrix&#39;}) SET produced.studio = &#39;Warner Bros.&#39;&quot;</span><span class="p">)</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;CREATE (Keanu:Person {name: &#39;Keanu Reeves&#39;, born: &#39;09/02/1964&#39;})&quot;</span><span class="p">)</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="p">}</span>
+</span></code></pre></div>
+<!--- KNIT Example01.kt -->
+<!--- TEST_NAME Example02Test -->
+<!--- INCLUDE
+import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.withNeo4j
+import java.net.URI
+import kotlin.concurrent.thread
+
+fun runExample02() {
+  withNeo4j {
+----- SUFFIX
+  }
+}
+-->
+
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thread</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">Server</span><span class="p">(</span><span class="n">URI</span><span class="p">(</span><span class="n">boltUrl</span><span class="p">),</span><span class="w"> </span><span class="n">Schema</span><span class="p">(</span><span class="n">MOVIES_SCHEMA</span><span class="p">).</span><span class="na">Validator</span><span class="p">()).</span><span class="na">run</span><span class="p">()</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">InterruptedException</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">}</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span><span class="w"> </span><span class="c1">// Wait for the proxy server to initialize</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">runInvalidMoviesQueries</span><span class="p">(</span><span class="n">adminPassword</span><span class="p">)</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">proxy</span><span class="p">.</span><span class="na">interrupt</span><span class="p">()</span>
+</span></code></pre></div>
+<!--- KNIT Example02.kt -->
+
+<p>The code above prints the following <em>schema violation</em> messages.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Unknown node TVShow
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Unknown property &#39;budget&#39; for node Movie
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Unknown relationship WATCHED from Person to Movie
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Unknown property &#39;studio&#39; for relationship PRODUCED from Person to Movie
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Invalid query value(s) &#39;09/02/1964&#39; for property &#39;born: Integer&#39; on node Person
+</span></code></pre></div>
+<!--- TEST -->
+
 <h4 id="schema">Schema</h4>
 <p>A schema describes the nodes and relationships in a graph. The schema is defined
 using a custom DSL language, demonstrated below for
@@ -537,17 +591,17 @@ const val MOVIES_SCHEMA =
 """
 -->
 
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">graph</span><span class="w"> </span><span class="n">Movies</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">born</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">):</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="n">ACTED_IN</span><span class="p">(</span><span class="n">roles</span><span class="p">:</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="n">DIRECTED</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">PRODUCED</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="n">WROTE</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="n">REVIEWED</span><span class="p">(</span><span class="n">summary</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">;</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Movie</span><span class="p">(</span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">released</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">,</span><span class="w"> </span><span class="n">tagline</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">);</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">graph</span><span class="w"> </span><span class="n">Movies</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">born</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">):</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">ACTED_IN</span><span class="p">(</span><span class="n">roles</span><span class="p">:</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">DIRECTED</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">PRODUCED</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">WROTE</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">REVIEWED</span><span class="p">(</span><span class="n">summary</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">;</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Movie</span><span class="p">(</span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">released</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">,</span><span class="w"> </span><span class="n">tagline</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">);</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">}</span>
 </span></code></pre></div>
-<!--- KNIT Example01.kt -->
+<!--- KNIT Example03.kt -->
 
 <h4 id="graph">Graph</h4>
 <p>A <code>graph</code> contains <a href="#nodes">node statements</a>. A <a href="#schema">schema</a> may include multiple
@@ -560,12 +614,12 @@ const val PLACES_SCHEMA =
 """
 -->
 
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">graph</span><span class="w"> </span><span class="n">Places</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Theater</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">):</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">SHOWING</span><span class="p">(</span><span class="n">times</span><span class="p">:</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movies</span><span class="p">.</span><span class="na">Movie</span><span class="p">;</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graph</span><span class="w"> </span><span class="n">Places</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Theater</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">):</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">SHOWING</span><span class="p">(</span><span class="n">times</span><span class="p">:</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movies</span><span class="p">.</span><span class="na">Movie</span><span class="p">;</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span>
 </span></code></pre></div>
-<!--- KNIT Example02.kt -->
+<!--- KNIT Example04.kt -->
 
 <h4 id="nodes">Nodes</h4>
 <p>A <code>node</code> must have a unique name, and may
@@ -616,6 +670,61 @@ example <code>String?</code> and <code>List&lt;Any?&gt;</code>.</p>
 the (<a href="https://github.com/antlr/antlr4">antlr4</a>)
 <a href="https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4">grammar</a>
 for an exact specification of the <a href="#schema">schema</a> DSL.</p>
+<h3 id="script">Script</h3>
+<p><a href="https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html">Script.evaluate</a>
+enables <a href="#plugins">plugins</a> to be compiled and loaded from
+a <a href="https://kotlinlang.org/docs/custom-script-deps-tutorial.html">Kotlin script</a>.
+The <a href="https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-script/-context/index.html">Script.Context</a>
+exposes
+a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html">DSL</a>
+to build <a href="#plugins">plugins</a>.</p>
+<p>For example, use a <a href="#script">plugin script</a> with the <a href="#design">Server</a>.</p>
+<!--- TEST_NAME Example05Test -->
+<!--- INCLUDE
+import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.plugin.Script
+import io.github.cfraser.graphguard.runMoviesQueries
+import io.github.cfraser.graphguard.withNeo4j
+import java.net.URI
+import kotlin.concurrent.thread
+
+fun runExample05() {
+  withNeo4j {
+----- SUFFIX
+  }
+}
+-->
+
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;&quot;</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="s">import java.util.concurrent.atomic.AtomicInteger</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="s">plugin { </span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s">  val messages = AtomicInteger()</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s">  intercept { message -&gt;</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s">    if (messages.getAndIncrement() == 0) println(message::class.simpleName)</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s">    message</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s">  }</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="s">}</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="s">&quot;&quot;&quot;</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="kd">val</span><span class="w"> </span><span class="nv">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thread</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="n">Server</span><span class="p">(</span><span class="n">URI</span><span class="p">(</span><span class="n">boltUrl</span><span class="p">),</span><span class="w"> </span><span class="n">Script</span><span class="p">.</span><span class="na">evaluate</span><span class="p">(</span><span class="n">script</span><span class="p">)).</span><span class="na">run</span><span class="p">()</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">InterruptedException</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="p">}</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="m">10</span><span class="n">_000</span><span class="p">)</span><span class="w"> </span><span class="c1">// Wait for the proxy server to initialize</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="n">runMoviesQueries</span><span class="p">(</span><span class="n">adminPassword</span><span class="p">)</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="n">proxy</span><span class="p">.</span><span class="na">interrupt</span><span class="p">()</span>
+</span></code></pre></div>
+<blockquote>
+<p>Script compilation and evaluation takes longer, thus the 10 second <code>Thread.sleep</code>.</p>
+</blockquote>
+<!--- KNIT Example05.kt -->
+
+<p>The code above prints the following message.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Hello
+</span></code></pre></div>
+<!--- TEST -->
+
 <h2 id="usage">Usage</h2>
 <p>The <code>graph-guard</code> libraries are accessible
 via <a href="https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard*">Maven Central</a>
@@ -634,84 +743,14 @@ and <a href="https://c-fraser.github.io/graph-guard/api/plugins/">graph-guard-pl
 documentation.</p>
 <h3 id="cli">CLI</h3>
 <p>Download and run the <code>graph-guard-cli</code> application.</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-OL<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-cli-shadow.tar
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>./graph-guard-cli-shadow/bin/graph-guard-cli<span class="w"> </span>--help
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>curl<span class="w"> </span>-OL<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-cli-shadow.tar
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>./graph-guard-cli-shadow/bin/graph-guard-cli<span class="w"> </span>--help
 </span></code></pre></div>
-<h2 id="example">Example</h2>
-<!--- INCLUDE
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.Config
-import org.neo4j.driver.GraphDatabase
-import org.neo4j.driver.exceptions.DatabaseException
--->
-
-<p>Using the <code>graph-guard</code> libraries, validate <a href="https://github.com/neo4j-graph-examples/movies">movies</a>
-queries via the <a href="#design">Bolt proxy server</a>.</p>
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">runInvalidMoviesQueries</span><span class="p">(</span><span class="n">password</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">GraphDatabase</span><span class="p">.</span><span class="na">driver</span><span class="p">(</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">          </span><span class="s">&quot;bolt://localhost:8787&quot;</span><span class="p">,</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">          </span><span class="n">AuthTokens</span><span class="p">.</span><span class="na">basic</span><span class="p">(</span><span class="s">&quot;neo4j&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">password</span><span class="p">),</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">          </span><span class="n">Config</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">withoutEncryption</span><span class="p">().</span><span class="na">build</span><span class="p">()).</span><span class="na">use</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">driver</span><span class="w"> </span><span class="o">-&gt;</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">driver</span><span class="p">.</span><span class="na">session</span><span class="p">().</span><span class="na">use</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">-&gt;</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="cm">/** Run the invalid [query] and print the schema violation message. */</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="kd">fun</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">query</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">          </span><span class="n">session</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">          </span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Expected schema violation for query &#39;</span><span class="si">$</span><span class="n">query</span><span class="s">&#39;&quot;</span><span class="p">)</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">exception</span><span class="p">:</span><span class="w"> </span><span class="n">DatabaseException</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">          </span><span class="n">println</span><span class="p">(</span><span class="n">exception</span><span class="p">.</span><span class="na">message</span><span class="p">)</span>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">        </span><span class="p">}</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">      </span><span class="p">}</span>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;CREATE (:TVShow {title: &#39;The Office&#39;, released: 2005})&quot;</span><span class="p">)</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;MATCH (theMatrix:Movie {title: &#39;The Matrix&#39;}) SET theMatrix.budget = 63000000&quot;</span><span class="p">)</span>
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;MERGE (:Person {name: &#39;Chris Fraser&#39;})-[:WATCHED]-&gt;(:Movie {title: &#39;The Matrix&#39;})&quot;</span><span class="p">)</span>
-</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;MATCH (:Person)-[produced:PRODUCED]-&gt;(:Movie {title: &#39;The Matrix&#39;}) SET produced.studio = &#39;Warner Bros.&#39;&quot;</span><span class="p">)</span>
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">      </span><span class="n">run</span><span class="p">(</span><span class="s">&quot;CREATE (Keanu:Person {name: &#39;Keanu Reeves&#39;, born: &#39;09/02/1964&#39;})&quot;</span><span class="p">)</span>
-</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="p">}</span>
-</span></code></pre></div>
-<!--- KNIT Example03.kt -->
-<!--- TEST_NAME Example04Test -->
-<!--- INCLUDE
-import io.github.cfraser.graphguard.plugin.Schema
-import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
-import kotlin.concurrent.thread
-import kotlin.time.Duration.Companion.seconds
-
-fun runExample04() {
-  withNeo4j {
------ SUFFIX
-  }
-}
--->
-
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thread</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">Server</span><span class="p">(</span><span class="n">URI</span><span class="p">(</span><span class="n">boltUrl</span><span class="p">),</span><span class="w"> </span><span class="n">Schema</span><span class="p">(</span><span class="n">MOVIES_SCHEMA</span><span class="p">).</span><span class="na">Validator</span><span class="p">()).</span><span class="na">run</span><span class="p">()</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">InterruptedException</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">}</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="m">3.</span><span class="n">seconds</span><span class="p">.</span><span class="na">inWholeMilliseconds</span><span class="p">)</span><span class="w"> </span><span class="c1">// Wait for the proxy server to initialize</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">runInvalidMoviesQueries</span><span class="p">(</span><span class="n">adminPassword</span><span class="p">)</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">proxy</span><span class="p">.</span><span class="na">interrupt</span><span class="p">()</span>
-</span></code></pre></div>
-<!--- KNIT Example04.kt -->
-
-<p>The code above prints the following <em>schema violation</em> messages.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Unknown node TVShow
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Unknown property &#39;budget&#39; for node Movie
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Unknown relationship WATCHED from Person to Movie
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Unknown property &#39;studio&#39; for relationship PRODUCED from Person to Movie
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Invalid query value(s) &#39;09/02/1964&#39; for property &#39;born: Integer&#39; on node Person
-</span></code></pre></div>
-<!--- TEST -->
-
-<h3 id="demo">Demo</h3>
+<blockquote>
 <p>Refer to the <a href="https://c-fraser.github.io/graph-guard/cli/">demo</a>
 (and <a href="https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh">source script</a>).</p>
+</blockquote>
 <h2 id="license">License</h2>
 <div class="language-text highlight"><pre><span></span><code>Copyright 2023 c-fraser
 

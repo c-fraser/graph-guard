@@ -58,6 +58,11 @@ $dokka.location:io.github.cfraser.graphguard/Server.Disconnected///PointingToDec
 $dokka.location:io.github.cfraser.graphguard/Server.Disconnected/Disconnected/#io.github.cfraser.graphguard.Server.Connection/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-disconnected/-disconnected.html
 $dokka.location:io.github.cfraser.graphguard/Server.Disconnected/connection/#/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-disconnected/connection.html
 $dokka.location:io.github.cfraser.graphguard/Server.Event///PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-event/index.html
+$dokka.location:io.github.cfraser.graphguard/Server.Plugin.Builder///PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-builder/index.html
+$dokka.location:io.github.cfraser.graphguard/Server.Plugin.Builder/intercept/#kotlin.coroutines.SuspendFunction1[io.github.cfraser.graphguard.Bolt.Message,io.github.cfraser.graphguard.Bolt.Message]/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-builder/intercept.html
+$dokka.location:io.github.cfraser.graphguard/Server.Plugin.Builder/observe/#kotlin.coroutines.SuspendFunction1[io.github.cfraser.graphguard.Server.Event,kotlin.Unit]/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-builder/observe.html
+$dokka.location:io.github.cfraser.graphguard/Server.Plugin.DSL///PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html
+$dokka.location:io.github.cfraser.graphguard/Server.Plugin.DSL/plugin/#kotlin.Function1[io.github.cfraser.graphguard.Server.Plugin.Builder,kotlin.Unit]/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/plugin.html
 $dokka.location:io.github.cfraser.graphguard/Server.Plugin///PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html
 $dokka.location:io.github.cfraser.graphguard/Server.Plugin/intercept/#io.github.cfraser.graphguard.Bolt.Message/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/intercept.html
 $dokka.location:io.github.cfraser.graphguard/Server.Plugin/observe/#io.github.cfraser.graphguard.Server.Event/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-server/-plugin/observe.html
