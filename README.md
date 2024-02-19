@@ -13,7 +13,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
 
 * [Design](#design)
 * [Plugins](#plugins)
-  * [Schema validation](#schema-validation)
+  * [Query validation](#query-validation)
     * [Schema](#schema)
     * [Graph](#graph)
     * [Nodes](#nodes)
@@ -21,7 +21,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Properties](#properties)
     * [Violations](#violations)
     * [Grammar](#grammar)
-  * [Script](#script)
+  * [Scripting](#scripting)
 * [Usage](#usage)
   * [Documentation](#documentation)
   * [CLI](#cli)
@@ -51,7 +51,7 @@ implementations to
 augment [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
 functionality.
 
-### Schema validation
+### Query validation
 
 [Schema.Validator](https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
 is a [plugin](#plugins) that performs realtime [schema](#schema) validation by
@@ -252,7 +252,7 @@ the ([antlr4](https://github.com/antlr/antlr4))
 [grammar](https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4)
 for an exact specification of the [schema](#schema) DSL.
 
-### Script
+### Scripting
 
 [Script.evaluate](https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html)
 enables [plugins](#plugins) to be compiled and loaded from
@@ -262,7 +262,7 @@ exposes
 a [DSL](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html)
 to build [plugins](#plugins).
 
-For example, use a [plugin script](#script) with the [Server](#design).
+For example, use a [plugin script](#scripting) with the [Server](#design).
 
 <!--- TEST_NAME Example05Test --> 
 <!--- INCLUDE
