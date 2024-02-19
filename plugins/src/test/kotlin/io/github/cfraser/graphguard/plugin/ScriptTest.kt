@@ -1,6 +1,7 @@
 package io.github.cfraser.graphguard.plugin
 
 import io.github.cfraser.graphguard.Bolt
+import io.github.cfraser.graphguard.LOCAL
 import io.github.cfraser.graphguard.Server
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.system.captureStandardOut
@@ -29,6 +30,26 @@ class ScriptTest : FunSpec() {
         plugin.intercept(message)
         plugin.observe(event)
       } shouldBe "$message$event"
+    }
+
+    test("script with dependencies").config(tags = setOf(LOCAL)) {
+      val plugin =
+          Script.evaluate(
+              """
+              @file:DependsOn("io.arrow-kt:arrow-core:1.2.0")
+              
+              import arrow.core.Either
+              import arrow.core.raise.either
+              import arrow.core.right
+                
+              plugin {
+                fun process(message: Bolt.Message): Either<Nothing, Bolt.Message> = message.right().onRight(::print)
+                intercept { message -> either { process(message).bind() }.getOrNull().let(::checkNotNull) }
+              }
+              """
+                  .trimIndent())
+      val message = Bolt.Hello(emptyMap())
+      captureStandardOut { plugin.intercept(message) } shouldBe "$message"
     }
   }
 

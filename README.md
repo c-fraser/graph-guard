@@ -283,7 +283,19 @@ fun runExample05() {
 [//]: # (@formatter:off)
 ```kotlin
 val script = """
+@file:DependsOn(
+    "io.github.resilience4j:resilience4j-ratelimiter:2.2.0",
+    "io.github.resilience4j:resilience4j-kotlin:2.2.0")
+
+import io.github.resilience4j.kotlin.ratelimiter.RateLimiterConfig
+import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction
+import io.github.resilience4j.ratelimiter.RateLimiter
 import java.util.concurrent.atomic.AtomicInteger
+
+plugin {
+  val rateLimiter = RateLimiter.of("message-limiter", RateLimiterConfig {})
+  intercept { message -> rateLimiter.executeSuspendFunction { message } }
+}
 
 plugin { 
   val messages = AtomicInteger()

@@ -30,6 +30,8 @@ dependencies {
   implementation(kotlin("scripting-common"))
   implementation(kotlin("scripting-jvm"))
   implementation(kotlin("scripting-jvm-host"))
+  implementation(kotlin("scripting-dependencies"))
+  implementation(kotlin("scripting-dependencies-maven"))
   implementation(kotlin("reflect"))
   implementation(libs.kotlinx.coroutines)
   implementation(libs.caffeine)
