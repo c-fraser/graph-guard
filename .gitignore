@@ -15,9 +15,7 @@ docs/api
 docs/cli/*
 !docs/cli/demo.cast
 # runtime metadata
-.devcontainer/*
-!.devcontainer/devcontainer.json
-!.devcontainer/exec.sh
+.devcontainer/up.json
 cli/neo4j.cid
 # generated antlr files
 plugins/src/main/java

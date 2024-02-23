@@ -13,18 +13,18 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
 
 * [Design](#design)
 * [Plugins](#plugins)
-  * [Query validation](#query-validation)
-    * [Schema](#schema)
-    * [Graph](#graph)
-    * [Nodes](#nodes)
-    * [Relationships](#relationships)
-    * [Properties](#properties)
-    * [Violations](#violations)
-    * [Grammar](#grammar)
-  * [Scripting](#scripting)
+    * [Query validation](#query-validation)
+        * [Schema](#schema)
+        * [Graph](#graph)
+        * [Nodes](#nodes)
+        * [Relationships](#relationships)
+        * [Properties](#properties)
+        * [Violations](#violations)
+        * [Grammar](#grammar)
+    * [Scripting](#scripting)
 * [Usage](#usage)
-  * [Documentation](#documentation)
-  * [CLI](#cli)
+    * [Documentation](#documentation)
+    * [CLI](#cli)
 * [License](#license)
 
 <!--- END -->
@@ -353,9 +353,10 @@ documentation.
 Download and run the `graph-guard-cli` application.
 
 ```shell
-curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
-tar -xvf graph-guard-cli-shadow.tar
-./graph-guard-cli-shadow/bin/graph-guard-cli --help
+curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar
+mkdir graph-guard-cli
+tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
+./graph-guard-cli/bin/graph-guard-cli --help
 ```
 
 > Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)

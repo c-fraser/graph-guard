@@ -15,6 +15,7 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.collectedAnnotations
+import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.ide
@@ -80,6 +81,7 @@ abstract class Script {
           dependenciesFromCurrentContext(wholeClasspath = true)
           jvmTarget("17")
         }
+        compilerOptions.append("-Xadd-modules=ALL-MODULE-PATH")
         ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
         refineConfiguration {
           onAnnotations(DependsOn::class, Repository::class, handler = ::resolveDependencies)
