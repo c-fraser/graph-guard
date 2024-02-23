@@ -58,7 +58,7 @@ allprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
 
   group = "io.github.c-fraser"
-  version = "0.8.1"
+  version = "0.8.2"
 
   configure<JavaPluginExtension> {
     toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
