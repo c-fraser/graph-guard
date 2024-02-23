@@ -755,9 +755,10 @@ and <a href="https://c-fraser.github.io/graph-guard/api/plugins/">graph-guard-pl
 documentation.</p>
 <h3 id="cli">CLI</h3>
 <p>Download and run the <code>graph-guard-cli</code> application.</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>curl<span class="w"> </span>-OL<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-cli-shadow.tar
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>./graph-guard-cli-shadow/bin/graph-guard-cli<span class="w"> </span>--help
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>curl<span class="w"> </span>-OL<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mkdir<span class="w"> </span>graph-guard-cli
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-cli.tar<span class="w"> </span>--strip-components<span class="o">=</span><span class="m">1</span><span class="w"> </span>-C<span class="w"> </span>graph-guard-cli
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>./graph-guard-cli/bin/graph-guard-cli<span class="w"> </span>--help
 </span></code></pre></div>
 <blockquote>
 <p>Refer to the <a href="https://c-fraser.github.io/graph-guard/cli/">demo</a>
