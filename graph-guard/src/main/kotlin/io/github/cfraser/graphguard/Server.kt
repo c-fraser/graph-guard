@@ -38,6 +38,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -52,6 +53,7 @@ import org.slf4j.MDC.MDCCloseable
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
+import java.util.concurrent.CompletableFuture
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -71,7 +73,9 @@ import io.ktor.network.sockets.SocketAddress as KSocketAddress
  * @property parallelism the number of parallel coroutines used by the [Server]
  */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalContracts::class)
-class Server(
+class Server
+@JvmOverloads
+constructor(
     val graph: URI,
     plugin: Plugin = Plugin.DSL.plugin {},
     val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
@@ -308,16 +312,14 @@ class Server(
      *   [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages)
      * @return the [Bolt.Message] to send
      */
-    suspend fun intercept(message: Bolt.Message): Bolt.Message {
-      return message
-    }
+    suspend fun intercept(message: Bolt.Message): Bolt.Message
 
     /**
      * Observe the [event].
      *
      * @param event the [Server.Event] that occurred
      */
-    suspend fun observe(event: Event) {}
+    suspend fun observe(event: Event)
 
     /**
      * Run `this` [Server.Plugin] then [that].
@@ -333,6 +335,37 @@ class Server(
           `this`.observe(event)
           that.observe(event)
         }
+      }
+    }
+
+    /** [Server.Plugin.Async] is an asynchronous [Server.Plugin] intended for use by *Java* code. */
+    abstract class Async : Plugin {
+
+      /**
+       * Asynchronously [intercept] the [message].
+       *
+       * @param message the intercepted
+       *   [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages)
+       * @return a [CompletableFuture] with the [Bolt.Message] to send
+       */
+      abstract fun interceptAsync(message: Bolt.Message): CompletableFuture<Bolt.Message>
+
+      /**
+       * Asynchronously [observe] the [event].
+       *
+       * @param event the [Server.Event] that occurred
+       * @return a [CompletableFuture] of [Void]
+       */
+      abstract fun observeAsync(event: Event): CompletableFuture<Void>
+
+      /** [interceptAsync] then [await] for the [CompletableFuture] to complete. */
+      final override suspend fun intercept(message: Bolt.Message): Bolt.Message {
+        return interceptAsync(message).await()
+      }
+
+      /** [observeAsync] then [await] for the [CompletableFuture] to complete. */
+      final override suspend fun observe(event: Event) {
+        observeAsync(event).await()
       }
     }
 
@@ -417,14 +450,14 @@ class Server(
    *
    * @property connection the [Server.Connection] metadata
    */
-  data class Connected(val connection: Connection) : Event
+  @JvmRecord data class Connected(val connection: Connection) : Event
 
   /**
    * The [Server] closed the [connection].
    *
    * @property connection the [Server.Connection] metadata
    */
-  data class Disconnected(val connection: Connection) : Event
+  @JvmRecord data class Disconnected(val connection: Connection) : Event
 
   /**
    * A proxy connection.
@@ -440,14 +473,14 @@ class Server(
      *
      * @property address the [InetSocketAddress] of the client
      */
-    data class Client(override val address: InetSocketAddress) : Connection
+    @JvmRecord data class Client(override val address: InetSocketAddress) : Connection
 
     /**
      * The graph database the [Server] connected to.
      *
      * @property address the [InetSocketAddress] of the graph database
      */
-    data class Graph(override val address: InetSocketAddress) : Connection
+    @JvmRecord data class Graph(override val address: InetSocketAddress) : Connection
   }
 
   /**
@@ -458,6 +491,7 @@ class Server(
    * @property destination the [Connection] that received the [sent] [Bolt.Message]
    * @property sent the [Bolt.Message] sent to the [destination]
    */
+  @JvmRecord
   data class Proxied(
       val source: Connection,
       val received: Bolt.Message,

@@ -38,9 +38,14 @@ fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>
 
 /** Run the test [block] with a [Server] initialized with the [plugin]. */
 fun Neo4jContainer<*>.withServer(plugin: Server.Plugin = plugin {}, block: () -> Unit) {
+  withServer(Server(URI(boltUrl), plugin), block)
+}
+
+/** Run the test [block] with the [Server]. */
+fun Neo4jContainer<*>.withServer(server: Server, block: () -> Unit) {
   val proxy = thread {
     try {
-      Server(URI(boltUrl), plugin).run()
+      server.run()
     } catch (_: InterruptedException) {}
   }
   Thread.sleep(1.seconds.inWholeMilliseconds)

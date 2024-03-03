@@ -59,6 +59,10 @@ class ServerTest : FunSpec() {
       withNeo4j { withServer { runMoviesQueries(adminPassword) } }
     }
 
+    test("proxy bolt messages with async plugin").config(tags = setOf(LOCAL)) {
+      withNeo4j { withServer(Utils.server(boltUrl)) { runMoviesQueries(adminPassword) } }
+    }
+
     test("observe server events").config(tags = setOf(LOCAL)) {
       val lock = Mutex()
       val clientAddresses = mutableListOf<InetSocketAddress>()

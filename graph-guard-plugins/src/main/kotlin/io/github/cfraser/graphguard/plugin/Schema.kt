@@ -45,6 +45,7 @@ import kotlin.String as KString
  *
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
+@JvmRecord
 data class Schema internal constructor(val graphs: Set<Graph>) {
 
   /**
@@ -66,20 +67,22 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
           })
 
   /** The [Schema.Node]s in the [graphs] indexed by [Schema.Node.name]. */
-  private val nodes: Map<KString, Node> = graphs.flatMap(Graph::nodes).associateBy(Node::name)
+  private val nodes: Map<KString, Node>
+    get() = graphs.flatMap(Graph::nodes).associateBy(Node::name)
 
   /** The [Schema.Relationship]s in the [graphs] indexed by [Query.Relationship]. */
-  private val relationships: Map<Query.Relationship, Relationship> = buildMap {
-    graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
-      val key =
-          Query.Relationship(
-              relationship.name, relationship.source.validate(), relationship.target.validate())
-      require(key !in this) {
-        "Duplicate relationship ${key.label} from ${key.source} to ${key.target}"
+  private val relationships: Map<Query.Relationship, Relationship>
+    get() = buildMap {
+      graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
+        val key =
+            Query.Relationship(
+                relationship.name, relationship.source.validate(), relationship.target.validate())
+        require(key !in this) {
+          "Duplicate relationship ${key.label} from ${key.source} to ${key.target}"
+        }
+        this[key] = relationship
       }
-      this[key] = relationship
     }
-  }
 
   /**
    * Validate that the *Cypher* [Query] and [parameters] adhere to the [nodes] and [relationships].
@@ -90,6 +93,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
   internal fun validate(cypher: KString, parameters: Map<KString, KAny?>): InvalidQuery? {
     val query = Query.parse(cypher) ?: return null
+    val (nodes, relationships) = nodes to relationships
     for (queryNode in query.nodes) {
       val entity = InvalidQuery.Entity.Node(queryNode)
       val schemaNode = nodes[queryNode] ?: return InvalidQuery.Unknown(entity)
@@ -136,7 +140,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property name the name of the graph
    * @property nodes the nodes and relationships in the graph
    */
-  data class Graph internal constructor(val name: KString, val nodes: Set<Node>) {
+  @JvmRecord data class Graph internal constructor(val name: KString, val nodes: Set<Node>) {
 
     override fun toString(): KString {
       return "graph $name {\n${nodes.joinToString("\n", transform = Node::toString)}\n}"
@@ -149,7 +153,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property name the name of the node
    * @property properties the node properties
    */
-  data class Node
+  @JvmRecord data class Node
   internal constructor(
       val name: KString,
       val properties: Set<Property>,
@@ -174,7 +178,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property isDirected whether the relationship is directed
    * @property properties the relationship properties
    */
-  data class Relationship
+  @JvmRecord data class Relationship
   internal constructor(
       val name: KString,
       val source: KString,
@@ -199,7 +203,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property isNullable whether the [Property] value is nullable
    * @property allowsNullable whether the [Property] (container) allows nullable values
    */
-  data class Property
+  @JvmRecord data class Property
   internal constructor(
       val name: KString,
       val type: Type,
@@ -263,7 +267,7 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    *
    * @param cacheSize the maximum entries in the cache of validated queries
    */
-  inner class Validator(cacheSize: Long? = null) : Server.Plugin {
+  inner class Validator @JvmOverloads constructor(cacheSize: Long? = null) : Server.Plugin {
 
     /** A [LoadingCache] of validated *Cypher* queries. */
     private val cache =
@@ -278,6 +282,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       LOGGER.info("Cypher query '{}' is invalid: {}", message.query, invalid.message)
       return Bolt.Failure(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message))
     }
+
+    override suspend fun observe(event: Server.Event) {}
   }
 
   /** An [InvalidQuery] describes a *Cypher* query with a [Schema] violation. */

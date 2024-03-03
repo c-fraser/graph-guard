@@ -50,19 +50,19 @@ object Bolt {
   sealed interface Response : Message
 
   /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-hello) message. */
-  data class Hello(val extra: Map<String, Any?>) : Request
+  @JvmRecord data class Hello(val extra: Map<String, Any?>) : Request
 
   /** The [GOODBYE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-goodbye) message. */
   data object Goodbye : Request
 
   /** The [LOGON](https://neo4j.com/docs/bolt/current/bolt/message/#messages-logon) message. */
-  data class Logon(val auth: Map<String, Any?>) : Request
+  @JvmRecord data class Logon(val auth: Map<String, Any?>) : Request
 
   /** The [LOGOFF](https://neo4j.com/docs/bolt/current/bolt/message/#messages-logoff) message. */
   data object Logoff : Request
 
   /** The [BEGIN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-begin) message. */
-  data class Begin(val extra: Map<String, Any?>) : Request
+  @JvmRecord data class Begin(val extra: Map<String, Any?>) : Request
 
   /** The [COMMIT](https://neo4j.com/docs/bolt/current/bolt/message/#messages-commit) message. */
   data object Commit : Request
@@ -76,6 +76,7 @@ object Bolt {
   data object Reset : Request
 
   /** The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message. */
+  @JvmRecord
   data class Run(
       val query: String,
       val parameters: Map<String, Any?>,
@@ -83,27 +84,27 @@ object Bolt {
   ) : Request
 
   /** The [DISCARD](https://neo4j.com/docs/bolt/current/bolt/message/#messages-discard) message. */
-  data class Discard(val extra: Map<String, Any?>) : Request
+  @JvmRecord data class Discard(val extra: Map<String, Any?>) : Request
 
   /** The [PULL](https://neo4j.com/docs/bolt/current/bolt/message/#messages-pull) message. */
-  data class Pull(val extra: Map<String, Any?>) : Request
+  @JvmRecord data class Pull(val extra: Map<String, Any?>) : Request
 
   /**
    * The [TELEMETRY](https://neo4j.com/docs/bolt/current/bolt/message/#messages-telemetry) message.
    */
-  data class Telemetry(val api: Long) : Request
+  @JvmRecord data class Telemetry(val api: Long) : Request
 
   /** The [SUCCESS](https://neo4j.com/docs/bolt/current/bolt/message/#messages-success) message. */
-  data class Success(val metadata: Map<String, Any?>) : Response
+  @JvmRecord data class Success(val metadata: Map<String, Any?>) : Response
 
   /** The [RECORD](https://neo4j.com/docs/bolt/current/bolt/message/#messages-record) message. */
-  data class Record(val data: List<Any?>) : Response
+  @JvmRecord data class Record(val data: List<Any?>) : Response
 
   /** The [IGNORED](https://neo4j.com/docs/bolt/current/bolt/message/#messages-ignored) message. */
   data object Ignored : Response
 
   /** The [FAILURE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-failure) message. */
-  data class Failure(val metadata: Map<String, Any?>) : Response
+  @JvmRecord data class Failure(val metadata: Map<String, Any?>) : Response
 
   /**
    * Convert the [PackStream.Structure] to a [Message].

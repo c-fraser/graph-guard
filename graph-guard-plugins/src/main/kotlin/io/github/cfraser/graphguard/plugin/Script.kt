@@ -106,6 +106,7 @@ abstract class Script {
      * @return the initialized [Server.Plugin]
      * @throws IllegalArgumentException if the [source] is invalid
      */
+    @JvmStatic
     fun evaluate(source: String): Server.Plugin {
       return evaluate(source.toScriptSource())
     }

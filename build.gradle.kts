@@ -52,7 +52,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.8.2"
+  version = "0.9.0"
 
   repositories { mavenCentral() }
 }
@@ -191,6 +191,16 @@ configure<SpotlessExtension> {
     ktfmt(ktfmtVersion)
     licenseHeader(licenseHeader, "(import|buildscript|plugins|include|@Suppress)")
     target(fileTree(rootProject.rootDir) { include("**/*.gradle.kts") })
+  }
+
+  java {
+    googleJavaFormat()
+    licenseHeader(licenseHeader)
+    target(
+        fileTree(rootProject.rootDir) {
+          include("**/*.java")
+          exclude("**/plugin/Schema*")
+        })
   }
 
   antlr4 {
@@ -354,7 +364,8 @@ tasks {
                 .toTypedArray())
       }
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
-  val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
+  val spotlessJava by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
+  val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessJava) }
   val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
 
   val detektAll by creating(Detekt::class) { source = kotlinSourceFiles }

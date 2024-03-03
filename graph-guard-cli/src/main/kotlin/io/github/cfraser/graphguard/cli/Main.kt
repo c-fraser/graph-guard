@@ -298,6 +298,8 @@ internal class Command :
               .styled(TextColors.brightBlue))
     }
 
+    override suspend fun intercept(message: Bolt.Message) = message
+
     override suspend fun observe(event: Server.Event) {
       if (event !is Server.Proxied) return
       val received = event.received

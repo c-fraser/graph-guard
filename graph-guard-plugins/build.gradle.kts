@@ -43,11 +43,7 @@ dependencies {
 }
 
 tasks {
-  val grammarSrcDir =
-      project.name.replaceFirst("-", "").replace("-", ".").removeSuffix("s").let {
-        file("src/main/java/io/github/cfraser/$it")
-      }
-
+  val grammarSrcDir = file("src/main/java/io/github/cfraser/graphguard/plugin")
   val modifyGrammarSource by creating {
     mustRunAfter(withType<AntlrTask>())
     doLast {
