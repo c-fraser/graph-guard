@@ -25,7 +25,7 @@ plugins {
 application { mainClass.set("io.github.cfraser.graphguard.cli.Main") }
 
 dependencies {
-  implementation(rootProject)
+  implementation(project(":graph-guard"))
   implementation(project(":graph-guard-plugins"))
   implementation(libs.clikt)
   implementation(libs.jackson)
@@ -34,12 +34,17 @@ dependencies {
   implementation(libs.logback.classic)
   runtimeOnly(libs.logback.encoder)
 
-  testImplementation(testFixtures(rootProject))
+  testImplementation(testFixtures(project(":graph-guard")))
 }
 
 buildConfig {
-  packageName("${rootProject.group}.${rootProject.name}".replace("-", ""))
-  buildConfigField(String::class.simpleName!!, "VERSION", "\"${rootProject.version}\"")
+  packageName(
+      "${project.group}.${project.name}"
+          .reversed()
+          .replaceFirst("-", ".")
+          .reversed()
+          .replace("-", ""))
+  buildConfigField(String::class.simpleName!!, "VERSION", "\"${project.version}\"")
 }
 
 tasks {

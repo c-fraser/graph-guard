@@ -13,9 +13,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-rootProject.name = "graph-guard"
-
-listOf("cli", "plugins").forEach { dir ->
-  include(":$dir")
-  project(":$dir").apply { name = "${rootProject.name}-$dir" }
-}
+include("graph-guard", "graph-guard-cli", "graph-guard-plugins")

@@ -17,7 +17,6 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  alias(libs.plugins.dokka)
   antlr
   `java-library`
   `maven-publish`
@@ -26,7 +25,7 @@ plugins {
 
 dependencies {
   antlr(libs.antlr4)
-  implementation(rootProject)
+  implementation(project(":graph-guard"))
   implementation(kotlin("scripting-common"))
   implementation(kotlin("scripting-jvm"))
   implementation(kotlin("scripting-jvm-host"))
@@ -38,7 +37,7 @@ dependencies {
   implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
 
-  testImplementation(testFixtures(rootProject))
+  testImplementation(testFixtures(project(":graph-guard")))
   testImplementation(libs.kotest.datatest)
   testRuntimeOnly(libs.slf4j.nop)
 }

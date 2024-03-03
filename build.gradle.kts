@@ -38,27 +38,28 @@ buildscript {
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
+  alias(libs.plugins.dokka) apply false
   alias(libs.plugins.spotless)
-  alias(libs.plugins.dokka)
   alias(libs.plugins.detekt)
   alias(libs.plugins.nexus.publish)
   alias(libs.plugins.jreleaser)
   alias(libs.plugins.dependency.versions)
   alias(libs.plugins.kover)
   alias(libs.plugins.compatibility.validator)
-  `java-library`
-  `java-test-fixtures`
-  `maven-publish`
-  signing
 }
 
 apply(plugin = "kotlinx-knit")
 
-allprojects project@{
-  apply(plugin = "org.jetbrains.kotlin.jvm")
-
+allprojects {
   group = "io.github.c-fraser"
   version = "0.8.2"
+
+  repositories { mavenCentral() }
+}
+
+subprojects project@{
+  apply(plugin = "org.jetbrains.kotlin.jvm")
+  apply(plugin = "org.jetbrains.dokka")
 
   configure<JavaPluginExtension> {
     toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
@@ -72,12 +73,10 @@ allprojects project@{
     }
   }
 
-  repositories { mavenCentral() }
-
   afterEvaluate {
     dependencies {
-      testImplementation(libs.kotest.assertions)
-      testImplementation(libs.kotest.runner)
+      "testImplementation"(libs.kotest.assertions)
+      "testImplementation"(libs.kotest.runner)
     }
 
     tasks.withType<Test> { useJUnitPlatform() }
@@ -108,12 +107,12 @@ allprojects project@{
           pom {
             name.set(this@project.name)
             description.set("${this@project.name}-${this@project.version}")
-            url.set("https://github.com/c-fraser/${rootProject.name}")
+            url.set("https://github.com/c-fraser/graph-guard")
             inceptionYear.set("2023")
 
             issueManagement {
               system.set("GitHub")
-              url.set("https://github.com/c-fraser/${rootProject.name}/issues")
+              url.set("https://github.com/c-fraser/graph-guard/issues")
             }
 
             licenses {
@@ -132,10 +131,9 @@ allprojects project@{
             }
 
             scm {
-              url.set("https://github.com/c-fraser/${rootProject.name}")
-              connection.set("scm:git:git://github.com/c-fraser/${rootProject.name}.git")
-              developerConnection.set(
-                  "scm:git:ssh://git@github.com/c-fraser/${rootProject.name}.git")
+              url.set("https://github.com/c-fraser/graph-guard")
+              connection.set("scm:git:git://github.com/c-fraser/graph-guard.git")
+              developerConnection.set("scm:git:ssh://git@github.com/c-fraser/graph-guard.git")
             }
           }
         }
@@ -151,24 +149,6 @@ allprojects project@{
       }
     }
   }
-}
-
-dependencies {
-  implementation(libs.kotlinx.coroutines)
-  implementation(libs.kotlinx.coroutines.slf4j)
-  implementation(libs.ktor.network)
-  implementation(libs.slf4j.api)
-
-  testImplementation(libs.kotest.datatest)
-  testImplementation(libs.knit.test)
-  testRuntimeOnly(libs.slf4j.nop)
-
-  testFixturesApi(rootProject)
-  testFixturesApi(project(":graph-guard-plugins"))
-  testFixturesApi(libs.neo4j.java.driver)
-  testFixturesApi(libs.testcontainers)
-  testFixturesApi(libs.testcontainers.neo4j)
-  testFixturesImplementation(libs.kotest.runner)
 }
 
 val kotlinSourceFiles by lazy {
@@ -209,7 +189,7 @@ configure<SpotlessExtension> {
 
   kotlinGradle {
     ktfmt(ktfmtVersion)
-    licenseHeader(licenseHeader, "(import|buildscript|plugins|rootProject|@Suppress)")
+    licenseHeader(licenseHeader, "(import|buildscript|plugins|include|@Suppress)")
     target(fileTree(rootProject.rootDir) { include("**/*.gradle.kts") })
   }
 
@@ -257,7 +237,7 @@ configure<JReleaserExtension> {
     license.set("Apache-2.0")
     extraProperties.put("inceptionYear", "2023")
     description.set("Extensible graph database proxy server")
-    links { homepage.set("https://github.com/c-fraser/${rootProject.name}") }
+    links { homepage.set("https://github.com/c-fraser/graph-guard") }
   }
 
   release {
@@ -330,15 +310,16 @@ tasks {
   }
 
   val setupDocs by creating {
-    dependsOn(setupAsciinemaPlayer, dokkaHtml, ":graph-guard-plugins:dokkaHtml")
+    dependsOn(setupAsciinemaPlayer, ":graph-guard:dokkaHtml", ":graph-guard-plugins:dokkaHtml")
     doLast {
       copy {
-        from(dokkaHtml.get().outputDirectory)
+        val docs by project(":graph-guard").tasks.named<DokkaTask>("dokkaHtml")
+        from(docs.outputDirectory)
         into(layout.projectDirectory.dir("docs/api"))
       }
       copy {
-        val validatorDocs by project(":graph-guard-plugins").tasks.named<DokkaTask>("dokkaHtml")
-        from(validatorDocs.outputDirectory)
+        val docs by project(":graph-guard-plugins").tasks.named<DokkaTask>("dokkaHtml")
+        from(docs.outputDirectory)
         into(layout.projectDirectory.dir("docs/api/plugins"))
       }
       val docs = rootDir.resolve("docs/index.md")

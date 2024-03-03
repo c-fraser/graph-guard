@@ -10,16 +10,16 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Java
+      - name: setup Java
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 17
-      - name: Check code
+      - name: check code
         run: ./gradlew spotlessCheck detektAll
-      - name: Execute test
+      - name: execute test
         run: ./gradlew clean test -Dkotest.tags='!Local'
