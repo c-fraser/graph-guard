@@ -198,7 +198,7 @@ configure<SpotlessExtension> {
     licenseHeader(licenseHeader)
     target(
         fileTree(rootProject.rootDir) {
-          include("**/*.java")
+          include("**/src/**/*.java")
           exclude("**/plugin/Schema*")
         })
   }
