@@ -1,1 +1,1 @@
-sourceset_dependencies='{":dokkaHtml/main":[]}'
+sourceset_dependencies='{":graph-guard:dokkaHtml/main":[]}'

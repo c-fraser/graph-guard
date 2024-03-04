@@ -40,6 +40,7 @@ $dokka.location:io.github.cfraser.graphguard.plugin/Schema.Relationship/toString
 $dokka.location:io.github.cfraser.graphguard.plugin/Schema.Validator///PointingToDeclaration/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html
 $dokka.location:io.github.cfraser.graphguard.plugin/Schema.Validator/Validator/#kotlin.Long?/PointingToDeclaration/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/-validator.html
 $dokka.location:io.github.cfraser.graphguard.plugin/Schema.Validator/intercept/#io.github.cfraser.graphguard.Bolt.Message/PointingToDeclaration/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/intercept.html
+$dokka.location:io.github.cfraser.graphguard.plugin/Schema.Validator/observe/#io.github.cfraser.graphguard.Server.Event/PointingToDeclaration/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/observe.html
 $dokka.location:io.github.cfraser.graphguard.plugin/Schema///PointingToDeclaration/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/index.html
 $dokka.location:io.github.cfraser.graphguard.plugin/Schema/Schema/#kotlin.String/PointingToDeclaration/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-schema.html
 $dokka.location:io.github.cfraser.graphguard.plugin/Schema/graphs/#/PointingToDeclaration/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/graphs.html
