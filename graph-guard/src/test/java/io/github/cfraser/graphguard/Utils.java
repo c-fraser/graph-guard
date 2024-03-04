@@ -34,7 +34,6 @@ final class Utils {
     return new Server(
         URI.create(boltUrl),
         new Server.Plugin.Async() {
-
           @NotNull
           @Override
           public CompletableFuture<Message> interceptAsync(@NotNull Bolt.Message message) {

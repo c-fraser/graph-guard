@@ -111,38 +111,40 @@ constructor(
    * Start the proxy server on the [address], connecting to the [graph].
    *
    * [Server.run] blocks indefinitely. To stop the server, [java.lang.Thread.interrupt] the blocked
-   * thread.
+   * thread. [InterruptedException] is **not** thrown after the server is stopped.
    */
   @Suppress("TooGenericExceptionCaught")
   override fun run() {
-    runBlocking(
-        when (val parallelism = parallelism) {
-          null -> Dispatchers.IO
-          else -> Dispatchers.IO.limitedParallelism(parallelism)
-        }) {
-          bind { selector, serverSocket ->
-            while (isActive) {
-              try {
-                accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
-                  connect(selector) { graphConnection, graphReader, graphWriter ->
-                    proxy(
-                        clientConnection,
-                        clientReader,
-                        clientWriter,
-                        graphConnection,
-                        graphReader,
-                        graphWriter)
+    try {
+      runBlocking(
+          when (val parallelism = parallelism) {
+            null -> Dispatchers.IO
+            else -> Dispatchers.IO.limitedParallelism(parallelism)
+          }) {
+            bind { selector, serverSocket ->
+              while (isActive) {
+                try {
+                  accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
+                    connect(selector) { graphConnection, graphReader, graphWriter ->
+                      proxy(
+                          clientConnection,
+                          clientReader,
+                          clientWriter,
+                          graphConnection,
+                          graphReader,
+                          graphWriter)
+                    }
                   }
-                }
-              } catch (thrown: Throwable) {
-                when (thrown) {
-                  is CancellationException -> LOGGER.debug("Proxy connection closed", thrown)
-                  else -> LOGGER.error("Proxy connection failure", thrown)
+                } catch (thrown: Throwable) {
+                  when (thrown) {
+                    is CancellationException -> LOGGER.debug("Proxy connection closed", thrown)
+                    else -> LOGGER.error("Proxy connection failure", thrown)
+                  }
                 }
               }
             }
           }
-        }
+    } catch (_: InterruptedException) {}
   }
 
   /** Bind the proxy [ServerSocket] to the [address] then run the [block]. */

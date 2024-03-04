@@ -16,6 +16,7 @@ limitations under the License.
 package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
+import io.github.cfraser.graphguard.knit.use
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
 import org.neo4j.driver.AuthTokens
@@ -23,8 +24,6 @@ import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
 import org.testcontainers.containers.Neo4jContainer
 import java.net.URI
-import kotlin.concurrent.thread
-import kotlin.time.Duration.Companion.seconds
 
 val LOCAL = NamedTag("Local")
 
@@ -36,24 +35,9 @@ fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>
       .use { neo4j -> neo4j.block() }
 }
 
-/** Run the test [block] with a [Server] initialized with the [plugin]. */
+/** Run the [block] using a [Server] initialized with the [plugin]. */
 fun Neo4jContainer<*>.withServer(plugin: Server.Plugin = plugin {}, block: () -> Unit) {
-  withServer(Server(URI(boltUrl), plugin), block)
-}
-
-/** Run the test [block] with the [Server]. */
-fun Neo4jContainer<*>.withServer(server: Server, block: () -> Unit) {
-  val proxy = thread {
-    try {
-      server.run()
-    } catch (_: InterruptedException) {}
-  }
-  Thread.sleep(1.seconds.inWholeMilliseconds)
-  try {
-    block()
-  } finally {
-    proxy.interrupt()
-  }
+  Server(URI(boltUrl), plugin).use { block() }
 }
 
 /** Run [MoviesGraph] queries through the [server] to the [Neo4jContainer]. */

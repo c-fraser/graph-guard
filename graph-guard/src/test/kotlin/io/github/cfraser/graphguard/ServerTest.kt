@@ -19,6 +19,7 @@ import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
+import io.github.cfraser.graphguard.knit.use
 import io.github.cfraser.graphguard.plugin.Schema
 import io.kotest.assertions.fail
 import io.kotest.assertions.throwables.shouldThrow
@@ -60,7 +61,7 @@ class ServerTest : FunSpec() {
     }
 
     test("proxy bolt messages with async plugin").config(tags = setOf(LOCAL)) {
-      withNeo4j { withServer(Utils.server(boltUrl)) { runMoviesQueries(adminPassword) } }
+      withNeo4j { Utils.server(boltUrl).use { runMoviesQueries(adminPassword) } }
     }
 
     test("observe server events").config(tags = setOf(LOCAL)) {
