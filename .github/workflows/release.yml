@@ -35,7 +35,7 @@ jobs:
           python-version: 3.12
       - name: install documentation dependencies
         run: pip install mkdocs-material
-      - name: Configure git credentials
+      - name: configure git credentials
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
