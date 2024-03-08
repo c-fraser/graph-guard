@@ -15,7 +15,6 @@ docs/api
 docs/cli/*
 !docs/cli/demo.cast
 # runtime metadata
-.devcontainer/up.json
 graph-guard-cli/neo4j.cid
 # generated antlr files
 graph-guard-plugins/src/main/java

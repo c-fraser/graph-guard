@@ -338,7 +338,8 @@ tasks {
           docs
               .readText()
               // remove project header
-              .replace("# graph-guard${System.lineSeparator()}", "# ${System.lineSeparator()}")
+              .replace(
+                  "# ${rootProject.name}${System.lineSeparator()}", "# ${System.lineSeparator()}")
               // unqualify docs references
               .replace(Regex("\\(docs/.*\\)")) { it.value.replace("docs/", "") }
               // remove inline TOC
