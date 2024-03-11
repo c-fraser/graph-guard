@@ -52,7 +52,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.9.2"
+  version = "0.9.3"
 
   repositories { mavenCentral() }
 }
@@ -239,7 +239,8 @@ configure<NexusPublishExtension> publish@{
 }
 
 val cli = project(":graph-guard-cli")
-val cliDist: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
+val cliTar: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
+val cliZip: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.zip")
 
 configure<JReleaserExtension> {
   project {
@@ -271,7 +272,12 @@ configure<JReleaserExtension> {
         }
       }
     }
-    distributions { create(cli.name) { artifact { path.set(cliDist) } } }
+    distributions {
+      create(cli.name) {
+        artifact { path.set(cliTar) }
+        artifact { path.set(cliZip) }
+      }
+    }
   }
 
   packagers {
@@ -394,13 +400,15 @@ tasks {
   }
 
   val releaseCli by creating {
-    dependsOn(":graph-guard-cli:shadowDistTar")
+    dependsOn(":graph-guard-cli:shadowDistTar", ":graph-guard-cli:shadowDistZip")
     doLast {
-      cli.layout.buildDirectory
-          .file("distributions/${cli.name}-shadow-$version.tar")
-          .map(RegularFile::getAsFile)
-          .get()
-          .copyTo(cliDist.map(RegularFile::getAsFile).get())
+      arrayOf(cliTar, cliZip).forEach { dist ->
+        cli.layout.buildDirectory
+            .file("distributions/${cli.name}-shadow-$version.${dist.get().asFile.extension}")
+            .map(RegularFile::getAsFile)
+            .get()
+            .copyTo(dist.map(RegularFile::getAsFile).get())
+      }
     }
   }
 
