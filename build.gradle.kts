@@ -245,7 +245,7 @@ configure<JReleaserExtension> {
   project {
     authors.set(listOf("c-fraser"))
     license.set("Apache-2.0")
-    extraProperties.put("inceptionYear", "2023")
+    inceptionYear.set("2023")
     description.set("Extensible graph database proxy server")
     links { homepage.set("https://github.com/c-fraser/graph-guard") }
   }
@@ -277,14 +277,14 @@ configure<JReleaserExtension> {
   packagers {
     brew {
       active.set(Active.ALWAYS)
+      downloadUrl.set(
+          "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar")
       @Suppress("DEPRECATION")
       repository {
         active.set(Active.ALWAYS)
         repoOwner.set("c-fraser")
-        username.set("c-fraser")
         token.set(System.getenv("GITHUB_TOKEN").orEmpty())
       }
-      formulaName.set("GraphGuard")
     }
   }
 }
