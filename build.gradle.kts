@@ -284,7 +284,7 @@ configure<JReleaserExtension> {
     brew {
       active.set(Active.ALWAYS)
       downloadUrl.set(
-          "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar")
+          "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.zip")
       @Suppress("DEPRECATION")
       repository {
         active.set(Active.ALWAYS)
