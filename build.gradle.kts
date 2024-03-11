@@ -273,6 +273,20 @@ configure<JReleaserExtension> {
     }
     distributions { create(cli.name) { artifact { path.set(cliDist) } } }
   }
+
+  packagers {
+    brew {
+      active.set(Active.ALWAYS)
+      @Suppress("DEPRECATION")
+      repository {
+        active.set(Active.ALWAYS)
+        repoOwner.set("c-fraser")
+        username.set("c-fraser")
+        token.set(System.getenv("GITHUB_TOKEN").orEmpty())
+      }
+      formulaName.set("GraphGuard")
+    }
+  }
 }
 
 apiValidation { ignoredProjects += listOf(cli.name) }
