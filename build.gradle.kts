@@ -52,7 +52,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.9.2"
+  version = "0.9.4"
 
   repositories { mavenCentral() }
 }
@@ -239,13 +239,14 @@ configure<NexusPublishExtension> publish@{
 }
 
 val cli = project(":graph-guard-cli")
-val cliDist: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
+val cliTar: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
+val cliZip: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.zip")
 
 configure<JReleaserExtension> {
   project {
     authors.set(listOf("c-fraser"))
     license.set("Apache-2.0")
-    extraProperties.put("inceptionYear", "2023")
+    inceptionYear.set("2023")
     description.set("Extensible graph database proxy server")
     links { homepage.set("https://github.com/c-fraser/graph-guard") }
   }
@@ -271,20 +272,24 @@ configure<JReleaserExtension> {
         }
       }
     }
-    distributions { create(cli.name) { artifact { path.set(cliDist) } } }
-  }
-
-  packagers {
-    brew {
-      active.set(Active.ALWAYS)
-      @Suppress("DEPRECATION")
-      repository {
-        active.set(Active.ALWAYS)
-        repoOwner.set("c-fraser")
-        username.set("c-fraser")
-        token.set(System.getenv("GITHUB_TOKEN").orEmpty())
+    distributions {
+      create(cli.name) {
+        artifact { path.set(cliTar) }
+        artifact { path.set(cliZip) }
+        brew {
+          active.set(Active.NEVER)
+          downloadUrl.set(
+              "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.zip")
+          @Suppress("DEPRECATION")
+          repository {
+            active.set(Active.RELEASE)
+            repoOwner.set("c-fraser")
+            username.set("c-fraser")
+            multiPlatform.set(true)
+            token.set(System.getenv("GITHUB_TOKEN").orEmpty())
+          }
+        }
       }
-      formulaName.set("GraphGuard")
     }
   }
 }
@@ -394,13 +399,15 @@ tasks {
   }
 
   val releaseCli by creating {
-    dependsOn(":graph-guard-cli:shadowDistTar")
+    dependsOn(":graph-guard-cli:shadowDistTar", ":graph-guard-cli:shadowDistZip")
     doLast {
-      cli.layout.buildDirectory
-          .file("distributions/${cli.name}-shadow-$version.tar")
-          .map(RegularFile::getAsFile)
-          .get()
-          .copyTo(cliDist.map(RegularFile::getAsFile).get())
+      arrayOf(cliTar, cliZip).forEach { dist ->
+        cli.layout.buildDirectory
+            .file("distributions/${cli.name}-shadow-$version.${dist.get().asFile.extension}")
+            .map(RegularFile::getAsFile)
+            .get()
+            .copyTo(dist.map(RegularFile::getAsFile).get())
+      }
     }
   }
 
