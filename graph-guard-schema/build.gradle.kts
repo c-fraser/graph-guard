@@ -25,12 +25,7 @@ plugins {
 
 dependencies {
   antlr(libs.antlr4)
-  implementation(project(":graph-guard"))
-  implementation(kotlin("scripting-common"))
-  implementation(kotlin("scripting-jvm"))
-  implementation(kotlin("scripting-jvm-host"))
-  implementation(kotlin("scripting-dependencies"))
-  implementation(kotlin("scripting-dependencies-maven"))
+  compileOnly(project(":graph-guard"))
   implementation(kotlin("reflect"))
   implementation(libs.kotlinx.coroutines)
   implementation(libs.caffeine)

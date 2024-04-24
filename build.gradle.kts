@@ -52,7 +52,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.9.4"
+  version = "0.10.0"
 
   repositories { mavenCentral() }
 }
@@ -346,10 +346,12 @@ tasks {
         from(docs.outputDirectory)
         into(layout.projectDirectory.dir("docs/api"))
       }
-      copy {
-        val docs by project(":graph-guard-plugins").tasks.named<DokkaTask>("dokkaHtml")
-        from(docs.outputDirectory)
-        into(layout.projectDirectory.dir("docs/api/plugins"))
+      listOf("schema", "script").forEach { plugin ->
+        copy {
+          val docs by project(":graph-guard-$plugin").tasks.named<DokkaTask>("dokkaHtml")
+          from(docs.outputDirectory)
+          into(layout.projectDirectory.dir("docs/api/$plugin"))
+        }
       }
       val docs = rootDir.resolve("docs/index.md")
       rootDir.resolve("README.md").copyTo(docs, overwrite = true)

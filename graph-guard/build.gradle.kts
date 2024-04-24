@@ -30,7 +30,8 @@ dependencies {
   testImplementation(libs.knit.test)
   testRuntimeOnly(libs.slf4j.nop)
 
-  testFixturesApi(project(":graph-guard-plugins"))
+  testFixturesApi(project(":graph-guard-schema"))
+  testFixturesApi(project(":graph-guard-script"))
   testFixturesApi(libs.neo4j.java.driver)
   testFixturesApi(libs.testcontainers)
   testFixturesApi(libs.testcontainers.neo4j)

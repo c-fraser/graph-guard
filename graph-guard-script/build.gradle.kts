@@ -13,4 +13,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-include("graph-guard", "graph-guard-cli", "graph-guard-schema", "graph-guard-script")
+plugins {
+  `java-library`
+  `maven-publish`
+  signing
+}
+
+dependencies {
+  compileOnly(project(":graph-guard"))
+  implementation(kotlin("scripting-common"))
+  implementation(kotlin("scripting-jvm"))
+  implementation(kotlin("scripting-jvm-host"))
+  implementation(kotlin("scripting-dependencies"))
+  implementation(kotlin("scripting-dependencies-maven"))
+  implementation(libs.kotlinx.coroutines)
+  implementation(libs.slf4j.api)
+
+  testImplementation(testFixtures(project(":graph-guard")))
+  testRuntimeOnly(libs.slf4j.nop)
+}

@@ -23,6 +23,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
+import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.OffsetTime
@@ -45,8 +46,7 @@ import kotlin.String as KString
  *
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
-@JvmRecord
-data class Schema internal constructor(val graphs: Set<Graph>) {
+data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
 
   /**
    * Initialize a [Schema] from the [schemaText].
@@ -67,33 +67,31 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
           })
 
   /** The [Schema.Node]s in the [graphs] indexed by [Schema.Node.name]. */
-  private val nodes: Map<KString, Node>
-    get() = graphs.flatMap(Graph::nodes).associateBy(Node::name)
+  @JvmField val nodes: Map<KString, Node> = graphs.flatMap(Graph::nodes).associateBy(Node::name)
 
-  /** The [Schema.Relationship]s in the [graphs] indexed by [Query.Relationship]. */
-  private val relationships: Map<Query.Relationship, Relationship>
-    get() = buildMap {
-      graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
-        val key =
-            Query.Relationship(
-                relationship.name, relationship.source.validate(), relationship.target.validate())
-        require(key !in this) {
-          "Duplicate relationship ${key.label} from ${key.source} to ${key.target}"
-        }
-        this[key] = relationship
+  /** The [Schema.Relationship]s in the [graphs] indexed by [Relationship.Id]. */
+  @JvmField
+  val relationships: Map<Relationship.Id, Relationship> = buildMap {
+    graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
+      val key =
+          Relationship.Id(
+              relationship.name, relationship.source.validate(), relationship.target.validate())
+      require(key !in this) {
+        "Duplicate relationship ${key.name} from ${key.source} to ${key.target}"
       }
+      this[key] = relationship
     }
+  }
 
   /**
    * Validate that the *Cypher* [Query] and [parameters] adhere to the [nodes] and [relationships].
    *
    * Returns an [InvalidQuery] with [Bolt.Failure.metadata] if the [cypher] is invalid.
    */
-  /*@VisibleForTesting*/
+  @VisibleForTesting
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
   internal fun validate(cypher: KString, parameters: Map<KString, KAny?>): InvalidQuery? {
     val query = Query.parse(cypher) ?: return null
-    val (nodes, relationships) = nodes to relationships
     for (queryNode in query.nodes) {
       val entity = InvalidQuery.Entity.Node(queryNode)
       val schemaNode = nodes[queryNode] ?: return InvalidQuery.Unknown(entity)
@@ -110,7 +108,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       if (source == null || target == null) continue
       val entity = InvalidQuery.Entity.Relationship(label, source, target)
       val schemaRelationship =
-          relationships[queryRelationship] ?: return InvalidQuery.Unknown(entity)
+          relationships[Relationship.Id(label, source, target)]
+              ?: return InvalidQuery.Unknown(entity)
       for (queryProperty in query.properties(label)) {
         val schemaProperty =
             schemaRelationship.properties.matches(queryProperty)
@@ -140,7 +139,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property name the name of the graph
    * @property nodes the nodes and relationships in the graph
    */
-  @JvmRecord data class Graph internal constructor(val name: KString, val nodes: Set<Node>) {
+  @JvmRecord
+  data class Graph internal constructor(val name: KString, val nodes: Set<Node>) {
 
     override fun toString(): KString {
       return "graph $name {\n${nodes.joinToString("\n", transform = Node::toString)}\n}"
@@ -153,7 +153,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property name the name of the node
    * @property properties the node properties
    */
-  @JvmRecord data class Node
+  @JvmRecord
+  data class Node
   internal constructor(
       val name: KString,
       val properties: Set<Property>,
@@ -178,7 +179,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property isDirected whether the relationship is directed
    * @property properties the relationship properties
    */
-  @JvmRecord data class Relationship
+  @JvmRecord
+  data class Relationship
   internal constructor(
       val name: KString,
       val source: KString,
@@ -186,6 +188,15 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
       val isDirected: KBoolean,
       val properties: Set<Property>
   ) {
+
+    /**
+     * [Relationship.Id] uniquely identifies a [Relationship].
+     *
+     * @property name the name of the relationship
+     * @property source the name of the node the relationship comes from
+     * @property target the name of the node the relationship goes to
+     */
+    @JvmRecord data class Id(val name: KString, val source: KString, val target: KString)
 
     override fun toString(): KString {
       val direction = if (isDirected) "->" else "--"
@@ -203,7 +214,8 @@ data class Schema internal constructor(val graphs: Set<Graph>) {
    * @property isNullable whether the [Property] value is nullable
    * @property allowsNullable whether the [Property] (container) allows nullable values
    */
-  @JvmRecord data class Property
+  @JvmRecord
+  data class Property
   internal constructor(
       val name: KString,
       val type: Type,

@@ -19,7 +19,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
   * [Documentation](#documentation)
   * [CLI](#cli)
 * [Plugins](#plugins)
-  * [Query validation](#query-validation)
+  * [graph-guard-schema](#graph-guard-schema)
     * [Schema](#schema)
     * [Graph](#graph)
     * [Nodes](#nodes)
@@ -27,7 +27,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Properties](#properties)
     * [Violations](#violations)
     * [Grammar](#grammar)
-  * [Scripting](#scripting)
+  * [graph-guard-script](#graph-guard-script)
 * [License](#license)
 
 <!--- END -->
@@ -153,9 +153,9 @@ server.interrupt(); // interrupt the thread running the server to initiate a gra
 
 ### Documentation
 
-Refer to the [graph-guard](https://c-fraser.github.io/graph-guard/api/)
-and [graph-guard-plugins](https://c-fraser.github.io/graph-guard/api/plugins/) code
-documentation.
+- [graph-guard](https://c-fraser.github.io/graph-guard/api/)
+- [graph-guard-schema](https://c-fraser.github.io/graph-guard/api/schema/)
+- [graph-guard-script](https://c-fraser.github.io/graph-guard/api/script/)
 
 ### CLI
 
@@ -173,13 +173,13 @@ tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
 
 ## Plugins
 
-`graph-guard-plugins` contains
+The following `graph-guard*` projects contain
 various [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
 implementations to
 augment [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
 functionality.
 
-### Query validation
+### graph-guard-schema
 
 [Schema.Validator](https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
 is a [plugin](#plugins) that performs realtime [schema](#schema) validation by
@@ -374,7 +374,7 @@ the ([antlr4](https://github.com/antlr/antlr4))
 [grammar](https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4)
 for an exact specification of the [schema](#schema) DSL.
 
-### Scripting
+### graph-guard-script
 
 [Script.evaluate](https://c-fraser.github.io/graph-guard/api/plugins/graph-guard-plugins/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html)
 enables [plugins](#plugins) to be compiled and loaded from
@@ -384,7 +384,7 @@ exposes
 a [DSL](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html)
 to build [plugins](#plugins).
 
-For example, use a [plugin script](#scripting) with the [Server](#design).
+For example, use a [plugin script](#graph-guard-script) with the [Server](#design).
 
 <!--- TEST_NAME Example07Test --> 
 <!--- INCLUDE
