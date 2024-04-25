@@ -1,0 +1,11 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:io.github.cfraser.graphguard.plugin////PointingToDeclaration/graph-guard-script/io.github.cfraser.graphguard.plugin/index.html
+$dokka.location:io.github.cfraser.graphguard.plugin/Script.Companion///PointingToDeclaration/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/index.html
+$dokka.location:io.github.cfraser.graphguard.plugin/Script.Companion/evaluate/#kotlin.String/PointingToDeclaration/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html
+$dokka.location:io.github.cfraser.graphguard.plugin/Script.Context///PointingToDeclaration/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/index.html
+$dokka.location:io.github.cfraser.graphguard.plugin/Script.Context/plugin/#kotlin.Function1[io.github.cfraser.graphguard.Server.Plugin.Builder,kotlin.Unit]/PointingToDeclaration/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/plugin.html
+$dokka.location:io.github.cfraser.graphguard.plugin/Script///PointingToDeclaration/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/index.html
+$dokka.location:io.github.cfraser.graphguard.plugin/Script/Script/#/PointingToDeclaration/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-script.html
+io.github.cfraser.graphguard.plugin
+
