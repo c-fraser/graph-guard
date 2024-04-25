@@ -52,7 +52,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.10.0"
+  version = "0.10.1"
 
   repositories { mavenCentral() }
 }
@@ -339,14 +339,18 @@ tasks {
   }
 
   val setupDocs by creating {
-    dependsOn(setupAsciinemaPlayer, ":graph-guard:dokkaHtml", ":graph-guard-plugins:dokkaHtml")
+    val plugins = listOf("schema", "script")
+    dependsOn(
+        setupAsciinemaPlayer,
+        ":graph-guard:dokkaHtml",
+        *plugins.map { plugin -> ":graph-guard-$plugin:dokkaHtml" }.toTypedArray())
     doLast {
       copy {
         val docs by project(":graph-guard").tasks.named<DokkaTask>("dokkaHtml")
         from(docs.outputDirectory)
         into(layout.projectDirectory.dir("docs/api"))
       }
-      listOf("schema", "script").forEach { plugin ->
+      plugins.forEach { plugin ->
         copy {
           val docs by project(":graph-guard-$plugin").tasks.named<DokkaTask>("dokkaHtml")
           from(docs.outputDirectory)
