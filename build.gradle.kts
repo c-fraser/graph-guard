@@ -52,7 +52,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.10.1"
+  version = "0.10.2"
 
   repositories { mavenCentral() }
 }
@@ -354,7 +354,7 @@ tasks {
         copy {
           val docs by project(":graph-guard-$plugin").tasks.named<DokkaTask>("dokkaHtml")
           from(docs.outputDirectory)
-          into(layout.projectDirectory.dir("docs/api/$plugin"))
+          into(layout.projectDirectory.dir("docs/api/plugin/$plugin"))
         }
       }
       val docs = rootDir.resolve("docs/index.md")
@@ -362,9 +362,6 @@ tasks {
       docs.writeText(
           docs
               .readText()
-              // remove project header
-              .replace(
-                  "# ${rootProject.name}${System.lineSeparator()}", "# ${System.lineSeparator()}")
               // unqualify docs references
               .replace(Regex("\\(docs/.*\\)")) { it.value.replace("docs/", "") }
               // remove inline TOC

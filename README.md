@@ -181,7 +181,7 @@ functionality.
 
 ### graph-guard-schema
 
-[Schema.Validator](https://c-fraser.github.io/graph-guard/api/plugins/schema/graph-guard-schema/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
+[Schema.Validator](https://c-fraser.github.io/graph-guard/api/plugin/schema/graph-guard-schema/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
 is a [plugin](#plugins) that performs realtime [schema](#schema) validation by
 intercepting [RUN](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-run/index.html)
 requests then analyzing the [Cypher](https://neo4j.com/developer/cypher/) query (and parameters) for
@@ -376,10 +376,10 @@ for an exact specification of the [schema](#schema) DSL.
 
 ### graph-guard-script
 
-[Script.evaluate](https://c-fraser.github.io/graph-guard/api/plugins/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html)
+[Script.evaluate](https://c-fraser.github.io/graph-guard/api/plugin/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html)
 enables [plugins](#plugins) to be compiled and loaded from
 a [Kotlin script](https://kotlinlang.org/docs/custom-script-deps-tutorial.html).
-The [Script.Context](https://c-fraser.github.io/graph-guard/api/plugins/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/index.html)
+The [Script.Context](https://c-fraser.github.io/graph-guard/api/plugin/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/index.html)
 exposes
 a [DSL](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html)
 to build [plugins](#plugins).
