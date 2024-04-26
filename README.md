@@ -13,21 +13,21 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
 
 * [Design](#design)
 * [Usage](#usage)
-  * [Examples](#examples)
-    * [Kotlin](#kotlin)
-    * [Java](#java)
-  * [Documentation](#documentation)
-  * [CLI](#cli)
+    * [Examples](#examples)
+        * [Kotlin](#kotlin)
+        * [Java](#java)
+    * [Documentation](#documentation)
+    * [CLI](#cli)
 * [Plugins](#plugins)
-  * [graph-guard-schema](#graph-guard-schema)
-    * [Schema](#schema)
-    * [Graph](#graph)
-    * [Nodes](#nodes)
-    * [Relationships](#relationships)
-    * [Properties](#properties)
-    * [Violations](#violations)
-    * [Grammar](#grammar)
-  * [graph-guard-script](#graph-guard-script)
+    * [graph-guard-schema](#graph-guard-schema)
+        * [Schema](#schema)
+        * [Graph](#graph)
+        * [Nodes](#nodes)
+        * [Relationships](#relationships)
+        * [Properties](#properties)
+        * [Violations](#violations)
+        * [Grammar](#grammar)
+    * [graph-guard-script](#graph-guard-script)
 * [License](#license)
 
 <!--- END -->
@@ -154,8 +154,8 @@ server.interrupt(); // interrupt the thread running the server to initiate a gra
 ### Documentation
 
 - [graph-guard](https://c-fraser.github.io/graph-guard/api/)
-- [graph-guard-schema](https://c-fraser.github.io/graph-guard/api/schema/)
-- [graph-guard-script](https://c-fraser.github.io/graph-guard/api/script/)
+- [graph-guard-schema](https://c-fraser.github.io/graph-guard/api/plugin/schema/)
+- [graph-guard-script](https://c-fraser.github.io/graph-guard/api/plugin/script/)
 
 ### CLI
 
