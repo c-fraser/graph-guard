@@ -399,7 +399,7 @@ The Cypher query validation prevents the following [schema](#schema) violations.
 
 Refer to
 the ([antlr4](https://github.com/antlr/antlr4))
-[grammar](https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4)
+[grammar](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-schema/src/main/antlr/Schema.g4)
 for an exact specification of the [schema](#schema) DSL.
 
 ### graph-guard-script
