@@ -23,14 +23,28 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Graph : java/lang/
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/cfraser/graphguard/plugin/Schema$Metadata : java/lang/Record {
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Metadata;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Metadata;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Metadata;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun name ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun value ()Ljava/lang/String;
+}
+
 public final class io/github/cfraser/graphguard/plugin/Schema$Node : java/lang/Record {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/Set;
 	public final fun component3 ()Ljava/util/Set;
-	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;)Lio/github/cfraser/graphguard/plugin/Schema$Node;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Node;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Node;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lio/github/cfraser/graphguard/plugin/Schema$Node;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Node;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Node;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
+	public final fun metadata ()Ljava/util/Set;
 	public final fun name ()Ljava/lang/String;
 	public final fun properties ()Ljava/util/Set;
 	public final fun relationships ()Ljava/util/Set;
@@ -41,15 +55,17 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Property : java/la
 	public final fun allowsNullable ()Z
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;
-	public final fun component3 ()Z
+	public final fun component3 ()Ljava/util/Set;
 	public final fun component4 ()Z
 	public final fun component5 ()Z
-	public final fun copy (Ljava/lang/String;Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;ZZZ)Lio/github/cfraser/graphguard/plugin/Schema$Property;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Property;Ljava/lang/String;Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;ZZZILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Property;
+	public final fun component6 ()Z
+	public final fun copy (Ljava/lang/String;Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;Ljava/util/Set;ZZZ)Lio/github/cfraser/graphguard/plugin/Schema$Property;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Property;Ljava/lang/String;Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;Ljava/util/Set;ZZZILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Property;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public final fun isList ()Z
 	public final fun isNullable ()Z
+	public final fun metadata ()Ljava/util/Set;
 	public final fun name ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 	public final fun type ()Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;
@@ -143,11 +159,13 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Relationship : jav
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Z
 	public final fun component5 ()Ljava/util/Set;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Set;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Relationship;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship;
+	public final fun component6 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Set;Ljava/util/Set;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Relationship;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public final fun isDirected ()Z
+	public final fun metadata ()Ljava/util/Set;
 	public final fun name ()Ljava/lang/String;
 	public final fun properties ()Ljava/util/Set;
 	public final fun source ()Ljava/lang/String;

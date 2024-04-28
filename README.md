@@ -13,21 +13,22 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
 
 * [Design](#design)
 * [Usage](#usage)
-    * [Examples](#examples)
-        * [Kotlin](#kotlin)
-        * [Java](#java)
-    * [Documentation](#documentation)
-    * [CLI](#cli)
+  * [Examples](#examples)
+    * [Kotlin](#kotlin)
+    * [Java](#java)
+  * [Documentation](#documentation)
+  * [CLI](#cli)
 * [Plugins](#plugins)
-    * [graph-guard-schema](#graph-guard-schema)
-        * [Schema](#schema)
-        * [Graph](#graph)
-        * [Nodes](#nodes)
-        * [Relationships](#relationships)
-        * [Properties](#properties)
-        * [Violations](#violations)
-        * [Grammar](#grammar)
-    * [graph-guard-script](#graph-guard-script)
+  * [graph-guard-schema](#graph-guard-schema)
+    * [Schema](#schema)
+    * [Graph](#graph)
+    * [Nodes](#nodes)
+    * [Relationships](#relationships)
+    * [Properties](#properties)
+    * [Metadata](#metadata)
+    * [Violations](#violations)
+    * [Grammar](#grammar)
+  * [graph-guard-script](#graph-guard-script)
 * [License](#license)
 
 <!--- END -->
@@ -330,7 +331,8 @@ must have a unique `(source)-[name]-(target)`, and may also have [properties](#p
 
 #### Properties
 
-A node or relationship may have *typed* properties. The supported property types are listed below.
+A [node](#nodes) or [relationship](#relationships) may have *typed* properties. The supported
+property types are listed below.
 
 > The types align with the
 > supported [Cypher values](https://neo4j.com/docs/cypher-manual/current/values-and-types/).
@@ -356,6 +358,32 @@ A node or relationship may have *typed* properties. The supported property types
 
 A property can be designated as nullable by including the `?` suffix on the type, for
 example `String?` and `List<Any?>`.
+
+#### Metadata
+
+A [node](#nodes), [relationship](#relationships), or [property](#properties) may have arbitrary
+*metadata*.
+
+> Currently, the metadata is purely information, it isn't used in [schema](#schema) verification.
+
+<!--- INCLUDE
+const val METADATA_SCHEMA =
+    """
+----- SUFFIX
+"""
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+graph G {
+  node @a N(@b(c) p: Any):
+    @d R(@e(f) @g p: Any) -- N;
+}
+```
+[//]: # (@formatter:on)
+<!--- KNIT Example07.kt --> 
+
+The metadata annotations can have any name, and may include a value within parenthesis.
 
 #### Violations
 
@@ -386,7 +414,7 @@ to build [plugins](#plugins).
 
 For example, use a [plugin script](#graph-guard-script) with the [Server](#design).
 
-<!--- TEST_NAME Example07Test --> 
+<!--- TEST_NAME Example08Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.plugin.Script
@@ -395,7 +423,7 @@ import io.github.cfraser.graphguard.withNeo4j
 import java.net.URI
 import kotlin.time.Duration.Companion.seconds
 
-fun runExample07() {
+fun runExample08() {
   withNeo4j {
 ----- SUFFIX
   }
@@ -437,7 +465,7 @@ server.use(wait = 10.seconds) {
 
 > Script compilation and evaluation takes longer, thus the 10 second `wait`.
 
-<!--- KNIT Example07.kt --> 
+<!--- KNIT Example08.kt --> 
 
 The code above prints the following message.
 

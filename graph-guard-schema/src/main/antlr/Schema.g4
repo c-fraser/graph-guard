@@ -28,11 +28,11 @@ graph
    ;
 
 node
-   : NODE name properties? (COLON relationship (COMMA relationship)*)?
+   : NODE metadata? name properties? (COLON relationship (COMMA relationship)*)?
    ;
 
 relationship
-   : name properties? (UNDIRECTED | DIRECTED) target
+   : metadata? name properties? (UNDIRECTED | DIRECTED) target
    ;
 
 properties
@@ -40,19 +40,19 @@ properties
    ;
 
 property
-   : name COLON type
+   : metadata? name COLON type
    ;
 
 type
-   : (value | list) QM?
+   : (typeValue | list) QM?
    ;
 
-value
+typeValue
    : VALUE
    ;
 
 list
-   : LIST LT value QM? GT
+   : LIST LT typeValue QM? GT
    ;
 
 name
@@ -66,6 +66,18 @@ qualified
 target
    : name
    | qualified
+   ;
+
+metadata
+   : AT name metadataValue? metadata?
+   ;
+
+metadataValue
+   : LP (name) RP
+   ;
+
+AT
+   : '@'
    ;
 
 LC

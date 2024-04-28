@@ -16,6 +16,7 @@ limitations under the License.
 package io.github.cfraser.graphguard.plugin
 
 import io.github.cfraser.graphguard.MoviesGraph
+import io.github.cfraser.graphguard.knit.METADATA_SCHEMA
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.knit.PLACES_SCHEMA
 import io.kotest.core.spec.style.FunSpec
@@ -34,6 +35,10 @@ class SchemaTest : FunSpec() {
   init {
     test("parse graph schema") {
       Schema(MOVIES_SCHEMA + PLACES_SCHEMA) shouldBe MOVIES_AND_PLACES_GRAPH_SCHEMA
+    }
+
+    test("parse graph schema with metadata") {
+      Schema(METADATA_SCHEMA) shouldBe METADATA_SCHEMA_GRAPH_SCHEMA
     }
 
     test("render graph schema") { "$MOVIES_GRAPH" shouldBe MOVIES_SCHEMA.trim() }
@@ -321,8 +326,8 @@ class SchemaTest : FunSpec() {
                         name = "Person",
                         properties =
                             setOf(
-                                Schema.Property("name", Schema.Property.Type.String),
-                                Schema.Property("born", Schema.Property.Type.Integer)),
+                                Schema.Property("name", Schema.Property.Type.String, emptySet()),
+                                Schema.Property("born", Schema.Property.Type.Integer, emptySet())),
                         relationships =
                             setOf(
                                 Schema.Relationship(
@@ -335,7 +340,9 @@ class SchemaTest : FunSpec() {
                                             Schema.Property(
                                                 "roles",
                                                 Schema.Property.Type.String,
+                                                emptySet(),
                                                 isList = true)),
+                                    metadata = emptySet(),
                                 ),
                                 Schema.Relationship(
                                     name = "DIRECTED",
@@ -343,6 +350,7 @@ class SchemaTest : FunSpec() {
                                     target = "Movie",
                                     isDirected = true,
                                     properties = emptySet(),
+                                    metadata = emptySet(),
                                 ),
                                 Schema.Relationship(
                                     name = "PRODUCED",
@@ -350,6 +358,7 @@ class SchemaTest : FunSpec() {
                                     target = "Movie",
                                     isDirected = true,
                                     properties = emptySet(),
+                                    metadata = emptySet(),
                                 ),
                                 Schema.Relationship(
                                     name = "WROTE",
@@ -357,6 +366,7 @@ class SchemaTest : FunSpec() {
                                     target = "Movie",
                                     isDirected = true,
                                     properties = emptySet(),
+                                    metadata = emptySet(),
                                 ),
                                 Schema.Relationship(
                                     name = "REVIEWED",
@@ -365,18 +375,26 @@ class SchemaTest : FunSpec() {
                                     isDirected = true,
                                     properties =
                                         setOf(
-                                            Schema.Property("summary", Schema.Property.Type.String),
                                             Schema.Property(
-                                                "rating", Schema.Property.Type.Integer)),
-                                ))),
+                                                "summary", Schema.Property.Type.String, emptySet()),
+                                            Schema.Property(
+                                                "rating",
+                                                Schema.Property.Type.Integer,
+                                                emptySet())),
+                                    metadata = emptySet(),
+                                )),
+                        metadata = emptySet()),
                     Schema.Node(
                         name = "Movie",
                         properties =
                             setOf(
-                                Schema.Property("title", Schema.Property.Type.String),
-                                Schema.Property("released", Schema.Property.Type.Integer),
-                                Schema.Property("tagline", Schema.Property.Type.String)),
-                        relationships = emptySet()),
+                                Schema.Property("title", Schema.Property.Type.String, emptySet()),
+                                Schema.Property(
+                                    "released", Schema.Property.Type.Integer, emptySet()),
+                                Schema.Property(
+                                    "tagline", Schema.Property.Type.String, emptySet())),
+                        relationships = emptySet(),
+                        metadata = emptySet()),
                 ))
 
     /** The [Schema.Graph] for the `PLACES_SCHEMA`. */
@@ -387,7 +405,8 @@ class SchemaTest : FunSpec() {
                 setOf(
                     Schema.Node(
                         name = "Theater",
-                        properties = setOf(Schema.Property("name", Schema.Property.Type.String)),
+                        properties =
+                            setOf(Schema.Property("name", Schema.Property.Type.String, emptySet())),
                         relationships =
                             setOf(
                                 Schema.Relationship(
@@ -400,11 +419,58 @@ class SchemaTest : FunSpec() {
                                             Schema.Property(
                                                 "times",
                                                 Schema.Property.Type.Integer,
+                                                emptySet(),
                                                 isList = true)),
-                                )))))
+                                    metadata = emptySet(),
+                                )),
+                        metadata = emptySet())))
 
     /** The [Schema] for the [MOVIES_GRAPH] and [PLACES_GRAPH]. */
     val MOVIES_AND_PLACES_GRAPH_SCHEMA = Schema(setOf(MOVIES_GRAPH, PLACES_GRAPH))
+
+    /** The [Schema] for the [METADATA_SCHEMA]. */
+    val METADATA_SCHEMA_GRAPH_SCHEMA =
+        Schema(
+            graphs =
+                setOf(
+                    Schema.Graph(
+                        name = "G",
+                        nodes =
+                            setOf(
+                                Schema.Node(
+                                    name = "N",
+                                    properties =
+                                        setOf(
+                                            Schema.Property(
+                                                name = "p",
+                                                type = Schema.Property.Type.Any,
+                                                metadata =
+                                                    setOf(
+                                                        Schema.Metadata(name = "b", value = "c")))),
+                                    relationships =
+                                        setOf(
+                                            Schema.Relationship(
+                                                name = "R",
+                                                source = "N",
+                                                target = "N",
+                                                isDirected = false,
+                                                properties =
+                                                    setOf(
+                                                        Schema.Property(
+                                                            name = "p",
+                                                            type = Schema.Property.Type.Any,
+                                                            metadata =
+                                                                setOf(
+                                                                    Schema.Metadata(
+                                                                        name = "e", value = "f"),
+                                                                    Schema.Metadata(
+                                                                        name = "g",
+                                                                        value = null)))),
+                                                metadata =
+                                                    setOf(
+                                                        Schema.Metadata(
+                                                            name = "d", value = null)))),
+                                    metadata = setOf(Schema.Metadata(name = "a", value = null)))))))
 
     infix fun String.with(parameters: Map<String, Any?>) = this to parameters
 
@@ -412,23 +478,26 @@ class SchemaTest : FunSpec() {
         Data(first, second, expected)
 
     val PERSON = Schema.InvalidQuery.Entity.Node("Person")
-    val NAME = Schema.Property("name", Schema.Property.Type.String)
+    val NAME = Schema.Property("name", Schema.Property.Type.String, emptySet())
 
     val A = Schema.InvalidQuery.Entity.Node("A")
-    val A_A = Schema.Property("a", Schema.Property.Type.Any, isList = true, allowsNullable = true)
+    val A_A =
+        Schema.Property(
+            "a", Schema.Property.Type.Any, emptySet(), isList = true, allowsNullable = true)
     val B = Schema.InvalidQuery.Entity.Node("B")
-    val B_B = Schema.Property("b", Schema.Property.Type.Any, isList = true, isNullable = true)
+    val B_B =
+        Schema.Property("b", Schema.Property.Type.Any, emptySet(), isList = true, isNullable = true)
     val C = Schema.InvalidQuery.Entity.Node("C")
-    val C_C = Schema.Property("c", Schema.Property.Type.Date)
+    val C_C = Schema.Property("c", Schema.Property.Type.Date, emptySet())
     val D = Schema.InvalidQuery.Entity.Node("D")
-    val D_D = Schema.Property("d", Schema.Property.Type.Time)
+    val D_D = Schema.Property("d", Schema.Property.Type.Time, emptySet())
     val E = Schema.InvalidQuery.Entity.Node("E")
-    val E_E = Schema.Property("e", Schema.Property.Type.LocalTime)
+    val E_E = Schema.Property("e", Schema.Property.Type.LocalTime, emptySet())
     val F = Schema.InvalidQuery.Entity.Node("F")
-    val F_F = Schema.Property("f", Schema.Property.Type.DateTime)
+    val F_F = Schema.Property("f", Schema.Property.Type.DateTime, emptySet())
     val G = Schema.InvalidQuery.Entity.Node("G")
-    val G_G = Schema.Property("g", Schema.Property.Type.LocalDateTime)
+    val G_G = Schema.Property("g", Schema.Property.Type.LocalDateTime, emptySet())
     val H = Schema.InvalidQuery.Entity.Node("H")
-    val H_H = Schema.Property("h", Schema.Property.Type.Duration)
+    val H_H = Schema.Property("h", Schema.Property.Type.Duration, emptySet())
   }
 }

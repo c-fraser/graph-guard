@@ -19,26 +19,26 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.Server
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.OffsetTime
+import java.time.ZonedDateTime as JZonedDateTime
+import java.time.ZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Any
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
 import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
-import java.time.LocalDate
-import java.time.OffsetTime
-import java.time.ZonedDateTime
-import kotlin.Any
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.ZonedDateTime as JZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
 
 /**
  * A [Schema] describes the nodes and relationships in a [Neo4j](https://neo4j.com/) database via
@@ -152,13 +152,16 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
    *
    * @property name the name of the node
    * @property properties the node properties
+   * @property relationships the relationships to other nodes
+   * @property metadata the node metadata
    */
   @JvmRecord
   data class Node
   internal constructor(
       val name: KString,
       val properties: Set<Property>,
-      val relationships: Set<Relationship>
+      val relationships: Set<Relationship>,
+      val metadata: Set<Metadata>
   ) {
 
     override fun toString(): KString {
@@ -178,6 +181,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
    * @property target the name of the node the relationship goes to
    * @property isDirected whether the relationship is directed
    * @property properties the relationship properties
+   * @property metadata the relationship metadata
    */
   @JvmRecord
   data class Relationship
@@ -186,7 +190,8 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
       val source: KString,
       val target: KString,
       val isDirected: KBoolean,
-      val properties: Set<Property>
+      val properties: Set<Property>,
+      val metadata: Set<Metadata>
   ) {
 
     /**
@@ -209,6 +214,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
    *
    * @property name the name of the property
    * @property type the property type
+   * @property metadata the property metadata
    * @property isList whether the [Property] is a
    *   [List](https://neo4j.com/docs/cypher-manual/5/values-and-types/lists/) of the [type]
    * @property isNullable whether the [Property] value is nullable
@@ -219,6 +225,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
   internal constructor(
       val name: KString,
       val type: Type,
+      val metadata: Set<Metadata>,
       val isList: KBoolean = false,
       val isNullable: KBoolean = false,
       val allowsNullable: KBoolean = false
@@ -271,6 +278,14 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
       }
     }
   }
+
+  /**
+   * [Graph] entity [Metadata].
+   *
+   * @property name the name of the metadata
+   * @property value the optional value of the metadata
+   */
+  @JvmRecord data class Metadata internal constructor(val name: KString, val value: KString?)
 
   /**
    * [Schema.Validator] is a [Server.Plugin] that validates the [Bolt.Run.query] and
@@ -544,25 +559,28 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
     private var node by notNull<Node>()
 
     override fun enterGraph(ctx: SchemaParser.GraphContext) {
-      graph = Graph(+ctx.name(), emptySet())
+      graph = Graph(ctx.name().get(), emptySet())
     }
 
     override fun enterNode(ctx: SchemaParser.NodeContext) {
-      val name = +ctx.name()
-      val properties = +ctx.properties()
-      node = Node(name, properties, emptySet())
+      val name = ctx.name().get()
+      val properties = ctx.properties().get()
+      val metadata = ctx.metadata().get()
+      node = Node(name, properties, emptySet(), metadata)
     }
 
     override fun enterRelationship(ctx: SchemaParser.RelationshipContext) {
-      val name = +ctx.name()
+      val name = ctx.name().get()
       val source = node.name
-      val target = +ctx.target()
+      val target = ctx.target().get()
       val directed = ctx.DIRECTED() != null
-      val properties = +ctx.properties()
+      val properties = ctx.properties().get()
+      val metadata = ctx.metadata().get()
       node =
           node.copy(
               relationships =
-                  node.relationships + Relationship(name, source, target, directed, properties))
+                  node.relationships +
+                      Relationship(name, source, target, directed, properties, metadata))
     }
 
     override fun exitNode(ctx: SchemaParser.NodeContext?) {
@@ -576,21 +594,34 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
     private companion object {
 
       /** Get the name from the [RuleNode]. */
-      operator fun RuleNode?.unaryPlus(): KString {
+      fun RuleNode?.get(): KString {
         return checkNotNull(this?.text?.takeUnless { it.isBlank() })
+      }
+
+      /** Get the [Metadata] from the [SchemaParser.MetadataContext]. */
+      tailrec fun SchemaParser.MetadataContext?.get(
+          collected: MutableSet<Metadata> = mutableSetOf()
+      ): Set<Metadata> {
+        return if (this == null) collected
+        else {
+          val name = name().get()
+          val value = metadataValue()?.name()?.get()
+          collected += Metadata(name, value)
+          metadata().get(collected)
+        }
       }
 
       /** Get the properties from the [SchemaParser.PropertiesContext]. */
       @Suppress("CyclomaticComplexMethod")
-      operator fun SchemaParser.PropertiesContext?.unaryPlus(): Set<Property> {
+      fun SchemaParser.PropertiesContext?.get(): Set<Property> {
         return this?.property()
             ?.map { ctx ->
-              val name = +ctx.name()
+              val name = ctx.name().get()
               val type =
                   when (val type =
-                      when (val type = ctx.type()?.run { value() ?: list() }) {
-                        is SchemaParser.ValueContext -> +type
-                        is SchemaParser.ListContext -> +type.value()
+                      when (val type = ctx.type()?.run { typeValue() ?: list() }) {
+                        is SchemaParser.TypeValueContext -> type.get()
+                        is SchemaParser.ListContext -> type.typeValue().get()
                         else -> error("Unknown property type")
                       }) {
                     "Any" -> Property.Type.Any
@@ -606,10 +637,11 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
                     "Time" -> Property.Type.Time
                     else -> error("Unexpected property type '$type'")
                   }
+              val metadata = ctx.metadata().get()
               val isList = ctx.type().list() != null
               val isNullable = ctx.type().QM() != null
               val allowsNullable = ctx.type().list()?.QM() != null
-              Property(name, type, isList, isNullable, allowsNullable)
+              Property(name, type, metadata, isList, isNullable, allowsNullable)
             }
             ?.toSet() ?: emptySet()
       }

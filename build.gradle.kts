@@ -206,7 +206,7 @@ configure<SpotlessExtension> {
   antlr4 {
     antlr4Formatter()
     licenseHeader(licenseHeader)
-    target("**/src/antlr/*.g4")
+    target("**/src/main/antlr/*.g4")
   }
 
   fun FormatExtension.pretty() =
