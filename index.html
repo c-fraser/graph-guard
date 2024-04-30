@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.19">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.20">
     
     
       
@@ -439,6 +439,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#violations" class="md-nav__link">
     <span class="md-ellipsis">
       Violations
@@ -764,7 +773,8 @@ have <a href="#properties">properties</a> and/or <a href="#relationships">relati
 have a name, direction (<code>-&gt;</code> for directed, or <code>--</code> for undirected), and target node. A relationship
 must have a unique <code>(source)-[name]-(target)</code>, and may also have <a href="#properties">properties</a>.</p>
 <h4 id="properties">Properties</h4>
-<p>A node or relationship may have <em>typed</em> properties. The supported property types are listed below.</p>
+<p>A <a href="#nodes">node</a> or <a href="#relationships">relationship</a> may have <em>typed</em> properties. The supported
+property types are listed below.</p>
 <blockquote>
 <p>The types align with the
 supported <a href="https://neo4j.com/docs/cypher-manual/current/values-and-types/">Cypher values</a>.</p>
@@ -791,6 +801,27 @@ supported <a href="https://neo4j.com/docs/cypher-manual/current/values-and-types
 </ul>
 <p>A property can be designated as nullable by including the <code>?</code> suffix on the type, for
 example <code>String?</code> and <code>List&lt;Any?&gt;</code>.</p>
+<h4 id="metadata">Metadata</h4>
+<p>A <a href="#nodes">node</a>, <a href="#relationships">relationship</a>, or <a href="#properties">property</a> may have arbitrary
+<em>metadata</em>.</p>
+<blockquote>
+<p>Currently, the metadata is purely information, it isn't used in <a href="#schema">schema</a> verification.</p>
+</blockquote>
+<!--- INCLUDE
+const val METADATA_SCHEMA =
+    """
+----- SUFFIX
+"""
+-->
+
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">graph</span><span class="w"> </span><span class="n">G</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="nd">@a</span><span class="w"> </span><span class="n">N</span><span class="p">(</span><span class="nd">@b</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="kt">Any</span><span class="p">):</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nd">@d</span><span class="w"> </span><span class="n">R</span><span class="p">(</span><span class="nd">@e</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="nd">@g</span><span class="w"> </span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="kt">Any</span><span class="p">)</span><span class="w"> </span><span class="o">--</span><span class="w"> </span><span class="n">N</span><span class="p">;</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="p">}</span>
+</span></code></pre></div>
+<!--- KNIT Example07.kt -->
+
+<p>The metadata annotations can have any name, and may include a value within parenthesis.</p>
 <h4 id="violations">Violations</h4>
 <p>The Cypher query validation prevents the following <a href="#schema">schema</a> violations.</p>
 <ul>
@@ -803,7 +834,7 @@ example <code>String?</code> and <code>List&lt;Any?&gt;</code>.</p>
 <h4 id="grammar">Grammar</h4>
 <p>Refer to
 the (<a href="https://github.com/antlr/antlr4">antlr4</a>)
-<a href="https://github.com/c-fraser/graph-guard/blob/main/src/main/antlr/Schema.g4">grammar</a>
+<a href="https://github.com/c-fraser/graph-guard/blob/main/graph-guard-schema/src/main/antlr/Schema.g4">grammar</a>
 for an exact specification of the <a href="#schema">schema</a> DSL.</p>
 <h3 id="graph-guard-script">graph-guard-script</h3>
 <p><a href="https://c-fraser.github.io/graph-guard/api/plugin/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html">Script.evaluate</a>
@@ -814,7 +845,7 @@ exposes
 a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html">DSL</a>
 to build <a href="#plugins">plugins</a>.</p>
 <p>For example, use a <a href="#graph-guard-script">plugin script</a> with the <a href="#design">Server</a>.</p>
-<!--- TEST_NAME Example07Test -->
+<!--- TEST_NAME Example08Test -->
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.plugin.Script
@@ -823,49 +854,49 @@ import io.github.cfraser.graphguard.withNeo4j
 import java.net.URI
 import kotlin.time.Duration.Companion.seconds
 
-fun runExample07() {
+fun runExample08() {
   withNeo4j {
 ----- SUFFIX
   }
 }
 -->
 
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;&quot;</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="s">@file:DependsOn(</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="s">    &quot;io.github.resilience4j:resilience4j-ratelimiter:2.2.0&quot;,</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="s">    &quot;io.github.resilience4j:resilience4j-kotlin:2.2.0&quot;)</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="s">import io.github.resilience4j.kotlin.ratelimiter.RateLimiterConfig</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s">import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction</span>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s">import io.github.resilience4j.ratelimiter.RateLimiter</span>
-</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s">import java.util.concurrent.atomic.AtomicInteger</span>
-</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
-</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="s">plugin {</span>
-</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="s">  val rateLimiter = RateLimiter.of(&quot;message-limiter&quot;, RateLimiterConfig {})</span>
-</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="s">  intercept { message -&gt; rateLimiter.executeSuspendFunction { message } }</span>
-</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="s">}</span>
-</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
-</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="s">plugin { </span>
-</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="s">  val messages = AtomicInteger()</span>
-</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="s">  intercept { message -&gt;</span>
-</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="s">    if (messages.getAndIncrement() == 0) println(message::class.simpleName)</span>
-</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="s">    message</span>
-</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="s">  }</span>
-</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="s">}</span>
-</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="s">&quot;&quot;&quot;</span>
-</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="kd">val</span><span class="w"> </span><span class="nv">plugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Script</span><span class="p">.</span><span class="na">evaluate</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
-</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="kd">val</span><span class="w"> </span><span class="nv">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Server</span><span class="p">(</span><span class="n">URI</span><span class="p">(</span><span class="n">boltUrl</span><span class="p">),</span><span class="w"> </span><span class="n">plugin</span><span class="p">)</span>
-</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="n">server</span><span class="p">.</span><span class="na">use</span><span class="p">(</span><span class="n">wait</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10.</span><span class="n">seconds</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="w">  </span><span class="n">runMoviesQueries</span><span class="p">(</span><span class="n">adminPassword</span><span class="p">)</span>
-</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;&quot;</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="s">@file:DependsOn(</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="s">    &quot;io.github.resilience4j:resilience4j-ratelimiter:2.2.0&quot;,</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s">    &quot;io.github.resilience4j:resilience4j-kotlin:2.2.0&quot;)</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s">import io.github.resilience4j.kotlin.ratelimiter.RateLimiterConfig</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s">import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s">import io.github.resilience4j.ratelimiter.RateLimiter</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s">import java.util.concurrent.atomic.AtomicInteger</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="s">plugin {</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="s">  val rateLimiter = RateLimiter.of(&quot;message-limiter&quot;, RateLimiterConfig {})</span>
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="s">  intercept { message -&gt; rateLimiter.executeSuspendFunction { message } }</span>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="s">}</span>
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="s">plugin { </span>
+</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="s">  val messages = AtomicInteger()</span>
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="s">  intercept { message -&gt;</span>
+</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="s">    if (messages.getAndIncrement() == 0) println(message::class.simpleName)</span>
+</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="s">    message</span>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="s">  }</span>
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="s">}</span>
+</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="s">&quot;&quot;&quot;</span>
+</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="kd">val</span><span class="w"> </span><span class="nv">plugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Script</span><span class="p">.</span><span class="na">evaluate</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
+</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="kd">val</span><span class="w"> </span><span class="nv">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Server</span><span class="p">(</span><span class="n">URI</span><span class="p">(</span><span class="n">boltUrl</span><span class="p">),</span><span class="w"> </span><span class="n">plugin</span><span class="p">)</span>
+</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="n">server</span><span class="p">.</span><span class="na">use</span><span class="p">(</span><span class="n">wait</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10.</span><span class="n">seconds</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">  </span><span class="n">runMoviesQueries</span><span class="p">(</span><span class="n">adminPassword</span><span class="p">)</span>
+</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="p">}</span>
 </span></code></pre></div>
 <blockquote>
 <p>Script compilation and evaluation takes longer, thus the 10 second <code>wait</code>.</p>
 </blockquote>
-<!--- KNIT Example07.kt -->
+<!--- KNIT Example08.kt -->
 
 <p>The code above prints the following message.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Hello
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Hello
 </span></code></pre></div>
 <!--- TEST -->
 
