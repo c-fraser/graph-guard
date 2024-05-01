@@ -13,4 +13,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-include("graph-guard", "graph-guard-cli", "graph-guard-schema", "graph-guard-script")
+include("graph-guard", "graph-guard-cli", "graph-guard-script")

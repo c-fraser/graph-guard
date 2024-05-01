@@ -17,4 +17,4 @@ docs/cli/*
 # runtime metadata
 graph-guard-cli/neo4j.cid
 # generated antlr files
-graph-guard-schema/src/main/java
+graph-guard/src/main/java

@@ -26,7 +26,6 @@ application { mainClass.set("io.github.cfraser.graphguard.cli.Main") }
 
 dependencies {
   implementation(project(":graph-guard"))
-  implementation(project(":graph-guard-schema"))
   implementation(project(":graph-guard-script"))
   implementation(libs.clikt)
   implementation(libs.jackson)

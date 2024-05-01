@@ -52,7 +52,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.10.4"
+  version = "0.11.0"
 
   repositories { mavenCentral() }
 }
@@ -247,7 +247,7 @@ configure<JReleaserExtension> {
     authors.set(listOf("c-fraser"))
     license.set("Apache-2.0")
     inceptionYear.set("2023")
-    description.set("Extensible graph database proxy server")
+    description.set("Graph schema validation proxy server")
     links { homepage.set("https://github.com/c-fraser/graph-guard") }
   }
 
@@ -339,7 +339,7 @@ tasks {
   }
 
   val setupDocs by creating {
-    val plugins = listOf("schema", "script")
+    val plugins = listOf("script")
     dependsOn(
         setupAsciinemaPlayer,
         ":graph-guard:dokkaHtml",

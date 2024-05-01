@@ -41,12 +41,12 @@ import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.plugin.Script
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 import java.net.URI
 import java.time.LocalDateTime
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.slf4j.LoggerFactory
 
 /** [main] is the entry point for the [Server] application, run by the [Command]. */
 fun main(args: Array<String>) {
@@ -55,7 +55,7 @@ fun main(args: Array<String>) {
 
 /** [Command] runs [Server] with the CLI input. */
 internal class Command :
-    CliktCommand(name = "graph-guard", help = "Extensible graph database proxy server") {
+    CliktCommand(name = "graph-guard", help = "Graph schema validation proxy server") {
 
   init {
     versionOption(BuildConfig.VERSION)

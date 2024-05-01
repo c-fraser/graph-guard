@@ -6,12 +6,21 @@
 [![Javadoc](https://javadoc.io/badge2/io.github.c-fraser/graph-guard/javadoc.svg)](https://javadoc.io/doc/io.github.c-fraser/graph-guard)
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-`graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server
-for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
+`graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server, that
+is capable of performing realtime schema validation, for [Neo4j](https://neo4j.com/) 5+ (compatible
+databases).
 
 <!--- TOC -->
 
 * [Design](#design)
+  * [Schema](#schema)
+    * [Graph](#graph)
+    * [Nodes](#nodes)
+    * [Relationships](#relationships)
+    * [Properties](#properties)
+    * [Metadata](#metadata)
+    * [Violations](#violations)
+    * [Grammar](#grammar)
 * [Usage](#usage)
   * [Examples](#examples)
     * [Kotlin](#kotlin)
@@ -19,16 +28,6 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
   * [Documentation](#documentation)
   * [CLI](#cli)
 * [Plugins](#plugins)
-  * [graph-guard-schema](#graph-guard-schema)
-    * [Schema](#schema)
-    * [Graph](#graph)
-    * [Nodes](#nodes)
-    * [Relationships](#relationships)
-    * [Properties](#properties)
-      * [Union type](#union-type)
-    * [Metadata](#metadata)
-    * [Violations](#violations)
-    * [Grammar](#grammar)
   * [graph-guard-script](#graph-guard-script)
 * [License](#license)
 
@@ -48,143 +47,10 @@ enabling
 the [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
 to dynamically transform the incoming and outgoing data.
 
-## Usage
-
-The `graph-guard*` libraries are accessible
-via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard*)
-and the `graph-guard-cli` application is published in
-the [releases](https://github.com/c-fraser/graph-guard/releases).
-
-> `graph-guard` requires Java 17+.
-
-> `Server` doesn't currently support TLS (because
-> of [ktor-network](https://youtrack.jetbrains.com/issue/KTOR-694) limitations).
-> Use [NGINX](https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/) or a
-> cloud load balancer to decrypt *Bolt* traffic for the proxy server.
-
-### Examples
-
-Refer to the snippets below to see how to initialize and run a `Server` with the `graph-guard`
-library.
-
-#### Kotlin
-
-<!--- INCLUDE
-import io.github.cfraser.graphguard.Server
-import kotlin.concurrent.thread
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
--->
-
-[//]: # (@formatter:off)
-```kotlin
-/** [Server.run] `this` [Server] in a [thread] then execute the [block]. */
-fun Server.use(wait: Duration = 1.seconds, block: () -> Unit) {
-  val server = thread(block = ::run) // run the server until the thread is interrupted
-  Thread.sleep(wait.inWholeMilliseconds) // wait for the server to start in separate thread
-  try {
-    block() // execute a function interacting with the server
-  } finally {
-    server.interrupt() // interrupt the thread running the server to initiate a graceful shutdown
-  }
-}
-```
-[//]: # (@formatter:on)
-<!--- KNIT Example01.kt -->
-
-<!--- INCLUDE
-import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
-import io.github.cfraser.graphguard.runMoviesQueries
-import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
-
-fun runExample02() {
-  withNeo4j {
------ SUFFIX
-  }
-}
--->
-
-[//]: # (@formatter:off)
-```kotlin
-Server(
-  URI(boltUrl),
-  plugin { // define plugin using DSL
-    intercept { message -> message.also(::println) }
-    observe { event -> println(event) }
-  })
-  .use { TODO("interact with the running server") }
-```
-[//]: # (@formatter:on)
-<!--- KNIT Example02.kt -->
-
-#### Java
-
-[//]: # (@formatter:off)
-```java
-Server.Plugin plugin = // implement async plugin; can't utilize Kotlin coroutines plugin interface in Java
-    new Server.Plugin.Async() {
-      @NotNull
-      @Override
-      public CompletableFuture<Message> interceptAsync(@NotNull Bolt.Message message) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                  System.out.println(message);
-                  return message;
-                });
-      }
-
-      @NotNull
-      @Override
-      public CompletableFuture<Void> observeAsync(@NotNull Server.Event event) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                  System.out.println(event);
-                  return null;
-                });
-      }
-    };
-Thread server = new Thread(new Server(URI.create(boltUrl), plugin));
-server.start(); // run the server until the thread is interrupted
-Thread.sleep(1_000); // wait for the server to start in separate thread
-/* TODO: interact with the running server */
-server.interrupt(); // interrupt the thread running the server to initiate a graceful shutdown
-```
-[//]: # (@formatter:on)
-
-### Documentation
-
-- [graph-guard](https://c-fraser.github.io/graph-guard/api/)
-- [graph-guard-schema](https://c-fraser.github.io/graph-guard/api/plugin/schema/)
-- [graph-guard-script](https://c-fraser.github.io/graph-guard/api/plugin/script/)
-
-### CLI
-
-Download and run the `graph-guard-cli` application.
-
-```shell
-curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar
-mkdir graph-guard-cli
-tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
-./graph-guard-cli/bin/graph-guard-cli --help
-```
-
-> Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
-> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh)).
-
-## Plugins
-
-The following `graph-guard*` projects contain
-various [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
-implementations to
-augment [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
-functionality.
-
-### graph-guard-schema
-
-[Schema.Validator](https://c-fraser.github.io/graph-guard/api/plugin/schema/graph-guard-schema/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
-is a [plugin](#plugins) that performs realtime [schema](#schema) validation by
+[Schema.Validator](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
+is
+a [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
+that performs realtime [schema](#schema) validation by
 intercepting [RUN](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-run/index.html)
 requests then analyzing the [Cypher](https://neo4j.com/developer/cypher/) query (and parameters) for
 schema [violations](#violations). If the intercepted query is determined to be *invalid* according
@@ -229,9 +95,9 @@ fun runInvalidMoviesQueries(password: String) {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example03.kt -->
+<!--- KNIT Example01.kt -->
 
-<!--- TEST_NAME Example04Test --> 
+<!--- TEST_NAME Example02Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.Server
@@ -239,7 +105,7 @@ import io.github.cfraser.graphguard.withNeo4j
 import java.net.URI
 import kotlin.concurrent.thread
 
-fun runExample04() {
+fun runExample02() {
   withNeo4j {
 ----- SUFFIX
   }
@@ -253,7 +119,7 @@ val server = Server(URI(boltUrl), plugin)
 server.use { runInvalidMoviesQueries(adminPassword) }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example04.kt --> 
+<!--- KNIT Example02.kt --> 
 
 The code above prints the following *schema violation* messages.
 
@@ -267,7 +133,7 @@ Invalid query value(s) '09/02/1964' for property 'born: Integer' on node Person
 
 <!--- TEST -->
 
-#### Schema
+### Schema
 
 A schema describes the nodes and relationships in a graph. The schema is defined
 using a custom DSL language, demonstrated below for
@@ -294,7 +160,7 @@ graph Movies {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example05.kt --> 
+<!--- KNIT Example03.kt --> 
 
 #### Graph
 
@@ -317,7 +183,7 @@ graph Places {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example06.kt --> 
+<!--- KNIT Example04.kt --> 
 
 #### Nodes
 
@@ -356,12 +222,10 @@ property types are listed below.
 - `String`
 - `Time` -
   a [time()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-time)
-- String literal - any value enclosed in `"`, e.g. `"example"`
+- String literal - any value enclosed in double quotation marks, e.g. `"example"`
 
 A property can be designated as nullable by including the `?` suffix on the type, for
 example `String?` and `List<Any?>`.
-
-##### Union type
 
 A [property](#properties) may specify multiple types of values with the *union type* syntax, as
 shown below.
@@ -380,7 +244,7 @@ graph G {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example07.kt --> 
+<!--- KNIT Example05.kt --> 
 
 #### Metadata
 
@@ -404,7 +268,7 @@ graph G {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example08.kt --> 
+<!--- KNIT Example06.kt --> 
 
 The metadata annotations can have any name, and may include a value within parenthesis.
 
@@ -422,8 +286,140 @@ The Cypher query validation prevents the following [schema](#schema) violations.
 
 Refer to
 the ([antlr4](https://github.com/antlr/antlr4))
-[grammar](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-schema/src/main/antlr/Schema.g4)
+[grammar](https://github.com/c-fraser/graph-guard/blob/main/graph-guard/src/main/antlr/Schema.g4)
 for an exact specification of the [schema](#schema) DSL.
+
+## Usage
+
+The `graph-guard*` libraries are accessible
+via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard*)
+and the `graph-guard-cli` application is published in
+the [releases](https://github.com/c-fraser/graph-guard/releases).
+
+> `graph-guard` requires Java 17+.
+
+> `Server` doesn't currently support TLS (because
+> of [ktor-network](https://youtrack.jetbrains.com/issue/KTOR-694) limitations).
+> Use [NGINX](https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/) or a
+> cloud load balancer to decrypt *Bolt* traffic for the proxy server.
+
+### Examples
+
+Refer to the snippets below to see how to initialize and run a `Server` with the `graph-guard`
+library.
+
+#### Kotlin
+
+<!--- INCLUDE
+import io.github.cfraser.graphguard.Server
+import kotlin.concurrent.thread
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+/** [Server.run] `this` [Server] in a [thread] then execute the [block]. */
+fun Server.use(wait: Duration = 1.seconds, block: () -> Unit) {
+  val server = thread(block = ::run) // run the server until the thread is interrupted
+  Thread.sleep(wait.inWholeMilliseconds) // wait for the server to start in separate thread
+  try {
+    block() // execute a function interacting with the server
+  } finally {
+    server.interrupt() // interrupt the thread running the server to initiate a graceful shutdown
+  }
+}
+```
+[//]: # (@formatter:on)
+<!--- KNIT Example07.kt -->
+
+<!--- INCLUDE
+import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
+import io.github.cfraser.graphguard.runMoviesQueries
+import io.github.cfraser.graphguard.withNeo4j
+import java.net.URI
+
+fun runExample08() {
+  withNeo4j {
+----- SUFFIX
+  }
+}
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+Server(
+  URI(boltUrl),
+  plugin { // define plugin using DSL
+    intercept { message -> message.also(::println) }
+    observe { event -> println(event) }
+  })
+  .use { TODO("interact with the running server") }
+```
+[//]: # (@formatter:on)
+<!--- KNIT Example08.kt -->
+
+#### Java
+
+[//]: # (@formatter:off)
+```java
+Server.Plugin plugin = // implement async plugin; can't utilize Kotlin coroutines plugin interface in Java
+    new Server.Plugin.Async() {
+      @NotNull
+      @Override
+      public CompletableFuture<Message> interceptAsync(@NotNull Bolt.Message message) {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                  System.out.println(message);
+                  return message;
+                });
+      }
+
+      @NotNull
+      @Override
+      public CompletableFuture<Void> observeAsync(@NotNull Server.Event event) {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                  System.out.println(event);
+                  return null;
+                });
+      }
+    };
+Thread server = new Thread(new Server(URI.create(boltUrl), plugin));
+server.start(); // run the server until the thread is interrupted
+Thread.sleep(1_000); // wait for the server to start in separate thread
+/* TODO: interact with the running server */
+server.interrupt(); // interrupt the thread running the server to initiate a graceful shutdown
+```
+[//]: # (@formatter:on)
+
+### Documentation
+
+- [graph-guard](https://c-fraser.github.io/graph-guard/api/)
+- [graph-guard-script](https://c-fraser.github.io/graph-guard/api/plugin/script/)
+
+### CLI
+
+Download and run the `graph-guard-cli` application.
+
+```shell
+curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar
+mkdir graph-guard-cli
+tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
+./graph-guard-cli/bin/graph-guard-cli --help
+```
+
+> Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
+> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh)).
+
+## Plugins
+
+The following `graph-guard-*` projects contain
+additional [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
+implementations to
+augment [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
+functionality.
 
 ### graph-guard-script
 

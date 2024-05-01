@@ -13,7 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
+  antlr
   `java-library`
   `java-test-fixtures`
   `maven-publish`
@@ -21,19 +25,55 @@ plugins {
 }
 
 dependencies {
+  antlr(libs.antlr4)
+  implementation(kotlin("reflect"))
   implementation(libs.kotlinx.coroutines)
   implementation(libs.kotlinx.coroutines.slf4j)
   implementation(libs.ktor.network)
+  implementation(libs.caffeine)
+  implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
 
   testImplementation(libs.kotest.datatest)
   testImplementation(libs.knit.test)
   testRuntimeOnly(libs.slf4j.nop)
 
-  testFixturesApi(project(":graph-guard-schema"))
   testFixturesApi(project(":graph-guard-script"))
   testFixturesApi(libs.neo4j.java.driver)
   testFixturesApi(libs.testcontainers)
   testFixturesApi(libs.testcontainers.neo4j)
   testFixturesImplementation(libs.kotest.runner)
+}
+
+tasks {
+  val grammarSrcDir = file("src/main/java/io/github/cfraser/graphguard/plugin")
+  val modifyGrammarSource by creating {
+    mustRunAfter(withType<AntlrTask>())
+    doLast {
+      fileTree(grammarSrcDir) { include("*.java") }
+          .forEach { file ->
+            file.writeText(
+                file
+                    .readText()
+                    // reduce visibility of generated types
+                    .replace("public class", "class")
+                    .replace("public interface", "interface"))
+          }
+    }
+  }
+
+  generateGrammarSource {
+    finalizedBy(modifyGrammarSource)
+    outputDirectory = grammarSrcDir
+  }
+
+  withType<KotlinCompile> {
+    dependsOn(withType<AntlrTask>())
+    kotlinOptions { freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers") }
+  }
+
+  withType<Jar> { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+  named("sourcesJar") { dependsOn(withType<AntlrTask>()) }
+
+  withType<DokkaTask> { mustRunAfter(withType<AntlrTask>()) }
 }
