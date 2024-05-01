@@ -73,7 +73,6 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Property : java/la
 
 public abstract class io/github/cfraser/graphguard/plugin/Schema$Property$Type {
 	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/plugin/Schema$Property$Type$Any : io/github/cfraser/graphguard/plugin/Schema$Property$Type {
@@ -125,6 +124,17 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Property$Type$Inte
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/cfraser/graphguard/plugin/Schema$Property$Type$LiteralString : io/github/cfraser/graphguard/plugin/Schema$Property$Type {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$LiteralString;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$LiteralString;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$LiteralString;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/cfraser/graphguard/plugin/Schema$Property$Type$LocalDateTime : io/github/cfraser/graphguard/plugin/Schema$Property$Type {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$LocalDateTime;
 	public fun equals (Ljava/lang/Object;)Z
@@ -149,6 +159,17 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Property$Type$Stri
 public final class io/github/cfraser/graphguard/plugin/Schema$Property$Type$Time : io/github/cfraser/graphguard/plugin/Schema$Property$Type {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$Time;
 	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/plugin/Schema$Property$Type$Union : io/github/cfraser/graphguard/plugin/Schema$Property$Type {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$Union;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$Union;Ljava/util/List;ILjava/lang/Object;)Lio/github/cfraser/graphguard/plugin/Schema$Property$Type$Union;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTypes ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

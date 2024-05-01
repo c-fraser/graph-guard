@@ -22,12 +22,12 @@ import io.kotest.core.spec.style.FunSpec
 import kotlinx.knit.test.captureOutput
 import kotlinx.knit.test.verifyOutputLines
 
-class Example08Test : FunSpec() {
+class Example09Test : FunSpec() {
 
   init {
     tags(LOCAL)
-    test("Example08") {
-    captureOutput("Example08") { runExample08() }.verifyOutputLines(
+    test("Example09") {
+    captureOutput("Example09") { runExample09() }.verifyOutputLines(
         "Hello"
   )
     }

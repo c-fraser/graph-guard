@@ -273,8 +273,20 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
 
       data object Time : Type(OffsetTime::class)
 
-      override fun toString(): KString {
-        return "${this::class.simpleName}"
+      /** A [Type.LiteralString] [value]. */
+      data class LiteralString(val value: KString) : Type(KString::class) {
+
+        override fun toString(): KString {
+          return "\"$value\""
+        }
+      }
+
+      /** A [Type.Union] of [types]. */
+      data class Union(val types: List<Type>) : Type(Unit::class) {
+
+        override fun toString(): KString {
+          return types.joinToString(" | ")
+        }
       }
     }
   }
@@ -545,7 +557,17 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
       if (!isList && filterNotNull().any { it is MutableList<*> }) return false
       return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
           .filterNullIf(isNullable)
-          .all(type.clazz::isInstance)
+          .all { value ->
+            when (type) {
+              is Property.Type.LiteralString -> type.value == value
+              is Property.Type.Union ->
+                  type.types.any { t ->
+                    if (t is Property.Type.LiteralString) t.value == value
+                    else t.clazz.isInstance(value)
+                  }
+              else -> type.clazz.isInstance(value)
+            }
+          }
     }
   }
 
@@ -612,38 +634,55 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
       }
 
       /** Get the properties from the [SchemaParser.PropertiesContext]. */
-      @Suppress("CyclomaticComplexMethod")
       fun SchemaParser.PropertiesContext?.get(): Set<Property> {
         return this?.property()
             ?.map { ctx ->
               val name = ctx.name().get()
               val type =
-                  when (val type =
-                      when (val type = ctx.type()?.run { typeValue() ?: list() }) {
-                        is SchemaParser.TypeValueContext -> type.get()
-                        is SchemaParser.ListContext -> type.typeValue().get()
-                        else -> error("Unknown property type")
-                      }) {
-                    "Any" -> Property.Type.Any
-                    "Boolean" -> Property.Type.Boolean
-                    "Date" -> Property.Type.Date
-                    "DateTime" -> Property.Type.DateTime
-                    "Duration" -> Property.Type.Duration
-                    "Float" -> Property.Type.Float
-                    "Integer" -> Property.Type.Integer
-                    "LocalDateTime" -> Property.Type.LocalDateTime
-                    "LocalTime" -> Property.Type.LocalTime
-                    "String" -> Property.Type.String
-                    "Time" -> Property.Type.Time
-                    else -> error("Unexpected property type '$type'")
+                  when (val type = ctx.type() ?: ctx.union()) {
+                    is SchemaParser.TypeContext -> type.get()
+                    is SchemaParser.UnionContext -> type.get()
+                    else -> error("Unknown type")
                   }
               val metadata = ctx.metadata().get()
-              val isList = ctx.type().list() != null
-              val isNullable = ctx.type().QM() != null
-              val allowsNullable = ctx.type().list()?.QM() != null
+              val isList = ctx.type()?.list() != null
+              val isNullable = ctx.type()?.QM() != null
+              val allowsNullable = ctx.type()?.list()?.QM() != null
               Property(name, type, metadata, isList, isNullable, allowsNullable)
             }
             ?.toSet() ?: emptySet()
+      }
+
+      /** Get the [Property.Type] from the [SchemaParser.TypeContext]. */
+      @Suppress("CyclomaticComplexMethod")
+      fun SchemaParser.TypeContext.get(): Property.Type {
+        val value =
+            when (val ctx = typeValue() ?: list() ?: stringLiteral()) {
+              is SchemaParser.TypeValueContext,
+              is SchemaParser.StringLiteralContext -> ctx.get()
+              is SchemaParser.ListContext -> ctx.typeValue().get()
+              else -> error("Unknown type value")
+            }
+        return when (value) {
+          "Any" -> Property.Type.Any
+          "Boolean" -> Property.Type.Boolean
+          "Date" -> Property.Type.Date
+          "DateTime" -> Property.Type.DateTime
+          "Duration" -> Property.Type.Duration
+          "Float" -> Property.Type.Float
+          "Integer" -> Property.Type.Integer
+          "LocalDateTime" -> Property.Type.LocalDateTime
+          "LocalTime" -> Property.Type.LocalTime
+          "String" -> Property.Type.String
+          "Time" -> Property.Type.Time
+          else -> Property.Type.LiteralString(value.drop(1).dropLast(1))
+        }
+      }
+
+      /** Get the [Property.Type.Union] type from the [SchemaParser.UnionContext]. */
+      fun SchemaParser.UnionContext.get(): Property.Type.Union {
+        val types = type().map { type -> type.get() }
+        return Property.Type.Union(types)
       }
     }
   }

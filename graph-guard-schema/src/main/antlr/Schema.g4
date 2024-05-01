@@ -40,19 +40,27 @@ properties
    ;
 
 property
-   : metadata? name COLON type
+   : metadata? name COLON (type | union)
    ;
 
 type
-   : (typeValue | list) QM?
+   : (typeValue | list | stringLiteral) QM?
    ;
 
 typeValue
-   : VALUE
+   : TYPE_VALUE
    ;
 
 list
    : LIST LT typeValue QM? GT
+   ;
+
+stringLiteral
+   : STRING_LITERAL
+   ;
+
+union
+   : type (PIPE type)+
    ;
 
 name
@@ -124,6 +132,10 @@ DOT
    : '.'
    ;
 
+PIPE
+   : '|'
+   ;
+
 UNDIRECTED
    : '--'
    ;
@@ -140,7 +152,7 @@ NODE
    : 'node'
    ;
 
-VALUE
+TYPE_VALUE
    : ANY
    | BOOLEAN
    | DATE
@@ -208,6 +220,10 @@ NAME
 
 QUALIFIED
    : NAME DOT NAME
+   ;
+
+STRING_LITERAL
+   : '"' (~ ["\\\r\n] | '\'' | '\\"')* '"'
    ;
 
 WHITESPACE

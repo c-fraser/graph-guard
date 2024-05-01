@@ -25,6 +25,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Nodes](#nodes)
     * [Relationships](#relationships)
     * [Properties](#properties)
+      * [Union type](#union-type)
     * [Metadata](#metadata)
     * [Violations](#violations)
     * [Grammar](#grammar)
@@ -355,9 +356,31 @@ property types are listed below.
 - `String`
 - `Time` -
   a [time()](https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-time)
+- String literal - any value enclosed in `"`, e.g. `"example"`
 
 A property can be designated as nullable by including the `?` suffix on the type, for
 example `String?` and `List<Any?>`.
+
+##### Union type
+
+A [property](#properties) may specify multiple types of values with the *union type* syntax, as
+shown below.
+
+<!--- INCLUDE
+const val UNION_SCHEMA =
+    """
+----- SUFFIX
+"""
+-->
+
+[//]: # (@formatter:off)
+```kotlin
+graph G {
+  node N(p: Boolean | "true" | "false");
+}
+```
+[//]: # (@formatter:on)
+<!--- KNIT Example07.kt --> 
 
 #### Metadata
 
@@ -381,7 +404,7 @@ graph G {
 }
 ```
 [//]: # (@formatter:on)
-<!--- KNIT Example07.kt --> 
+<!--- KNIT Example08.kt --> 
 
 The metadata annotations can have any name, and may include a value within parenthesis.
 
@@ -414,7 +437,7 @@ to build [plugins](#plugins).
 
 For example, use a [plugin script](#graph-guard-script) with the [Server](#design).
 
-<!--- TEST_NAME Example08Test --> 
+<!--- TEST_NAME Example09Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.plugin.Script
@@ -423,7 +446,7 @@ import io.github.cfraser.graphguard.withNeo4j
 import java.net.URI
 import kotlin.time.Duration.Companion.seconds
 
-fun runExample08() {
+fun runExample09() {
   withNeo4j {
 ----- SUFFIX
   }
@@ -465,7 +488,7 @@ server.use(wait = 10.seconds) {
 
 > Script compilation and evaluation takes longer, thus the 10 second `wait`.
 
-<!--- KNIT Example08.kt --> 
+<!--- KNIT Example09.kt --> 
 
 The code above prints the following message.
 

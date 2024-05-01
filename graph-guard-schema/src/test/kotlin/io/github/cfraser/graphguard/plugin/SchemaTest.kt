@@ -19,6 +19,7 @@ import io.github.cfraser.graphguard.MoviesGraph
 import io.github.cfraser.graphguard.knit.METADATA_SCHEMA
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.knit.PLACES_SCHEMA
+import io.github.cfraser.graphguard.knit.UNION_SCHEMA
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
@@ -33,15 +34,19 @@ import java.time.ZonedDateTime
 class SchemaTest : FunSpec() {
 
   init {
-    test("parse graph schema") {
+    test("parse movies and places schema") {
       Schema(MOVIES_SCHEMA + PLACES_SCHEMA) shouldBe MOVIES_AND_PLACES_GRAPH_SCHEMA
     }
 
-    test("parse graph schema with metadata") {
-      Schema(METADATA_SCHEMA) shouldBe METADATA_SCHEMA_GRAPH_SCHEMA
-    }
+    test("parse metadata schema") { Schema(METADATA_SCHEMA) shouldBe METADATA_GRAPH_SCHEMA }
 
-    test("render graph schema") { "$MOVIES_GRAPH" shouldBe MOVIES_SCHEMA.trim() }
+    test("parse union schema") { Schema(UNION_SCHEMA) shouldBe UNION_GRAPH_SCHEMA }
+
+    test("render movies and places schema") { "$MOVIES_GRAPH" shouldBe MOVIES_SCHEMA.trim() }
+
+    test("render union schema") {
+      "${UNION_GRAPH_SCHEMA.graphs.first()}" shouldBe UNION_SCHEMA.trim()
+    }
 
     context("validate cypher queries") {
       withData(
@@ -116,6 +121,29 @@ class SchemaTest : FunSpec() {
               null) { (query, parameters, expected) ->
             MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected
           }
+    }
+
+    context("validate cypher queries with union schema") {
+      fun invalidProperty(vararg values: Any?) =
+          Schema.InvalidQuery.InvalidProperty(
+              Schema.InvalidQuery.Entity.Node("N"), UNION_PROPERTY, values.toList())
+      withData(
+          "CREATE (:N {p: true})" with emptyMap() expect null,
+          "CREATE (:N {p: false})" with emptyMap() expect null,
+          "CREATE (:N {p: 'true'})" with emptyMap() expect null,
+          "CREATE (:N {p: 'false'})" with emptyMap() expect null,
+          "CREATE (:N {p: \$p})" with mapOf("p" to true) expect null,
+          "CREATE (:N {p: \$p})" with mapOf("p" to false) expect null,
+          "CREATE (:N {p: \$p})" with mapOf("p" to "true") expect null,
+          "CREATE (:N {p: \$p})" with mapOf("p" to "false") expect null,
+          "CREATE (:N {p: ''})" with emptyMap() expect invalidProperty(""),
+          "CREATE (:N {p: \$p})" with mapOf("p" to "") expect invalidProperty(""),
+          "CREATE (:N {p: \$p})" with mapOf("p" to null) expect invalidProperty(null),
+          "CREATE (:N {p: 'TRUE'})" with emptyMap() expect invalidProperty("TRUE"),
+          "CREATE (:N {p: \$p})" with mapOf("p" to "FALSE") expect invalidProperty("FALSE"),
+      ) { (query, parameters, expected) ->
+        UNION_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected
+      }
     }
 
     context("validate nullable types") {
@@ -429,7 +457,7 @@ class SchemaTest : FunSpec() {
     val MOVIES_AND_PLACES_GRAPH_SCHEMA = Schema(setOf(MOVIES_GRAPH, PLACES_GRAPH))
 
     /** The [Schema] for the [METADATA_SCHEMA]. */
-    val METADATA_SCHEMA_GRAPH_SCHEMA =
+    val METADATA_GRAPH_SCHEMA =
         Schema(
             graphs =
                 setOf(
@@ -471,6 +499,33 @@ class SchemaTest : FunSpec() {
                                                         Schema.Metadata(
                                                             name = "d", value = null)))),
                                     metadata = setOf(Schema.Metadata(name = "a", value = null)))))))
+
+    /** A [Schema.Property] with a [Schema.Property.Type.Union] type. */
+    val UNION_PROPERTY =
+        Schema.Property(
+            name = "p",
+            type =
+                Schema.Property.Type.Union(
+                    listOf(
+                        Schema.Property.Type.Boolean,
+                        Schema.Property.Type.LiteralString("true"),
+                        Schema.Property.Type.LiteralString("false"))),
+            metadata = emptySet())
+
+    /** The [Schema] for the [UNION_SCHEMA]. */
+    val UNION_GRAPH_SCHEMA =
+        Schema(
+            graphs =
+                setOf(
+                    Schema.Graph(
+                        name = "G",
+                        nodes =
+                            setOf(
+                                Schema.Node(
+                                    name = "N",
+                                    properties = setOf(UNION_PROPERTY),
+                                    relationships = emptySet(),
+                                    metadata = emptySet())))))
 
     infix fun String.with(parameters: Map<String, Any?>) = this to parameters
 
