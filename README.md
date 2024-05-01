@@ -6,9 +6,9 @@
 [![Javadoc](https://javadoc.io/badge2/io.github.c-fraser/graph-guard/javadoc.svg)](https://javadoc.io/doc/io.github.c-fraser/graph-guard)
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-`graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server, that
-is capable of performing realtime schema validation, for [Neo4j](https://neo4j.com/) 5+ (compatible
-databases).
+`graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server,
+that's capable of performing realtime schema validation, for [Neo4j](https://neo4j.com/) 5+
+(compatible databases).
 
 <!--- TOC -->
 
@@ -59,7 +59,7 @@ a [FAILURE](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfr
 response is sent to the *client*.
 
 For example, validate [movies](https://github.com/neo4j-graph-examples/movies) queries via
-the [Server](#design), using the [graph-guard](#usage) libraries.
+the [Server](#design), using the [graph-guard](#usage) library.
 
 <!--- INCLUDE
 import org.neo4j.driver.AuthTokens
