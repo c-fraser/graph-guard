@@ -15,7 +15,7 @@ fi
 
 set -euo pipefail
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 PROJECT_DIR=$(dirname "$SCRIPT_DIR")
 
 function cleanup()
@@ -35,5 +35,5 @@ sleep 10 && \
     --rerun \
   > /dev/null 2>&1 &
 ./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist > /dev/null 2>&1
-python3 -c "import pathlib, re; print(re.search(r'\"{3}([\s\S]*?)\"{3}', pathlib.Path('$PROJECT_DIR/src/testFixtures/kotlin/io/github/cfraser/graphguard/knit/Example01.kt').read_text(), re.RegexFlag.MULTILINE)[1])" \
-  | timeout 15 ./cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --styled -s -
+python3 -c "import pathlib, re; print(re.search(r'\"{3}([\s\S]*?)\"{3}', pathlib.Path('$PROJECT_DIR/graph-guard/src/testFixtures/kotlin/io/github/cfraser/graphguard/knit/Example03.kt').read_text(), re.RegexFlag.MULTILINE)[1])" \
+  | timeout 15 ./graph-guard-cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --styled -s -

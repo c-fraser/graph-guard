@@ -188,7 +188,7 @@ constructor(
           }
         }
       } finally {
-        LOGGER.debug("Closed connection to '{}'", clientConnection)
+        LOGGER.debug("Closed connection from '{}'", clientConnection)
         plugin.observe(Disconnected(clientConnection))
       }
     }
