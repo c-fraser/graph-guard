@@ -28,6 +28,7 @@ import io.kotest.inspectors.forExactly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldBeOneOf
 import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
@@ -126,7 +127,9 @@ class ServerTest : FunSpec() {
                 message shouldBe event.sent
               } else {
                 event.source.address shouldBe event.destination.address
-                event.sent.shouldBeTypeOf<Bolt.Failure>()
+                event.sent.shouldBeTypeOf<Bolt.Messages>()
+                (event.sent as Bolt.Messages).messages.map { it::class } shouldContainExactly
+                    listOf(Bolt.Failure::class, Bolt.Ignored::class)
               }
           else -> fail("Received unexpected '$message'")
         }

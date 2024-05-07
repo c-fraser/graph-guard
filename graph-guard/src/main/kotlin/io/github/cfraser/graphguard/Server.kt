@@ -606,8 +606,10 @@ constructor(
         message: Bolt.Message,
         maxChunkSize: Int = UShort.MAX_VALUE.toInt(),
     ) {
-      val structure = message.toStructure()
-      writeChunked(PackStream.pack { structure(structure) }, maxChunkSize)
+      (if (message is Bolt.Messages) message.messages else listOf(message))
+          .map { msg -> msg.toStructure() }
+          .map { structure -> PackStream.pack { structure(structure) } }
+          .forEach { bytes -> writeChunked(bytes, maxChunkSize) }
     }
 
     /**

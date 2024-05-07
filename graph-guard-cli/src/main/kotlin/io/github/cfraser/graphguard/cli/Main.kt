@@ -103,7 +103,10 @@ internal class Command :
   private val output by
       mutuallyExclusiveOptions(
           option("--debug", help = "Enable debug logging").flag().convert { Debug },
-          option("--styled", help = "Enable styled output").flag().convert { Styled() })
+          option("--styled", help = "Enable styled output").flag().convert { Styled() },
+          option("--inspect", help = "Enable message inspection", hidden = true).flag().convert {
+            Inspect
+          })
 
   override fun run() {
     var plugin =
@@ -114,10 +117,11 @@ internal class Command :
       Debug -> {
         logger("io.github.cfraser.graphguard").level = Level.DEBUG
       }
-      is Styled -> {
+      is Styled,
+      is Inspect -> {
         logger(Logger.ROOT_LOGGER_NAME).detachAppender("STDOUT")
-        plugin = plugin then output
-        output.printBanner()
+        plugin = plugin then checkNotNull(output as? Server.Plugin)
+        printBanner()
       }
     }
     Server(
@@ -136,6 +140,48 @@ internal class Command :
 
   /** [Styled] text output. */
   private inner class Styled : Output, Server.Plugin {
+
+    override suspend fun intercept(message: Bolt.Message) = message
+
+    override suspend fun observe(event: Server.Event) {
+      if (event !is Server.Proxied) return
+      val received = event.received
+      if (received !is Bolt.Run) return
+      val time = "${LocalDateTime.now()}".styled(TextColors.gray, TextStyles.underline.style)
+      val source =
+          "${event.source.address.hostString}:${event.source.address.port}"
+              .styled(TextColors.gray, TextStyles.underline.style)
+      val metadata = "$time $source"
+      val message = received.styled()
+      val output =
+          when (val sent = event.sent) {
+            is Bolt.Failure -> {
+              val violation = "${sent.metadata["message"]}".styled(TextColors.brightRed)
+              "❌ $metadata \"$violation\" $message"
+            }
+            else -> "✅ $metadata $message"
+          }
+      withContext(Dispatchers.IO) { terminal.println(output) }
+    }
+  }
+
+  /** [Inspect] the [Bolt] traffic. */
+  private data object Inspect : Output, Server.Plugin {
+
+    override suspend fun intercept(message: Bolt.Message) = message
+
+    override suspend fun observe(event: Server.Event) {
+      if (event !is Server.Proxied) return
+      if (event.received is Bolt.Request && event.destination is Server.Connection.Graph)
+          terminal.println(
+              "➡\uFE0F  ${event.sent}".styled(TextStyles.italic.style, TextColors.cyan))
+      if (event.sent is Bolt.Response && event.destination is Server.Connection.Client)
+          terminal.println(
+              "⬅\uFE0F  ${event.sent}".styled(TextStyles.bold.style, TextColors.yellow))
+    }
+  }
+
+  private companion object {
 
     /** The [Terminal] to use to display styled text/widgets in the console. */
     private val terminal by lazy { Terminal().apply { info.updateTerminalSize() } }
@@ -281,6 +327,11 @@ internal class Command :
       Regex("\\b(${keywords.joinToString("|")})\\b", RegexOption.IGNORE_CASE)
     }
 
+    /** Get the [Logger] with the [name] or throw an [IllegalStateException]. */
+    fun logger(name: String): Logger {
+      return checkNotNull(LoggerFactory.getLogger(name) as? Logger) { "Failed to get root logger" }
+    }
+
     /** Print the styled ASCII text banner. */
     fun printBanner() {
       terminal.println(
@@ -296,29 +347,6 @@ internal class Command :
           """
               .trimIndent()
               .styled(TextColors.brightBlue))
-    }
-
-    override suspend fun intercept(message: Bolt.Message) = message
-
-    override suspend fun observe(event: Server.Event) {
-      if (event !is Server.Proxied) return
-      val received = event.received
-      if (received !is Bolt.Run) return
-      val time = "${LocalDateTime.now()}".styled(TextColors.gray, TextStyles.underline.style)
-      val source =
-          "${event.source.address.hostString}:${event.source.address.port}"
-              .styled(TextColors.gray, TextStyles.underline.style)
-      val metadata = "$time $source"
-      val message = received.styled()
-      val output =
-          when (val sent = event.sent) {
-            is Bolt.Failure -> {
-              val violation = "${sent.metadata["message"]}".styled(TextColors.brightRed)
-              "❌ $metadata \"$violation\" $message"
-            }
-            else -> "✅ $metadata $message"
-          }
-      withContext(Dispatchers.IO) { terminal.println(output) }
     }
 
     /** Return the [Bolt.Run] message as a styled [String]. */
@@ -375,14 +403,6 @@ internal class Command :
       val token = checkNotNull(Styled::class.qualifiedName)
       val tag = style(token).substringBefore(token)
       return replace(tag, "")
-    }
-  }
-
-  private companion object {
-
-    /** Get the [Logger] with the [name] or throw an [IllegalStateException]. */
-    fun logger(name: String): Logger {
-      return checkNotNull(LoggerFactory.getLogger(name) as? Logger) { "Failed to get root logger" }
     }
   }
 }

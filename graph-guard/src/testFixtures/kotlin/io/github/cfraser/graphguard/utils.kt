@@ -17,13 +17,14 @@ package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.knit.use
+import io.kotest.assertions.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
+import java.net.URI
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
 import org.testcontainers.containers.Neo4jContainer
-import java.net.URI
 
 val LOCAL = NamedTag("Local")
 
@@ -63,6 +64,9 @@ fun runMoviesQueries(password: String, server: String = "bolt://localhost:8787")
               MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND,
               Values.parameters("name", "Keanu Reeves"))
           .list() shouldHaveSize 4
+      session
+          .runCatching { run("invalid cypher") }
+          .onSuccess { fail("Expected exception from invalid cypher") }
     }
   }
 }
@@ -581,7 +585,8 @@ CREATE
           .map(String::trim)
           .filterNot(String::isEmpty)
 
-  const val MATCH_TOM_HANKS = """
+  const val MATCH_TOM_HANKS =
+      """
 MATCH (tom:Person {name: 'Tom Hanks'})
 RETURN tom
 """
@@ -592,7 +597,8 @@ MATCH (cloudAtlas:Movie {title: 'Cloud Atlas'})
 RETURN cloudAtlas
 """
 
-  const val MATCH_10_PEOPLE = """
+  const val MATCH_10_PEOPLE =
+      """
 MATCH (people:Person)
 RETURN people.name
   LIMIT 10

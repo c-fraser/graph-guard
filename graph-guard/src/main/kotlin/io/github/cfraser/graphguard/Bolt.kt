@@ -41,7 +41,31 @@ object Bolt {
   }
 
   /** A [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages). */
-  sealed interface Message
+  sealed interface Message {
+
+    /**
+     * Combine `this` [Message] [and] [that].
+     *
+     * @param that the [Message] to combine with `this`
+     * @return the [Messages]
+     */
+    infix fun and(that: Message): Messages {
+      return Messages((if (this is Messages) messages else listOf(this)) + that)
+    }
+  }
+
+  /** An ordered [List] of [messages]. */
+  @JvmRecord
+  data class Messages internal constructor(val messages: List<Message>) : Message {
+
+    init {
+      require(
+          messages.all { message -> message is Request } ||
+              messages.all { message -> message is Response }) {
+            "${Messages::class.simpleName} must have a single destination"
+          }
+    }
+  }
 
   /** A [Message] received from the proxy client. */
   sealed interface Request : Message
@@ -157,6 +181,7 @@ object Bolt {
           is Run -> 0x10.toByte() to listOf(query, parameters, extra)
           is Success -> 0x70.toByte() to listOf(metadata)
           is Telemetry -> 0x54.toByte() to listOf(api)
+          else -> error("Invalid message '$this'")
         }
     return PackStream.Structure(id, fields)
   }

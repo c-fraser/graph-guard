@@ -17,6 +17,7 @@ package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
@@ -47,6 +48,18 @@ class BoltTest : FunSpec() {
             message.toStructure() shouldBe structure
             structure.toMessage() shouldBe message
           }
+    }
+
+    test("combine messages") {
+      (Bolt.Hello(emptyMap()) and Bolt.Logon(emptyMap()) and Bolt.Begin(emptyMap())) shouldBe
+          Bolt.Messages(
+              listOf(Bolt.Hello(emptyMap()), Bolt.Logon(emptyMap()), Bolt.Begin(emptyMap())))
+      Bolt.Messages(listOf(Bolt.Failure(emptyMap()), Bolt.Ignored))
+      (Bolt.Failure(emptyMap()) and Bolt.Ignored) shouldBe
+          Bolt.Messages(listOf(Bolt.Failure(emptyMap()), Bolt.Ignored))
+      shouldThrow<IllegalArgumentException> {
+        Bolt.Run("", emptyMap(), emptyMap()) and Bolt.Success(emptyMap())
+      }
     }
   }
 }

@@ -302,7 +302,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
   /**
    * [Schema.Validator] is a [Server.Plugin] that validates the [Bolt.Run.query] and
    * [Bolt.Run.parameters] in a [Bolt.Run] message. If the data in the [Bolt.Message] is invalid,
-   * according to the [Schema], then a [Bolt.Failure] is returned.
+   * according to the [Schema], then a [Bolt.Failure] and [Bolt.Ignored] is returned.
    *
    * @param cacheSize the maximum entries in the cache of validated queries
    */
@@ -319,7 +319,9 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
       if (message !is Bolt.Run) return message
       val invalid = cache[message.query to message.parameters] ?: return message
       LOGGER.info("Cypher query '{}' is invalid: {}", message.query, invalid.message)
-      return Bolt.Failure(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message))
+      return Bolt.Failure(
+          mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message)) and
+          Bolt.Ignored
     }
 
     override suspend fun observe(event: Server.Event) {}

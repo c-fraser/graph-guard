@@ -4,6 +4,7 @@ public final class io/github/cfraser/graphguard/Bolt {
 
 public final class io/github/cfraser/graphguard/Bolt$Begin : java/lang/Record, io/github/cfraser/graphguard/Bolt$Request {
 	public fun <init> (Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/util/Map;
 	public final fun copy (Ljava/util/Map;)Lio/github/cfraser/graphguard/Bolt$Begin;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Begin;Ljava/util/Map;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Begin;
@@ -15,6 +16,7 @@ public final class io/github/cfraser/graphguard/Bolt$Begin : java/lang/Record, i
 
 public final class io/github/cfraser/graphguard/Bolt$Commit : io/github/cfraser/graphguard/Bolt$Request {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/Bolt$Commit;
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -22,6 +24,7 @@ public final class io/github/cfraser/graphguard/Bolt$Commit : io/github/cfraser/
 
 public final class io/github/cfraser/graphguard/Bolt$Discard : java/lang/Record, io/github/cfraser/graphguard/Bolt$Request {
 	public fun <init> (Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/util/Map;
 	public final fun copy (Ljava/util/Map;)Lio/github/cfraser/graphguard/Bolt$Discard;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Discard;Ljava/util/Map;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Discard;
@@ -33,6 +36,7 @@ public final class io/github/cfraser/graphguard/Bolt$Discard : java/lang/Record,
 
 public final class io/github/cfraser/graphguard/Bolt$Failure : java/lang/Record, io/github/cfraser/graphguard/Bolt$Response {
 	public fun <init> (Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/util/Map;
 	public final fun copy (Ljava/util/Map;)Lio/github/cfraser/graphguard/Bolt$Failure;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Failure;Ljava/util/Map;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Failure;
@@ -44,6 +48,7 @@ public final class io/github/cfraser/graphguard/Bolt$Failure : java/lang/Record,
 
 public final class io/github/cfraser/graphguard/Bolt$Goodbye : io/github/cfraser/graphguard/Bolt$Request {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/Bolt$Goodbye;
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -51,6 +56,7 @@ public final class io/github/cfraser/graphguard/Bolt$Goodbye : io/github/cfraser
 
 public final class io/github/cfraser/graphguard/Bolt$Hello : java/lang/Record, io/github/cfraser/graphguard/Bolt$Request {
 	public fun <init> (Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/util/Map;
 	public final fun copy (Ljava/util/Map;)Lio/github/cfraser/graphguard/Bolt$Hello;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Hello;Ljava/util/Map;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Hello;
@@ -62,6 +68,7 @@ public final class io/github/cfraser/graphguard/Bolt$Hello : java/lang/Record, i
 
 public final class io/github/cfraser/graphguard/Bolt$Ignored : io/github/cfraser/graphguard/Bolt$Response {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/Bolt$Ignored;
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -69,6 +76,7 @@ public final class io/github/cfraser/graphguard/Bolt$Ignored : io/github/cfraser
 
 public final class io/github/cfraser/graphguard/Bolt$Logoff : io/github/cfraser/graphguard/Bolt$Request {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/Bolt$Logoff;
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -76,6 +84,7 @@ public final class io/github/cfraser/graphguard/Bolt$Logoff : io/github/cfraser/
 
 public final class io/github/cfraser/graphguard/Bolt$Logon : java/lang/Record, io/github/cfraser/graphguard/Bolt$Request {
 	public fun <init> (Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun auth ()Ljava/util/Map;
 	public final fun component1 ()Ljava/util/Map;
 	public final fun copy (Ljava/util/Map;)Lio/github/cfraser/graphguard/Bolt$Logon;
@@ -86,10 +95,27 @@ public final class io/github/cfraser/graphguard/Bolt$Logon : java/lang/Record, i
 }
 
 public abstract interface class io/github/cfraser/graphguard/Bolt$Message {
+	public abstract fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
+}
+
+public final class io/github/cfraser/graphguard/Bolt$Message$DefaultImpls {
+	public static fun and (Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
+}
+
+public final class io/github/cfraser/graphguard/Bolt$Messages : java/lang/Record, io/github/cfraser/graphguard/Bolt$Message {
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/cfraser/graphguard/Bolt$Messages;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Messages;Ljava/util/List;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Messages;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun messages ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/Bolt$Pull : java/lang/Record, io/github/cfraser/graphguard/Bolt$Request {
 	public fun <init> (Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/util/Map;
 	public final fun copy (Ljava/util/Map;)Lio/github/cfraser/graphguard/Bolt$Pull;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Pull;Ljava/util/Map;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Pull;
@@ -101,6 +127,7 @@ public final class io/github/cfraser/graphguard/Bolt$Pull : java/lang/Record, io
 
 public final class io/github/cfraser/graphguard/Bolt$Record : java/lang/Record, io/github/cfraser/graphguard/Bolt$Response {
 	public fun <init> (Ljava/util/List;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/util/List;
 	public final fun copy (Ljava/util/List;)Lio/github/cfraser/graphguard/Bolt$Record;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Record;Ljava/util/List;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Record;
@@ -113,8 +140,13 @@ public final class io/github/cfraser/graphguard/Bolt$Record : java/lang/Record, 
 public abstract interface class io/github/cfraser/graphguard/Bolt$Request : io/github/cfraser/graphguard/Bolt$Message {
 }
 
+public final class io/github/cfraser/graphguard/Bolt$Request$DefaultImpls {
+	public static fun and (Lio/github/cfraser/graphguard/Bolt$Request;Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
+}
+
 public final class io/github/cfraser/graphguard/Bolt$Reset : io/github/cfraser/graphguard/Bolt$Request {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/Bolt$Reset;
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -123,8 +155,13 @@ public final class io/github/cfraser/graphguard/Bolt$Reset : io/github/cfraser/g
 public abstract interface class io/github/cfraser/graphguard/Bolt$Response : io/github/cfraser/graphguard/Bolt$Message {
 }
 
+public final class io/github/cfraser/graphguard/Bolt$Response$DefaultImpls {
+	public static fun and (Lio/github/cfraser/graphguard/Bolt$Response;Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
+}
+
 public final class io/github/cfraser/graphguard/Bolt$Rollback : io/github/cfraser/graphguard/Bolt$Request {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/Bolt$Rollback;
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -132,6 +169,7 @@ public final class io/github/cfraser/graphguard/Bolt$Rollback : io/github/cfrase
 
 public final class io/github/cfraser/graphguard/Bolt$Run : java/lang/Record, io/github/cfraser/graphguard/Bolt$Request {
 	public fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/Map;
 	public final fun component3 ()Ljava/util/Map;
@@ -147,6 +185,7 @@ public final class io/github/cfraser/graphguard/Bolt$Run : java/lang/Record, io/
 
 public final class io/github/cfraser/graphguard/Bolt$Success : java/lang/Record, io/github/cfraser/graphguard/Bolt$Response {
 	public fun <init> (Ljava/util/Map;)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun component1 ()Ljava/util/Map;
 	public final fun copy (Ljava/util/Map;)Lio/github/cfraser/graphguard/Bolt$Success;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Bolt$Success;Ljava/util/Map;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Bolt$Success;
@@ -158,6 +197,7 @@ public final class io/github/cfraser/graphguard/Bolt$Success : java/lang/Record,
 
 public final class io/github/cfraser/graphguard/Bolt$Telemetry : java/lang/Record, io/github/cfraser/graphguard/Bolt$Request {
 	public fun <init> (J)V
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 	public final fun api ()J
 	public final fun component1 ()J
 	public final fun copy (J)Lio/github/cfraser/graphguard/Bolt$Telemetry;
