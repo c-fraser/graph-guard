@@ -5,7 +5,7 @@ kotlin = "1.9.23"
 kotlinx-coroutines = "1.8.0"
 ktfmt = "0.49"
 ktor = "2.3.10"
-micrometer = "1.12.3"
+micrometer = "1.12.5"
 slf4j = "2.0.12"
 testcontainers = "1.19.7"
 
@@ -13,7 +13,7 @@ testcontainers = "1.19.7"
 antlr4 = { module = "org.antlr:antlr4", version = "4.13.1" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.1.8" }
 clikt = { module = "com.github.ajalt.clikt:clikt-jvm", version = "4.4.0" }
-jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "2.17.0" }
+jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "2.17.1" }
 knit = { module = "org.jetbrains.kotlinx:kotlinx-knit", version.ref = "knit" }
 knit-test = { module = "org.jetbrains.kotlinx:kotlinx-knit-test", version.ref = "knit" }
 kotest-assertions = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }
