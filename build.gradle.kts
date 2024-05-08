@@ -22,8 +22,10 @@ import kotlinx.knit.KnitPluginExtension
 import kotlinx.validation.KotlinApiBuildTask
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
+import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jreleaser.gradle.plugin.JReleaserExtension
@@ -38,7 +40,7 @@ buildscript {
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
-  alias(libs.plugins.dokka) apply false
+  alias(libs.plugins.dokka)
   alias(libs.plugins.spotless)
   alias(libs.plugins.detekt)
   alias(libs.plugins.nexus.publish)
@@ -52,7 +54,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.12.0"
+  version = "0.12.1"
 
   repositories { mavenCentral() }
 }
@@ -83,7 +85,11 @@ subprojects project@{
   }
 
   plugins.withType<DokkaPlugin> {
-    tasks.withType<DokkaTask> {
+    val dokkaHtmlPartial by
+        tasks.getting(DokkaTaskPartial::class) {
+          outputDirectory.set(layout.buildDirectory.dir("docs/partial"))
+        }
+    tasks.withType<DokkaTaskPartial> {
       pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
         footerMessage = "Copyright &copy; 2023 c-fraser"
       }
@@ -338,24 +344,20 @@ tasks {
     }
   }
 
+  withType<DokkaMultiModuleTask> {
+    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+      footerMessage = "Copyright &copy; 2023 c-fraser"
+    }
+  }
+
+  val dokkaHtmlMultiModule by getting(DokkaMultiModuleTask::class)
+
   val setupDocs by creating {
-    val plugins = listOf("script")
-    dependsOn(
-        setupAsciinemaPlayer,
-        ":graph-guard:dokkaHtml",
-        *plugins.map { plugin -> ":graph-guard-$plugin:dokkaHtml" }.toTypedArray())
+    dependsOn(setupAsciinemaPlayer, dokkaHtmlMultiModule)
     doLast {
       copy {
-        val docs by project(":graph-guard").tasks.named<DokkaTask>("dokkaHtml")
-        from(docs.outputDirectory)
+        from(dokkaHtmlMultiModule.outputDirectory)
         into(layout.projectDirectory.dir("docs/api"))
-      }
-      plugins.forEach { plugin ->
-        copy {
-          val docs by project(":graph-guard-$plugin").tasks.named<DokkaTask>("dokkaHtml")
-          from(docs.outputDirectory)
-          into(layout.projectDirectory.dir("docs/api/plugin/$plugin"))
-        }
       }
       val docs = rootDir.resolve("docs/index.md")
       rootDir.resolve("README.md").copyTo(docs, overwrite = true)

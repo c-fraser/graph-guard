@@ -396,8 +396,7 @@ server.interrupt(); // interrupt the thread running the server to initiate a gra
 
 ### Documentation
 
-- [graph-guard](https://c-fraser.github.io/graph-guard/api/)
-- [graph-guard-script](https://c-fraser.github.io/graph-guard/api/plugin/script/)
+Refer to the [project website](https://c-fraser.github.io/graph-guard/api/).
 
 ### CLI
 
