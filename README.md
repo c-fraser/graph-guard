@@ -3,7 +3,6 @@
 [![Test](https://github.com/c-fraser/graph-guard/workflows/test/badge.svg)](https://github.com/c-fraser/graph-guard/actions)
 [![Release](https://img.shields.io/github/v/release/c-fraser/graph-guard?logo=github&sort=semver)](https://github.com/c-fraser/graph-guard/releases)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.c-fraser/graph-guard.svg)](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard)
-[![Javadoc](https://javadoc.io/badge2/io.github.c-fraser/graph-guard/javadoc.svg)](https://javadoc.io/doc/io.github.c-fraser/graph-guard)
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 `graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server,
