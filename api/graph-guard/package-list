@@ -85,6 +85,9 @@ $dokka.location:io.github.cfraser.graphguard/Bolt.Logon///PointingToDeclaration/
 $dokka.location:io.github.cfraser.graphguard/Bolt.Logon/Logon/#kotlin.collections.Map[kotlin.String,kotlin.Any?]/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-logon/-logon.html
 $dokka.location:io.github.cfraser.graphguard/Bolt.Logon/auth/#/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-logon/auth.html
 $dokka.location:io.github.cfraser.graphguard/Bolt.Message///PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-message/index.html
+$dokka.location:io.github.cfraser.graphguard/Bolt.Message/and/#io.github.cfraser.graphguard.Bolt.Message/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-message/and.html
+$dokka.location:io.github.cfraser.graphguard/Bolt.Messages///PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-messages/index.html
+$dokka.location:io.github.cfraser.graphguard/Bolt.Messages/messages/#/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-messages/messages.html
 $dokka.location:io.github.cfraser.graphguard/Bolt.Pull///PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-pull/index.html
 $dokka.location:io.github.cfraser.graphguard/Bolt.Pull/Pull/#kotlin.collections.Map[kotlin.String,kotlin.Any?]/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-pull/-pull.html
 $dokka.location:io.github.cfraser.graphguard/Bolt.Pull/extra/#/PointingToDeclaration/graph-guard/io.github.cfraser.graphguard/-bolt/-pull/extra.html
