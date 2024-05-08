@@ -410,7 +410,7 @@ tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
 ```
 
 > Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
-> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/cli/demo.sh)).
+> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-cli/demo.sh)).
 
 ## Plugins
 
