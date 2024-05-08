@@ -1,10 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html class="no-js">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>Server</title>
-    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
-    <script>var pathToRoot = "../../../";</script>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
     <script>document.documentElement.classList.replace("no-js","js");</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
     if (storage == null) {
@@ -19,20 +18,19 @@
         }
     }
     </script>
-<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
-<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
 <link href="../../../styles/style.css" rel="Stylesheet">
 <link href="../../../styles/main.css" rel="Stylesheet">
 <link href="../../../styles/prism.css" rel="Stylesheet">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
 <link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
-<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
-<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
-<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
-<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
-<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
-<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
-</head>
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
 <body>
     <div class="root">
 <nav class="navigation" id="navigation-wrapper">
@@ -40,15 +38,14 @@
         <div class="navigation-title">
             <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
             <div class="library-name">
-                    <a class="library-name--link" href="../../../index.html">
+<a class="library-name--link" href="../../../index.html">
                             graph-guard
-                    </a>
+                    </a>            </div>
+            <div class="library-version">0.12.1
             </div>
-            <div class="library-version">
-0.12.0            </div>
         </div>
         <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":graph-guard:dokkaHtml/main">jvm</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":graph-guard:dokkaHtmlPartial/main">jvm</button>
         </div>
     </div>
     <div class="navigation-controls">
@@ -61,28 +58,28 @@
                 <div class="sidebar--inner" id="sideMenu"></div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="classlike" id="content" pageIds="graph-guard::io.github.cfraser.graphguard/Server///PointingToDeclaration//957435451">
-  <div class="breadcrumbs"><a href="../../../index.html">graph-guard</a><span class="delimiter">/</span><a href="../index.html">io.github.cfraser.graphguard</a><span class="delimiter">/</span><span class="current">Server</span></div>
+<div class="main-content" data-page-type="classlike" id="content" pageids="graph-guard::io.github.cfraser.graphguard/Server///PointingToDeclaration//-175272588">
+  <div class="breadcrumbs"><a href="../../index.html">graph-guard</a><span class="delimiter">/</span><a href="../index.html">io.github.cfraser.graphguard</a><span class="delimiter">/</span><span class="current">Server</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Server</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">Server</a> <span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html"><span class="token annotation builtin">JvmOverloads</span></a> </span><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>graph<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a><span class="token punctuation">, </span></span><span class="parameter ">plugin<span class="token operator">: </span><a href="-plugin/index.html">Server.Plugin</a><span class="token operator"> = </span>Plugin.DSL.plugin {}<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>address<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token operator"> = </span>InetSocketAddress(&quot;localhost&quot;, 8787)<span class="token punctuation">, </span></span><span class="parameter ">parallelism<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html">Runnable</a></div><p class="paragraph"><a href="index.html">Server</a> proxies <a href="https://neo4j.com/docs/bolt/current/bolt/">Bolt</a> data to a <a href="https://neo4j.com/">Neo4j</a> (5+ compatible) database and performs dynamic message transformation through the <span data-unresolved-link="io.github.cfraser.graphguard/Server/plugin/#/PointingToDeclaration/">plugin</span>.</p><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>plugin</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the <a href="-plugin/index.html">Server.Plugin</a> to use to intercept proxied messages and observe server events</p></div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">Server</a>&nbsp;<span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html"><span class="token annotation builtin">JvmOverloads</span></a>&nbsp;</span><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>graph<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a><span class="token punctuation">, </span></span><span class="parameter ">plugin<span class="token operator">: </span><a href="-plugin/index.html">Server.Plugin</a><span class="token operator"> = </span>Plugin.DSL.plugin {}<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>address<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token operator"> = </span>InetSocketAddress("localhost", 8787)<span class="token punctuation">, </span></span><span class="parameter ">parallelism<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html">Runnable</a></div><p class="paragraph"><a href="index.html">Server</a> proxies <a href="https://neo4j.com/docs/bolt/current/bolt/">Bolt</a> data to a <a href="https://neo4j.com/">Neo4j</a> (5+ compatible) database and performs dynamic message transformation through the <a href="../../../graph-guard/io.github.cfraser.graphguard/-server/plugin.html">plugin</a>.</p><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>plugin</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the <a href="-plugin/index.html">Server.Plugin</a> to use to intercept proxied messages and observe server events</p></div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="CONSTRUCTOR">
         <h2 class="">Constructors</h2>
-        <div class="table"><a data-name="-1067848716%2FConstructors%2F957435451" anchor-label="Server" id="-1067848716%2FConstructors%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+        <div class="table"><a data-name="-1067848716%2FConstructors%2F-175272588" anchor-label="Server" id="-1067848716%2FConstructors%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-server.html"><span><span>Server</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1067848716%2FConstructors%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1067848716%2FConstructors%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html"><span class="token annotation builtin">JvmOverloads</span></a></div></div><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">graph<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a><span class="token punctuation">, </span></span><span class="parameter ">plugin<span class="token operator">: </span><a href="-plugin/index.html">Server.Plugin</a><span class="token operator"> = </span>Plugin.DSL.plugin {}<span class="token punctuation">, </span></span><span class="parameter ">address<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token operator"> = </span>InetSocketAddress(&quot;localhost&quot;, 8787)<span class="token punctuation">, </span></span><span class="parameter ">parallelism<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html"><span class="token annotation builtin">JvmOverloads</span></a></div></div><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">graph<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a><span class="token punctuation">, </span></span><span class="parameter ">plugin<span class="token operator">: </span><a href="-plugin/index.html">Server.Plugin</a><span class="token operator"> = </span>Plugin.DSL.plugin {}<span class="token punctuation">, </span></span><span class="parameter ">address<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token operator"> = </span>InetSocketAddress("localhost", 8787)<span class="token punctuation">, </span></span><span class="parameter ">parallelism<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
                 </div>
               </div>
             </div>
@@ -91,122 +88,122 @@
       </div>
       <div data-togglable="TYPE">
         <h2 class="">Types</h2>
-        <div class="table"><a data-name="17727966%2FClasslikes%2F957435451" anchor-label="Connected" id="17727966%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+        <div class="table"><a data-name="17727966%2FClasslikes%2F-175272588" anchor-label="Connected" id="17727966%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-connected/index.html"><span><span>Connected</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="17727966%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="17727966%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-record/index.html"><span class="token annotation builtin">JvmRecord</span></a></div></div><span class="token keyword">data </span><span class="token keyword">class </span><a href="-connected/index.html">Connected</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>connection<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a></span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Record.html">Record</a>, <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> established a <a href="-connected/connection.html">connection</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-record/index.html"><span class="token annotation builtin">JvmRecord</span></a></div></div><span class="token keyword">data </span><span class="token keyword">class </span><a href="-connected/index.html">Connected</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>connection<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a></span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Record.html">Record</a>, <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> established a <a href="-connected/connection.html">connection</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1282223421%2FClasslikes%2F957435451" anchor-label="Connection" id="1282223421%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="1282223421%2FClasslikes%2F-175272588" anchor-label="Connection" id="1282223421%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-connection/index.html"><span><span>Connection</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1282223421%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1282223421%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">interface </span><a href="-connection/index.html">Connection</a></div><div class="brief "><p class="paragraph">A proxy connection.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">interface </span><a href="-connection/index.html">Connection</a></div><div class="brief "><p class="paragraph">A proxy connection.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1031885312%2FClasslikes%2F957435451" anchor-label="Disconnected" id="-1031885312%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="-1031885312%2FClasslikes%2F-175272588" anchor-label="Disconnected" id="-1031885312%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-disconnected/index.html"><span><span>Disconnected</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1031885312%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1031885312%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-record/index.html"><span class="token annotation builtin">JvmRecord</span></a></div></div><span class="token keyword">data </span><span class="token keyword">class </span><a href="-disconnected/index.html">Disconnected</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>connection<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a></span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Record.html">Record</a>, <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> closed the <a href="-disconnected/connection.html">connection</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-record/index.html"><span class="token annotation builtin">JvmRecord</span></a></div></div><span class="token keyword">data </span><span class="token keyword">class </span><a href="-disconnected/index.html">Disconnected</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>connection<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a></span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Record.html">Record</a>, <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> closed the <a href="-disconnected/connection.html">connection</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-823938451%2FClasslikes%2F957435451" anchor-label="Event" id="-823938451%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="-823938451%2FClasslikes%2F-175272588" anchor-label="Event" id="-823938451%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-event/index.html"><span><span>Event</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-823938451%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-823938451%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">interface </span><a href="-event/index.html">Event</a></div><div class="brief "><p class="paragraph">A <a href="index.html">Server</a> event.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">interface </span><a href="-event/index.html">Event</a></div><div class="brief "><p class="paragraph">A <a href="index.html">Server</a> event.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1737194376%2FClasslikes%2F957435451" anchor-label="Plugin" id="1737194376%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="1737194376%2FClasslikes%2F-175272588" anchor-label="Plugin" id="1737194376%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-plugin/index.html"><span><span>Plugin</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1737194376%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1737194376%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-plugin/index.html">Plugin</a></div><div class="brief "><p class="paragraph"><a href="-plugin/index.html">Server.Plugin</a> enables <a href="index.html">Server</a> functionality to be augmented and/or observed.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-plugin/index.html">Plugin</a></div><div class="brief "><p class="paragraph"><a href="-plugin/index.html">Server.Plugin</a> enables <a href="index.html">Server</a> functionality to be augmented and/or observed.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1657825942%2FClasslikes%2F957435451" anchor-label="Proxied" id="-1657825942%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="-1657825942%2FClasslikes%2F-175272588" anchor-label="Proxied" id="-1657825942%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-proxied/index.html"><span><span>Proxied</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1657825942%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1657825942%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-record/index.html"><span class="token annotation builtin">JvmRecord</span></a></div></div><span class="token keyword">data </span><span class="token keyword">class </span><a href="-proxied/index.html">Proxied</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>source<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>received<span class="token operator">: </span><a href="../-bolt/-message/index.html">Bolt.Message</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>destination<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>sent<span class="token operator">: </span><a href="../-bolt/-message/index.html">Bolt.Message</a></span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Record.html">Record</a>, <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> proxied the <i>intercepted</i> <a href="../-bolt/-message/index.html">Bolt.Message</a> from the <a href="-proxied/source.html">source</a> to the <a href="-proxied/destination.html">destination</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-record/index.html"><span class="token annotation builtin">JvmRecord</span></a></div></div><span class="token keyword">data </span><span class="token keyword">class </span><a href="-proxied/index.html">Proxied</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>source<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>received<span class="token operator">: </span><a href="../-bolt/-message/index.html">Bolt.Message</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>destination<span class="token operator">: </span><a href="-connection/index.html">Server.Connection</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>sent<span class="token operator">: </span><a href="../-bolt/-message/index.html">Bolt.Message</a></span></span><span class="token punctuation">)</span> : <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Record.html">Record</a>, <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> proxied the <i>intercepted</i> <a href="../-bolt/-message/index.html">Bolt.Message</a> from the <a href="-proxied/source.html">source</a> to the <a href="-proxied/destination.html">destination</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1220773658%2FClasslikes%2F957435451" anchor-label="Started" id="-1220773658%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="-1220773658%2FClasslikes%2F-175272588" anchor-label="Started" id="-1220773658%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-started/index.html"><span><span>Started</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1220773658%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1220773658%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">object </span><a href="-started/index.html">Started</a> : <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> has started.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">object </span><a href="-started/index.html">Started</a> : <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> has started.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1429605094%2FClasslikes%2F957435451" anchor-label="Stopped" id="-1429605094%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="-1429605094%2FClasslikes%2F-175272588" anchor-label="Stopped" id="-1429605094%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-stopped/index.html"><span><span>Stopped</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1429605094%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1429605094%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">object </span><a href="-stopped/index.html">Stopped</a> : <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> has stopped.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">object </span><a href="-stopped/index.html">Stopped</a> : <a href="-event/index.html">Server.Event</a></div><div class="brief "><p class="paragraph">The <a href="index.html">Server</a> has stopped.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -215,32 +212,32 @@
       </div>
       <div data-togglable="PROPERTY">
         <h2 class="">Properties</h2>
-        <div class="table"><a data-name="-1391863232%2FProperties%2F957435451" anchor-label="address" id="-1391863232%2FProperties%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+        <div class="table"><a data-name="-1391863232%2FProperties%2F-175272588" anchor-label="address" id="-1391863232%2FProperties%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="address.html"><span><span>address</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1391863232%2FProperties%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1391863232%2FProperties%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="address.html">address</a><span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a></div><div class="brief "><p class="paragraph">the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a> to bind the <a href="index.html">Server</a> to</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="address.html">address</a><span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a></div><div class="brief "><p class="paragraph">the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a> to bind the <a href="index.html">Server</a> to</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="513220582%2FProperties%2F957435451" anchor-label="graph" id="513220582%2FProperties%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="513220582%2FProperties%2F-175272588" anchor-label="graph" id="513220582%2FProperties%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="graph.html"><span><span>graph</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="513220582%2FProperties%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="513220582%2FProperties%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="graph.html">graph</a><span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a></div><div class="brief "><p class="paragraph">the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a> of the graph database to proxy data to/from</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="graph.html">graph</a><span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a></div><div class="brief "><p class="paragraph">the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">URI</a> of the graph database to proxy data to/from</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -249,17 +246,17 @@
       </div>
       <div data-togglable="FUNCTION">
         <h2 class="">Functions</h2>
-        <div class="table"><a data-name="-1600252151%2FFunctions%2F957435451" anchor-label="run" id="-1600252151%2FFunctions%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+        <div class="table"><a data-name="-1600252151%2FFunctions%2F-175272588" anchor-label="run" id="-1600252151%2FFunctions%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="run.html"><span><span>run</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1600252151%2FFunctions%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1600252151%2FFunctions%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="run.html"><span class="token function">run</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Start the proxy server on the <a href="address.html">address</a>, connecting to the <a href="graph.html">graph</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="run.html"><span class="token function">run</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Start the proxy server on the <a href="address.html">address</a>, connecting to the <a href="graph.html">graph</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -270,12 +267,11 @@
   </div>
 </div>
       <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>Copyright &copy; 2023 c-fraser</span><span
-                class="pull-right"><span>Generated by </span><a
-                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>Copyright © 2023 c-fraser</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
             </div>
         </div>
     </div>
 </body>
 </html>
+

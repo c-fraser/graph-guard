@@ -1,0 +1,10 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+
+module:graph-guard
+io.github.cfraser.graphguard
+io.github.cfraser.graphguard.plugin
+module:graph-guard-cli
+io.github.cfraser.graphguard.cli
+module:graph-guard-script
+io.github.cfraser.graphguard.plugin

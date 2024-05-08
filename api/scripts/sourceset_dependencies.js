@@ -1,1 +1,1 @@
-sourceset_dependencies='{":graph-guard:dokkaHtml/main":[]}'
+sourceset_dependencies = '{":graph-guard-cli:dokkaHtmlPartial/main":[],":graph-guard:dokkaHtmlPartial/main":[],":graph-guard-script:dokkaHtmlPartial/main":[]}'

@@ -1,10 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html class="no-js">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>Plugin</title>
-    <link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg">
-    <script>var pathToRoot = "../../../../";</script>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../../";</script>
     <script>document.documentElement.classList.replace("no-js","js");</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
     if (storage == null) {
@@ -19,20 +18,19 @@
         }
     }
     </script>
-<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
-<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async="async"></script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
 <link href="../../../../styles/style.css" rel="Stylesheet">
 <link href="../../../../styles/main.css" rel="Stylesheet">
 <link href="../../../../styles/prism.css" rel="Stylesheet">
 <link href="../../../../styles/logo-styles.css" rel="Stylesheet">
 <link href="../../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
-<script type="text/javascript" src="../../../../scripts/clipboard.js" async="async"></script>
-<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async="async"></script>
-<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async="async"></script>
-<script type="text/javascript" src="../../../../scripts/main.js" defer="defer"></script>
-<script type="text/javascript" src="../../../../scripts/prism.js" async="async"></script>
-<script type="text/javascript" src="../../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
-</head>
+<script type="text/javascript" src="../../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
 <body>
     <div class="root">
 <nav class="navigation" id="navigation-wrapper">
@@ -40,15 +38,14 @@
         <div class="navigation-title">
             <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
             <div class="library-name">
-                    <a class="library-name--link" href="../../../../index.html">
+<a class="library-name--link" href="../../../../index.html">
                             graph-guard
-                    </a>
+                    </a>            </div>
+            <div class="library-version">0.12.1
             </div>
-            <div class="library-version">
-0.12.0            </div>
         </div>
         <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":graph-guard:dokkaHtml/main">jvm</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":graph-guard:dokkaHtmlPartial/main">jvm</button>
         </div>
     </div>
     <div class="navigation-controls">
@@ -61,58 +58,58 @@
                 <div class="sidebar--inner" id="sideMenu"></div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="classlike" id="content" pageIds="graph-guard::io.github.cfraser.graphguard/Server.Plugin///PointingToDeclaration//957435451">
-  <div class="breadcrumbs"><a href="../../../../index.html">graph-guard</a><span class="delimiter">/</span><a href="../../index.html">io.github.cfraser.graphguard</a><span class="delimiter">/</span><a href="../index.html">Server</a><span class="delimiter">/</span><span class="current">Plugin</span></div>
+<div class="main-content" data-page-type="classlike" id="content" pageids="graph-guard::io.github.cfraser.graphguard/Server.Plugin///PointingToDeclaration//-175272588">
+  <div class="breadcrumbs"><a href="../../../index.html">graph-guard</a><span class="delimiter">/</span><a href="../../index.html">io.github.cfraser.graphguard</a><span class="delimiter">/</span><a href="../index.html">Server</a><span class="delimiter">/</span><span class="current">Plugin</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Plugin</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Plugin</a></div><p class="paragraph"><a href="index.html">Server.Plugin</a> enables <a href="../index.html">Server</a> functionality to be augmented and/or observed.</p><p class="paragraph"><a href="index.html">Server.Plugin</a> function execution is non-blocking, but occurs synchronously within <a href="../index.html">Server</a> proxy operations. Therefore, implement <a href="index.html">Server.Plugin</a> functions judiciously, considering that long suspension time will impact <a href="../index.html">Server</a> throughput.</p><p class="paragraph"><a href="index.html">Server.Plugin</a> function invocation is <strong>not</strong> thread-safe. Thus, perform any necessary synchronization in the <a href="index.html">Server.Plugin</a> implementation.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-async/index.html">Async</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../../../io.github.cfraser.graphguard.plugin/-schema/-validator/index.html">Validator</a></div></span></div><div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Plugin</a></div><p class="paragraph"><a href="index.html">Server.Plugin</a> enables <a href="../index.html">Server</a> functionality to be augmented and/or observed.</p><p class="paragraph"><a href="index.html">Server.Plugin</a> function execution is non-blocking, but occurs synchronously within <a href="../index.html">Server</a> proxy operations. Therefore, implement <a href="index.html">Server.Plugin</a> functions judiciously, considering that long suspension time will impact <a href="../index.html">Server</a> throughput.</p><p class="paragraph"><a href="index.html">Server.Plugin</a> function invocation is <strong>not</strong> thread-safe. Thus, perform any necessary synchronization in the <a href="index.html">Server.Plugin</a> implementation.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-async/index.html">Async</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../../../io.github.cfraser.graphguard.plugin/-schema/-validator/index.html">Validator</a></div></span></div><div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="TYPE">
         <h2 class="">Types</h2>
-        <div class="table"><a data-name="-757733606%2FClasslikes%2F957435451" anchor-label="Async" id="-757733606%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+        <div class="table"><a data-name="-757733606%2FClasslikes%2F-175272588" anchor-label="Async" id="-757733606%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-async/index.html"><span><span>Async</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-757733606%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-757733606%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="-async/index.html">Async</a> : <a href="index.html">Server.Plugin</a></div><div class="brief "><p class="paragraph"><a href="-async/index.html">Server.Plugin.Async</a> is an asynchronous <a href="index.html">Server.Plugin</a> intended for use by <i>Java</i> code.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="-async/index.html">Async</a> : <a href="index.html">Server.Plugin</a></div><div class="brief "><p class="paragraph"><a href="-async/index.html">Server.Plugin.Async</a> is an asynchronous <a href="index.html">Server.Plugin</a> intended for use by <i>Java</i> code.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-77576805%2FClasslikes%2F957435451" anchor-label="Builder" id="-77576805%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="-77576805%2FClasslikes%2F-175272588" anchor-label="Builder" id="-77576805%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-builder/index.html"><span><span>Builder</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-77576805%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-77576805%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div><div class="brief "><p class="paragraph"><a href="-builder/index.html">Server.Plugin.Builder</a> builds a <a href="index.html">Server.Plugin</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div><div class="brief "><p class="paragraph"><a href="-builder/index.html">Server.Plugin.Builder</a> builds a <a href="index.html">Server.Plugin</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1122572345%2FClasslikes%2F957435451" anchor-label="DSL" id="1122572345%2FClasslikes%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="1122572345%2FClasslikes%2F-175272588" anchor-label="DSL" id="1122572345%2FClasslikes%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-d-s-l/index.html"><span><span>DSL</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1122572345%2FClasslikes%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1122572345%2FClasslikes%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-d-s-l/index.html">DSL</a></div><div class="brief "><p class="paragraph"><a href="-d-s-l/index.html">Server.Plugin.DSL</a> to build a <a href="index.html">Server.Plugin</a> with the <a href="-builder/index.html">Server.Plugin.Builder</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-d-s-l/index.html">DSL</a></div><div class="brief "><p class="paragraph"><a href="-d-s-l/index.html">Server.Plugin.DSL</a> to build a <a href="index.html">Server.Plugin</a> with the <a href="-builder/index.html">Server.Plugin.Builder</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -121,47 +118,47 @@
       </div>
       <div data-togglable="FUNCTION">
         <h2 class="">Functions</h2>
-        <div class="table"><a data-name="-1884786081%2FFunctions%2F957435451" anchor-label="intercept" id="-1884786081%2FFunctions%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+        <div class="table"><a data-name="-1884786081%2FFunctions%2F-175272588" anchor-label="intercept" id="-1884786081%2FFunctions%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="intercept.html"><span><span>intercept</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1884786081%2FFunctions%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1884786081%2FFunctions%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="intercept.html"><span class="token function">intercept</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../../-bolt/-message/index.html">Bolt.Message</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../-bolt/-message/index.html">Bolt.Message</a></div><div class="brief "><p class="paragraph">Intercept, and optionally transform, the <a href="intercept.html">message</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="intercept.html"><span class="token function">intercept</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../../-bolt/-message/index.html">Bolt.Message</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../-bolt/-message/index.html">Bolt.Message</a></div><div class="brief "><p class="paragraph">Intercept, and optionally transform, the <a href="intercept.html">message</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1871632616%2FFunctions%2F957435451" anchor-label="observe" id="-1871632616%2FFunctions%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="-1871632616%2FFunctions%2F-175272588" anchor-label="observe" id="-1871632616%2FFunctions%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="observe.html"><span><span>observe</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1871632616%2FFunctions%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1871632616%2FFunctions%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="observe.html"><span class="token function">observe</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">event<span class="token operator">: </span><a href="../-event/index.html">Server.Event</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Observe the <a href="observe.html">event</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="observe.html"><span class="token function">observe</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">event<span class="token operator">: </span><a href="../-event/index.html">Server.Event</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Observe the <a href="observe.html">event</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="809894864%2FFunctions%2F957435451" anchor-label="then" id="809894864%2FFunctions%2F957435451" data-filterable-set=":graph-guard:dokkaHtml/main"></a>
-          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtml/main" data-filterable-set=":graph-guard:dokkaHtml/main">
+<a data-name="809894864%2FFunctions%2F-175272588" anchor-label="then" id="809894864%2FFunctions%2F-175272588" data-filterable-set=":graph-guard:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard:dokkaHtmlPartial/main" data-filterable-set=":graph-guard:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="then.html"><span><span>then</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="809894864%2FFunctions%2F957435451"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="809894864%2FFunctions%2F-175272588"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">infix </span><span class="token keyword">fun </span><a href="then.html"><span class="token function">then</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="index.html">Server.Plugin</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">Server.Plugin</a></div><div class="brief "><p class="paragraph">Run <code class="lang-kotlin">this</code> <a href="index.html">Server.Plugin</a> then <a href="then.html">that</a>.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">infix </span><span class="token keyword">fun </span><a href="then.html"><span class="token function">then</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="index.html">Server.Plugin</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">Server.Plugin</a></div><div class="brief "><p class="paragraph">Run <code class="lang-kotlin">this</code> <a href="index.html">Server.Plugin</a> then <a href="then.html">that</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -172,12 +169,11 @@
   </div>
 </div>
       <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>Copyright &copy; 2023 c-fraser</span><span
-                class="pull-right"><span>Generated by </span><a
-                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>Copyright © 2023 c-fraser</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
             </div>
         </div>
     </div>
 </body>
 </html>
+
