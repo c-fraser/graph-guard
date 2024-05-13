@@ -27,16 +27,17 @@ final class Utils {
   /**
    * Initialize a {@link Server} in <i>Java</i>.
    *
-   * @param boltUrl the URL of the graph database
+   * @param boltUri the URL of the graph database
    * @return the {@link Server}
    */
-  static Server server(String boltUrl) {
+  static Server server(URI boltUri) {
     return new Server(
-        URI.create(boltUrl),
+        boltUri,
         new Server.Plugin.Async() {
           @NotNull
           @Override
-          public CompletableFuture<Message> interceptAsync(@NotNull Bolt.Message message) {
+          public CompletableFuture<Message> interceptAsync(
+              @NotNull String session, @NotNull Bolt.Message message) {
             return CompletableFuture.completedFuture(message);
           }
 

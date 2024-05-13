@@ -53,6 +53,7 @@ import org.slf4j.MDC.MDCCloseable
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -94,9 +95,9 @@ constructor(
    */
   private val plugin =
       Plugin.DSL.plugin {
-        intercept { message ->
+        intercept { session, message ->
           plugin
-              .runCatching { intercept(message) }
+              .runCatching { intercept(session, message) }
               .onFailure { LOGGER.error("Failed to intercept '{}'", message, it) }
               .getOrDefault(message)
         }
@@ -126,13 +127,14 @@ constructor(
                 try {
                   accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
                     connect(selector) { graphConnection, graphReader, graphWriter ->
-                      proxy(
-                          clientConnection,
-                          clientReader,
-                          clientWriter,
-                          graphConnection,
-                          graphReader,
-                          graphWriter)
+                      Bolt.Session("${UUID.randomUUID()}")
+                          .proxy(
+                              clientConnection,
+                              clientReader,
+                              clientWriter,
+                              graphConnection,
+                              graphReader,
+                              graphWriter)
                     }
                   }
                 } catch (thrown: Throwable) {
@@ -214,12 +216,9 @@ constructor(
     }
   }
 
-  /**
-   * Manage a [Bolt (proxy) session](https://neo4j.com/docs/bolt/current/bolt/message/#session)
-   * between the *client* and *graph*.
-   */
+  /** Proxy a [Bolt.Session] between the *client* and *graph*. */
   @Suppress("TooGenericExceptionCaught")
-  private suspend fun proxy(
+  private suspend fun Bolt.Session.proxy(
       clientConnection: Connection,
       clientReader: ByteReadChannel,
       clientWriter: ByteWriteChannel,
@@ -264,8 +263,9 @@ constructor(
    * [source] to the *resolved destination*.
    * > Intercept [Bolt.Goodbye] and [cancel] the [CoroutineScope] to end the session.
    */
+  context(CoroutineScope)
   @Suppress("TooGenericExceptionCaught")
-  private fun CoroutineScope.proxy(
+  private fun Bolt.Session.proxy(
       source: Connection,
       reader: ByteReadChannel,
       resolver: (Bolt.Message) -> Pair<Connection, ByteWriteChannel>,
@@ -278,7 +278,7 @@ constructor(
             break
           }
       LOGGER.debug("Read '{}' from {}", message, source)
-      val intercepted = plugin.intercept(message)
+      val intercepted = plugin.intercept(this@proxy, message)
       val (destination, writer) = resolver(intercepted)
       try {
         writer.writeMessage(intercepted)
@@ -287,7 +287,7 @@ constructor(
         break
       }
       LOGGER.debug("Wrote '{}' to {}", intercepted, destination)
-      plugin.observe(Proxied(source, message, destination, intercepted))
+      plugin.observe(Proxied(this@proxy, source, message, destination, intercepted))
       if (intercepted == Bolt.Goodbye) cancel("${Bolt.Goodbye}")
     }
   }
@@ -310,11 +310,12 @@ constructor(
      * If the returned [Bolt.Message] is a [Bolt.Request] then it's sent to the graph server,
      * otherwise the [Bolt.Response] is sent to the proxy client.
      *
+     * @param session the [Bolt.Session]
      * @param message the intercepted
      *   [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages)
      * @return the [Bolt.Message] to send
      */
-    suspend fun intercept(message: Bolt.Message): Bolt.Message
+    suspend fun intercept(session: Bolt.Session, message: Bolt.Message): Bolt.Message
 
     /**
      * Observe the [event].
@@ -332,7 +333,9 @@ constructor(
     infix fun then(that: Plugin): Plugin {
       @Suppress("VariableNaming") val `this` = this
       return DSL.plugin {
-        intercept { message -> that.intercept(`this`.intercept(message)) }
+        intercept { session, message ->
+          that.intercept(session, `this`.intercept(session, message))
+        }
         observe { event ->
           `this`.observe(event)
           that.observe(event)
@@ -346,11 +349,15 @@ constructor(
       /**
        * Asynchronously [intercept] the [message].
        *
+       * @param session the [Bolt.Session]
        * @param message the intercepted
        *   [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages)
        * @return a [CompletableFuture] with the [Bolt.Message] to send
        */
-      abstract fun interceptAsync(message: Bolt.Message): CompletableFuture<Bolt.Message>
+      abstract fun interceptAsync(
+          session: String,
+          message: Bolt.Message
+      ): CompletableFuture<Bolt.Message>
 
       /**
        * Asynchronously [observe] the [event].
@@ -361,8 +368,11 @@ constructor(
       abstract fun observeAsync(event: Event): CompletableFuture<Void>
 
       /** [interceptAsync] then [await] for the [CompletableFuture] to complete. */
-      final override suspend fun intercept(message: Bolt.Message): Bolt.Message {
-        return interceptAsync(message).await()
+      final override suspend fun intercept(
+          session: Bolt.Session,
+          message: Bolt.Message
+      ): Bolt.Message {
+        return interceptAsync(session.id, message).await()
       }
 
       /** [observeAsync] then [await] for the [CompletableFuture] to complete. */
@@ -379,8 +389,8 @@ constructor(
        *
        * ```kotlin
        * val printer = plugin {
-       *  intercept { message -> message.also(::println) }
-       *  observe { event -> println(event) }
+       *  intercept { _, message -> message.also(::println) }
+       *  observe { _, event -> println(event) }
        * }
        * ```
        *
@@ -400,7 +410,7 @@ constructor(
      */
     class Builder internal constructor() {
 
-      private var interceptor: (suspend (Bolt.Message) -> Bolt.Message)? = null
+      private var interceptor: (suspend (Bolt.Session, Bolt.Message) -> Bolt.Message)? = null
       private var observer: (suspend (Event) -> Unit)? = null
 
       /**
@@ -409,7 +419,7 @@ constructor(
        * @param interceptor the [Server.Plugin.intercept] function to use
        * @throws IllegalStateException if [Server.Plugin.intercept] has already been set
        */
-      fun intercept(interceptor: suspend (Bolt.Message) -> Bolt.Message) {
+      fun intercept(interceptor: suspend (Bolt.Session, Bolt.Message) -> Bolt.Message) {
         check(this.interceptor == null)
         this.interceptor = interceptor
       }
@@ -427,12 +437,13 @@ constructor(
 
       /** Build the [Server.Plugin] with [interceptor] and [observer]. */
       internal fun build(): Plugin {
-        val interceptor = interceptor ?: { it }
-        val observer = observer ?: {}
+        val interceptor = interceptor ?: { _, message -> message }
+        val observer = observer ?: { _ -> }
         return object : Plugin {
 
           /** Intercept the [message] with the [interceptor]. */
-          override suspend fun intercept(message: Bolt.Message) = interceptor(message)
+          override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) =
+              interceptor(session, message)
 
           /** Observe the [event] with the [observer]. */
           override suspend fun observe(event: Event) = observer(event)
@@ -488,6 +499,7 @@ constructor(
   /**
    * The [Server] proxied the *intercepted* [Bolt.Message] from the [source] to the [destination].
    *
+   * @property session the [Bolt.Session]
    * @property source the [Connection] that sent the [received] [Bolt.Message]
    * @property received the [Bolt.Message] received from the [source]
    * @property destination the [Connection] that received the [sent] [Bolt.Message]
@@ -495,6 +507,7 @@ constructor(
    */
   @JvmRecord
   data class Proxied(
+      val session: Bolt.Session,
       val source: Connection,
       val received: Bolt.Message,
       val destination: Connection,

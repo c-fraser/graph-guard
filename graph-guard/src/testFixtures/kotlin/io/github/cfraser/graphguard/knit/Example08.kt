@@ -19,17 +19,16 @@ package io.github.cfraser.graphguard.knit
 
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
-import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
 
+@Suppress("unused")
 fun runExample08() {
   withNeo4j {
 
 Server(
-  URI(boltUrl),
+  boltURI(),
   plugin { // define plugin using DSL
-    intercept { message -> message.also(::println) }
+    intercept { _, message -> message.also(::println) }
     observe { event -> println(event) }
   })
   .use { TODO("interact with the running server") }

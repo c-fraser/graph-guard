@@ -1,9 +1,12 @@
 package io.github.cfraser.graphguard.cli
 
 import io.github.cfraser.graphguard.LOCAL
+import io.github.cfraser.graphguard.driver
+import io.github.cfraser.graphguard.isE2eTest
 import io.github.cfraser.graphguard.knit.runInvalidMoviesQueries
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.kotest.core.spec.style.StringSpec
+import org.neo4j.driver.AuthTokens
 
 /**
  * Execute queries proxied through the CLI application to a Neo4J container.
@@ -43,10 +46,10 @@ class E2ETest :
     StringSpec({
       tags(LOCAL)
       "run queries"
-          .config(
-              enabled =
-                  System.getProperty("graph-guard.e2e.test")?.toBooleanStrictOrNull() == true) {
-                runMoviesQueries("password")
-                runInvalidMoviesQueries("password")
-              }
+          .config(enabled = isE2eTest) {
+            driver(auth = AuthTokens.basic("neo4j", "password")).use { driver ->
+              runMoviesQueries(driver)
+              runInvalidMoviesQueries(driver)
+            }
+          }
     })

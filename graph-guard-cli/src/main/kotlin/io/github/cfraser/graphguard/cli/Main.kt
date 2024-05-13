@@ -36,6 +36,7 @@ import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.rendering.TextStyles
 import com.github.ajalt.mordant.terminal.Terminal
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
@@ -141,7 +142,7 @@ internal class Command :
   /** [Styled] text output. */
   private inner class Styled : Output, Server.Plugin {
 
-    override suspend fun intercept(message: Bolt.Message) = message
+    override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) = message
 
     override suspend fun observe(event: Server.Event) {
       if (event !is Server.Proxied) return
@@ -168,16 +169,40 @@ internal class Command :
   /** [Inspect] the [Bolt] traffic. */
   private data object Inspect : Output, Server.Plugin {
 
-    override suspend fun intercept(message: Bolt.Message) = message
+    private val colors =
+        arrayOf(
+            TextColors.brightBlue,
+            TextColors.brightGreen,
+            TextColors.brightMagenta,
+            TextColors.brightRed,
+            TextColors.brightWhite,
+            TextColors.brightYellow)
+    private val sessions =
+        Caffeine.newBuilder().maximumSize(colors.size.toLong()).build<Bolt.Session, TextColors>()
+
+    override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) = message
 
     override suspend fun observe(event: Server.Event) {
       if (event !is Server.Proxied) return
-      if (event.received is Bolt.Request && event.destination is Server.Connection.Graph)
-          terminal.println(
-              "➡\uFE0F  ${event.sent}".styled(TextStyles.italic.style, TextColors.cyan))
-      if (event.sent is Bolt.Response && event.destination is Server.Connection.Client)
-          terminal.println(
-              "⬅\uFE0F  ${event.sent}".styled(TextStyles.bold.style, TextColors.yellow))
+      val color =
+          sessions[
+              event.session, { _ -> colors[sessions.estimatedSize().toInt() % colors.lastIndex] }]
+      when (event.destination) {
+            is Server.Connection.Graph ->
+                when (val sent = event.sent) {
+                  is Bolt.Request -> listOf(sent)
+                  is Bolt.Messages -> sent.messages
+                  else -> error(sent)
+                }.map { sent -> "➡\uFE0F  $sent".styled(TextStyles.italic.style, TextColors.cyan) }
+            is Server.Connection.Client ->
+                when (val sent = event.sent) {
+                  is Bolt.Response -> listOf(sent)
+                  is Bolt.Messages -> sent.messages
+                  else -> error(sent)
+                }.map { sent -> "⬅\uFE0F  $sent".styled(TextStyles.bold.style, TextColors.yellow) }
+          }
+          .map { message -> "${event.session.id} ".styled(color) + message }
+          .apply { withContext(Dispatchers.IO) { forEach(terminal::println) } }
     }
   }
 

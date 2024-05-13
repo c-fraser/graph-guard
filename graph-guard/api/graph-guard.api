@@ -183,6 +183,20 @@ public final class io/github/cfraser/graphguard/Bolt$Run : java/lang/Record, io/
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/cfraser/graphguard/Bolt$Session {
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/github/cfraser/graphguard/Bolt$Session;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
 public final class io/github/cfraser/graphguard/Bolt$Success : java/lang/Record, io/github/cfraser/graphguard/Bolt$Response {
 	public fun <init> (Ljava/util/Map;)V
 	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
@@ -272,22 +286,22 @@ public abstract interface class io/github/cfraser/graphguard/Server$Event {
 }
 
 public abstract interface class io/github/cfraser/graphguard/Server$Plugin {
-	public abstract fun intercept (Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun intercept-zufs0ZA (Ljava/lang/String;Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun observe (Lio/github/cfraser/graphguard/Server$Event;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun then (Lio/github/cfraser/graphguard/Server$Plugin;)Lio/github/cfraser/graphguard/Server$Plugin;
 }
 
 public abstract class io/github/cfraser/graphguard/Server$Plugin$Async : io/github/cfraser/graphguard/Server$Plugin {
 	public fun <init> ()V
-	public final fun intercept (Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun interceptAsync (Lio/github/cfraser/graphguard/Bolt$Message;)Ljava/util/concurrent/CompletableFuture;
+	public final fun intercept-zufs0ZA (Ljava/lang/String;Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun interceptAsync (Ljava/lang/String;Lio/github/cfraser/graphguard/Bolt$Message;)Ljava/util/concurrent/CompletableFuture;
 	public final fun observe (Lio/github/cfraser/graphguard/Server$Event;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun observeAsync (Lio/github/cfraser/graphguard/Server$Event;)Ljava/util/concurrent/CompletableFuture;
 	public fun then (Lio/github/cfraser/graphguard/Server$Plugin;)Lio/github/cfraser/graphguard/Server$Plugin;
 }
 
 public final class io/github/cfraser/graphguard/Server$Plugin$Builder {
-	public final fun intercept (Lkotlin/jvm/functions/Function2;)V
+	public final fun intercept (Lkotlin/jvm/functions/Function3;)V
 	public final fun observe (Lkotlin/jvm/functions/Function2;)V
 }
 
@@ -301,18 +315,20 @@ public final class io/github/cfraser/graphguard/Server$Plugin$DefaultImpls {
 }
 
 public final class io/github/cfraser/graphguard/Server$Proxied : java/lang/Record, io/github/cfraser/graphguard/Server$Event {
-	public fun <init> (Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;)V
-	public final fun component1 ()Lio/github/cfraser/graphguard/Server$Connection;
-	public final fun component2 ()Lio/github/cfraser/graphguard/Bolt$Message;
-	public final fun component3 ()Lio/github/cfraser/graphguard/Server$Connection;
-	public final fun component4 ()Lio/github/cfraser/graphguard/Bolt$Message;
-	public final fun copy (Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Server$Proxied;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/Server$Proxied;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Proxied;
+	public synthetic fun <init> (Ljava/lang/String;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-S-s-fls ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/cfraser/graphguard/Server$Connection;
+	public final fun component3 ()Lio/github/cfraser/graphguard/Bolt$Message;
+	public final fun component4 ()Lio/github/cfraser/graphguard/Server$Connection;
+	public final fun component5 ()Lio/github/cfraser/graphguard/Bolt$Message;
+	public final fun copy-jy18_CQ (Ljava/lang/String;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Server$Proxied;
+	public static synthetic fun copy-jy18_CQ$default (Lio/github/cfraser/graphguard/Server$Proxied;Ljava/lang/String;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;Lio/github/cfraser/graphguard/Server$Connection;Lio/github/cfraser/graphguard/Bolt$Message;ILjava/lang/Object;)Lio/github/cfraser/graphguard/Server$Proxied;
 	public final fun destination ()Lio/github/cfraser/graphguard/Server$Connection;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public final fun received ()Lio/github/cfraser/graphguard/Bolt$Message;
 	public final fun sent ()Lio/github/cfraser/graphguard/Bolt$Message;
+	public final fun session ()Ljava/lang/String;
 	public final fun source ()Lio/github/cfraser/graphguard/Server$Connection;
 	public fun toString ()Ljava/lang/String;
 }
@@ -546,7 +562,7 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Validator : io/git
 	public fun <init> (Lio/github/cfraser/graphguard/plugin/Schema;)V
 	public fun <init> (Lio/github/cfraser/graphguard/plugin/Schema;Ljava/lang/Long;)V
 	public synthetic fun <init> (Lio/github/cfraser/graphguard/plugin/Schema;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun intercept (Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun intercept-zufs0ZA (Ljava/lang/String;Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun observe (Lio/github/cfraser/graphguard/Server$Event;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun then (Lio/github/cfraser/graphguard/Server$Plugin;)Lio/github/cfraser/graphguard/Server$Plugin;
 }

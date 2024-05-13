@@ -54,7 +54,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.12.2"
+  version = "0.13.0"
 
   repositories { mavenCentral() }
 }
@@ -305,6 +305,15 @@ apiValidation { ignoredProjects += listOf(cli.name) }
 configure<KnitPluginExtension> { files = files("README.md") }
 
 tasks {
+  clean {
+    doLast {
+      rootProject.allprojects
+          .map { it.layout.buildDirectory.asFile.get().parentFile.resolve("bin") }
+          .filter { it.exists() }
+          .forEach { it.deleteRecursively() }
+    }
+  }
+
   val setupAsciinemaPlayer by creating {
     val css = file("docs/cli/asciinema-player.css")
     val js = file("docs/cli/asciinema-player.min.js")

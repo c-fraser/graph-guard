@@ -28,7 +28,6 @@ import io.kotest.inspectors.forExactly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldBeOneOf
 import io.kotest.matchers.collections.shouldContainAll
-import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
@@ -41,12 +40,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.GraphDatabase
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.properties.Delegates.notNull
+import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 
@@ -57,15 +56,16 @@ class ServerTest : FunSpec() {
       shouldThrow<IllegalStateException> { Server(URI("bolt+s://localhost:7687")) }
     }
 
-    test("proxy bolt messages").config(tags = setOf(LOCAL)) {
-      withNeo4j { withServer { runMoviesQueries(adminPassword) } }
+    test("proxy bolt messages") { withNeo4j { withServer(block = ::runMoviesQueries) } }
+
+    test("proxy bolt messages with async plugin") {
+      withNeo4j {
+        val server = Utils.server(boltURI())
+        server.use { server.driver.use(::runMoviesQueries) }
+      }
     }
 
-    test("proxy bolt messages with async plugin").config(tags = setOf(LOCAL)) {
-      withNeo4j { Utils.server(boltUrl).use { runMoviesQueries(adminPassword) } }
-    }
-
-    test("observe server events").config(tags = setOf(LOCAL)) {
+    test("observe server events") {
       val lock = Mutex()
       val clientAddresses = mutableListOf<InetSocketAddress>()
       val clientConnections by lazy { clientAddresses.map { Server.Connection.Client(it) } }
@@ -88,14 +88,11 @@ class ServerTest : FunSpec() {
         }
       }
       withNeo4j {
-        withServer(plugin = Schema(MOVIES_SCHEMA).Validator() then observer) {
-          GraphDatabase.driver("bolt://localhost:8787", AuthTokens.basic("neo4j", adminPassword))
-              .use { driver ->
-                driver.session().use { session ->
-                  session.run(MoviesGraph.MATCH_TOM_HANKS).list().shouldBeEmpty()
-                  session.runCatching { run("MATCH (n:N) RETURN n") }
-                }
-              }
+        withServer(plugin = Schema(MOVIES_SCHEMA).Validator() then observer) { driver ->
+          driver.session().use { session ->
+            session.run(MoviesGraph.MATCH_TOM_HANKS).list().shouldBeEmpty()
+            session.runCatching { run("MATCH (n:N) RETURN n") }
+          }
         }
       }
       lock.isLocked shouldBe false
@@ -104,12 +101,12 @@ class ServerTest : FunSpec() {
           clientConnections.flatMap {
             listOf(Server.Connected(it), Server.Connected(graphConnection))
           }
+      var ran = AtomicInteger()
       events.filterIsInstance<Server.Proxied>().forEach { event ->
         when (val message = event.received) {
           is Bolt.Hello,
           is Bolt.Goodbye,
           is Bolt.Logon,
-          is Bolt.Pull,
           is Bolt.Reset -> {
             event.source.address shouldBeOneOf clientConnections.map { it.address }
             event.destination.address shouldBe graphConnection.address
@@ -122,13 +119,21 @@ class ServerTest : FunSpec() {
           }
           is Bolt.Run ->
               if (message.query.contains("Tom Hanks")) {
+                ran.getAndIncrement() shouldBe 0
                 event.source.address shouldBeOneOf clientConnections.map { it.address }
                 event.destination.address shouldBe graphConnection.address
                 message shouldBe event.sent
               } else {
+                ran.getAndIncrement() shouldBe 1
                 event.source.address shouldBe event.destination.address
                 event.sent.shouldBeTypeOf<Bolt.Messages>()
-                (event.sent as Bolt.Messages).messages.map { it::class } shouldContainExactly
+                (event.sent as Bolt.Messages).messages.map { it::class } shouldBe emptyList()
+              }
+          is Bolt.Pull ->
+              if (ran.get() == 2) {
+                event.source.address shouldBe event.destination.address
+                event.sent.shouldBeTypeOf<Bolt.Messages>()
+                (event.sent as Bolt.Messages).messages.map { it::class } shouldBe
                     listOf(Bolt.Failure::class, Bolt.Ignored::class)
               }
           else -> fail("Received unexpected '$message'")
@@ -202,6 +207,26 @@ class ServerTest : FunSpec() {
               byteArrayOf(0x0, 0x2) +
               PackStreamTest.byteArrayOfSize(2) +
               byteArrayOf(0x00, 0x00))
+    }
+
+    test("measure proxy server latency").config(tags = setOf(LOCAL)) {
+      val times = mutableListOf<Long>()
+      val proxyTimes = mutableListOf<Long>()
+
+      for (i in 0..7) {
+        val time = withNeo4j {
+          driver.use { driver -> measureTimeMillis { runMoviesQueries(driver) } }
+        }
+        val proxyTime = withNeo4j {
+          withServer { driver -> measureTimeMillis { runMoviesQueries(driver) } }
+        }
+        if (i <= 2) continue
+        times += time
+        proxyTimes += proxyTime
+      }
+
+      // time with proxy server - time communicating directly with neo4j = proxy server latency
+      println("Proxy server latency = ${proxyTimes.average() - times.average()}ms")
     }
   }
 }

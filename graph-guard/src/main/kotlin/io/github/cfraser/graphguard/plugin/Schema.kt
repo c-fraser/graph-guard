@@ -33,6 +33,8 @@ import kotlin.Boolean as KBoolean
 import kotlin.String as KString
 import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
@@ -302,11 +304,22 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
   /**
    * [Schema.Validator] is a [Server.Plugin] that validates the [Bolt.Run.query] and
    * [Bolt.Run.parameters] in a [Bolt.Run] message. If the data in the [Bolt.Message] is invalid,
-   * according to the [Schema], then a [Bolt.Failure] and [Bolt.Ignored] is returned.
+   * according to the [Schema], then a [Bolt.Failure] and [Bolt.Ignored] is returned upon the next
+   * [Bolt.Pull].
    *
    * @param cacheSize the maximum entries in the cache of validated queries
    */
   inner class Validator @JvmOverloads constructor(cacheSize: Long? = null) : Server.Plugin {
+
+    /** A [Mutex] for writing [failures]. */
+    private val lock = Mutex()
+
+    /**
+     * A [MutableMap] storing a [Bolt.Failure] for a [Bolt.Session].
+     * > The [Bolt.Failure] isn't returned immediately after the [Bolt.Run], but rather upon the
+     * > subsequent [Bolt.Pull].
+     */
+    private val failures: MutableMap<Bolt.Session, Bolt.Failure> = mutableMapOf()
 
     /** A [LoadingCache] of validated *Cypher* queries. */
     private val cache =
@@ -315,13 +328,18 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
           validate(query, parameters)
         }
 
-    override suspend fun intercept(message: Bolt.Message): Bolt.Message {
+    override suspend fun intercept(session: Bolt.Session, message: Bolt.Message): Bolt.Message {
+      if (message is Bolt.Pull) {
+        val failure = failures[session]
+        if (failure != null) return failure and Bolt.Ignored
+      }
       if (message !is Bolt.Run) return message
       val invalid = cache[message.query to message.parameters] ?: return message
       LOGGER.info("Cypher query '{}' is invalid: {}", message.query, invalid.message)
-      return Bolt.Failure(
-          mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message)) and
-          Bolt.Ignored
+      val failure =
+          Bolt.Failure(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message))
+      lock.withLock { failures[session] = failure }
+      return Bolt.Messages(emptyList())
     }
 
     override suspend fun observe(event: Server.Event) {}

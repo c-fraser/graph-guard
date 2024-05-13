@@ -20,14 +20,20 @@ package io.github.cfraser.graphguard.knit
 import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
+import java.net.InetSocketAddress
 import kotlin.concurrent.thread
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.Config
+import org.neo4j.driver.GraphDatabase
 
 fun runExample02() {
   withNeo4j {
 
 val plugin = Schema(MOVIES_SCHEMA).Validator()
-val server = Server(URI(boltUrl), plugin)
-server.use { runInvalidMoviesQueries(adminPassword) }
+val server = Server(boltURI(), plugin, InetSocketAddress("localhost", 8787))
+server.use {
+  GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())
+    .use(::runInvalidMoviesQueries)
+}
   }
 }

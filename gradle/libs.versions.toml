@@ -7,7 +7,6 @@ ktfmt = "0.49"
 ktor = "2.3.10"
 micrometer = "1.12.5"
 slf4j = "2.0.12"
-testcontainers = "1.19.7"
 
 [libraries]
 antlr4 = { module = "org.antlr:antlr4", version = "4.13.1" }
@@ -28,11 +27,10 @@ micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "mic
 mordant = { module = "com.github.ajalt.mordant:mordant-jvm", version = "2.2.0" }
 neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2023.9.7" }
 neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "5.20.0" }
+neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "5.19.0" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
-testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
-testcontainers-neo4j = { module = "org.testcontainers:neo4j", version.ref = "testcontainers" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.3.5" }

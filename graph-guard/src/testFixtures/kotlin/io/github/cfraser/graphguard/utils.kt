@@ -20,54 +20,80 @@ import io.github.cfraser.graphguard.knit.use
 import io.kotest.assertions.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
-import java.net.URI
-import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.AuthToken
+import org.neo4j.driver.Config
+import org.neo4j.driver.Driver
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
-import org.testcontainers.containers.Neo4jContainer
+import org.neo4j.harness.Neo4j
+import org.neo4j.harness.Neo4jBuilders
+import java.net.URI
 
 val LOCAL = NamedTag("Local")
 
-/** Use a running [Neo4jContainer] with the test [block]. */
-fun <T> withNeo4j(dockerImage: String = "neo4j:latest", block: Neo4jContainer<*>.() -> T): T {
-  return Neo4jContainer(dockerImage)
-      .withRandomPassword()
-      .apply { start() }
-      .use { neo4j -> neo4j.block() }
+/** Return whether the E2E tests should be executed. */
+val isE2eTest: Boolean
+  get() = System.getProperty("graph-guard.e2e.test")?.toBooleanStrictOrNull() == true
+
+/** Use a running [Neo4j] with the test [block]. */
+fun <T> withNeo4j(block: Neo4j.() -> T): T {
+  return Neo4jBuilders.newInProcessBuilder().build().use { neo4j -> neo4j.block() }
 }
 
 /** Run the [block] using a [Server] initialized with the [plugin]. */
-fun Neo4jContainer<*>.withServer(plugin: Server.Plugin = plugin {}, block: () -> Unit) {
-  Server(URI(boltUrl), plugin).use { block() }
+fun <T> Neo4j.withServer(plugin: Server.Plugin = plugin {}, block: (Driver) -> T): T {
+  var t: T? = null
+  val server = Server(boltURI(), plugin)
+  server.use { server.driver.use { driver -> t = block(driver) } }
+  return checkNotNull(t)
 }
 
-/** Run [MoviesGraph] queries through the [server] to the [Neo4jContainer]. */
-fun runMoviesQueries(password: String, server: String = "bolt://localhost:8787") {
-  GraphDatabase.driver(server, AuthTokens.basic("neo4j", password)).use { driver ->
-    driver.session().use { session ->
-      MoviesGraph.CREATE.forEach(session::run)
-      session.run(MoviesGraph.MATCH_TOM_HANKS).list() shouldHaveSize 1
-      session.run(MoviesGraph.MATCH_CLOUD_ATLAS).list() shouldHaveSize 1
-      session.run(MoviesGraph.MATCH_10_PEOPLE).list() shouldHaveSize 10
-      session.run(MoviesGraph.MATCH_NINETIES_MOVIES).list() shouldHaveSize 20
-      session.run(MoviesGraph.MATCH_TOM_HANKS_MOVIES).list() shouldHaveSize 12
-      session.run(MoviesGraph.MATCH_CLOUD_ATLAS_DIRECTOR).list() shouldHaveSize 3
-      session.run(MoviesGraph.MATCH_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 34
-      session.run(MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE).list() shouldHaveSize 10
-      session.run(MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON).list() shouldHaveSize 170
-      session
-          .run(MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO, Values.parameters("name", "Tom Hanks"))
-          .list() shouldHaveSize 1
-      session.run(MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 44
-      session
-          .run(
-              MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND,
-              Values.parameters("name", "Keanu Reeves"))
-          .list() shouldHaveSize 4
-      session
-          .runCatching { run("invalid cypher") }
-          .onSuccess { fail("Expected exception from invalid cypher") }
-    }
+/** Get a [Driver] for the [Neo4j] database. */
+val Neo4j.driver: Driver
+  get() {
+    return GraphDatabase.driver(boltURI(), Config.builder().withoutEncryption().build())
+  }
+
+/** Get a [Driver] for the proxy [Server]. */
+val Server.driver: Driver
+  get() {
+    return GraphDatabase.driver(
+        URI("bolt://${address.hostName}:${address.port}"),
+        Config.builder().withoutEncryption().build())
+  }
+
+/** Get a [Driver] for the proxy [server] with the [auth]. */
+fun driver(server: URI = URI("bolt://localhost:8787"), auth: AuthToken? = null): Driver {
+  return if (auth == null)
+      GraphDatabase.driver(server, Config.builder().withoutEncryption().build())
+  else GraphDatabase.driver(server, auth, Config.builder().withoutEncryption().build())
+}
+
+/** Run [MoviesGraph] queries using the [driver]. */
+fun runMoviesQueries(driver: Driver) {
+  driver.session().use { session ->
+    MoviesGraph.CREATE.forEach(session::run)
+    session.run(MoviesGraph.MATCH_TOM_HANKS).list() shouldHaveSize 1
+    session.run(MoviesGraph.MATCH_CLOUD_ATLAS).list() shouldHaveSize 1
+    session.run(MoviesGraph.MATCH_10_PEOPLE).list() shouldHaveSize 10
+    session.run(MoviesGraph.MATCH_NINETIES_MOVIES).list() shouldHaveSize 20
+    session.run(MoviesGraph.MATCH_TOM_HANKS_MOVIES).list() shouldHaveSize 12
+    session.run(MoviesGraph.MATCH_CLOUD_ATLAS_DIRECTOR).list() shouldHaveSize 3
+    session.run(MoviesGraph.MATCH_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 34
+    session.run(MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE).list() shouldHaveSize 10
+    session.run(MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON).list() shouldHaveSize 170
+    session
+        .run(MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO, Values.parameters("name", "Tom Hanks"))
+        .list() shouldHaveSize 1
+    session.run(MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 44
+    session
+        .run(
+            MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND,
+            Values.parameters("name", "Keanu Reeves"))
+        .list() shouldHaveSize 4
+    session
+        .runCatching { run("invalid cypher") }
+        .onSuccess { fail("Expected exception from invalid cypher") }
   }
 }
 

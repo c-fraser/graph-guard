@@ -61,35 +61,29 @@ For example, validate [movies](https://github.com/neo4j-graph-examples/movies) q
 the [Server](#design), using the [graph-guard](#usage) library.
 
 <!--- INCLUDE
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.Config
-import org.neo4j.driver.GraphDatabase
+import org.neo4j.driver.Driver
 import org.neo4j.driver.exceptions.DatabaseException
 -->
 
 [//]: # (@formatter:off)
 ```kotlin
-fun runInvalidMoviesQueries(password: String) {
-    GraphDatabase.driver(
-          "bolt://localhost:8787",
-          AuthTokens.basic("neo4j", password),
-          Config.builder().withoutEncryption().build()).use { driver ->
-    driver.session().use { session ->
-      /** Run the invalid [query] and print the schema violation message. */
-      fun run(query: String) {
-        try {
-          session.run(query)
-          error("Expected schema violation for query '$query'")
-        } catch (exception: DatabaseException) {
-          println(exception.message)
-        }
+/** Use the [driver] to run queries that violate the *movies* schema. */
+fun runInvalidMoviesQueries(driver: Driver) {
+  driver.session().use { session ->
+    /** Run the invalid [query] and print the schema violation message. */
+    fun run(query: String) {
+      try {
+        session.run(query)
+        error("Expected schema violation for query '$query'")
+      } catch (exception: DatabaseException) {
+        println(exception.message)
       }
-      run("CREATE (:TVShow {title: 'The Office', released: 2005})")
-      run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
-      run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
-      run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
-      run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
     }
+    run("CREATE (:TVShow {title: 'The Office', released: 2005})")
+    run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
+    run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
+    run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
+    run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
   }
 }
 ```
@@ -101,8 +95,11 @@ fun runInvalidMoviesQueries(password: String) {
 import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
+import java.net.InetSocketAddress
 import kotlin.concurrent.thread
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.Config
+import org.neo4j.driver.GraphDatabase
 
 fun runExample02() {
   withNeo4j {
@@ -114,8 +111,11 @@ fun runExample02() {
 [//]: # (@formatter:off)
 ```kotlin
 val plugin = Schema(MOVIES_SCHEMA).Validator()
-val server = Server(URI(boltUrl), plugin)
-server.use { runInvalidMoviesQueries(adminPassword) }
+val server = Server(boltURI(), plugin, InetSocketAddress("localhost", 8787))
+server.use {
+  GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())
+    .use(::runInvalidMoviesQueries)
+}
 ```
 [//]: # (@formatter:on)
 <!--- KNIT Example02.kt --> 
@@ -335,10 +335,9 @@ fun Server.use(wait: Duration = 1.seconds, block: () -> Unit) {
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
-import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
 
+@Suppress("unused")
 fun runExample08() {
   withNeo4j {
 ----- SUFFIX
@@ -349,9 +348,9 @@ fun runExample08() {
 [//]: # (@formatter:off)
 ```kotlin
 Server(
-  URI(boltUrl),
+  boltURI(),
   plugin { // define plugin using DSL
-    intercept { message -> message.also(::println) }
+    intercept { _, message -> message.also(::println) }
     observe { event -> println(event) }
   })
   .use { TODO("interact with the running server") }
@@ -367,7 +366,8 @@ Server.Plugin plugin = // implement async plugin; can't utilize Kotlin coroutine
     new Server.Plugin.Async() {
       @NotNull
       @Override
-      public CompletableFuture<Message> interceptAsync(@NotNull Bolt.Message message) {
+      public CompletableFuture<Message> interceptAsync(
+              @NotNull String session, @NotNull Bolt.Message message) {
         return CompletableFuture.supplyAsync(
                 () -> {
                   System.out.println(message);
@@ -385,7 +385,7 @@ Server.Plugin plugin = // implement async plugin; can't utilize Kotlin coroutine
                 });
       }
     };
-Thread server = new Thread(new Server(URI.create(boltUrl), plugin));
+Thread server = new Thread(new Server(boltURI(), plugin));
 server.start(); // run the server until the thread is interrupted
 Thread.sleep(1_000); // wait for the server to start in separate thread
 /* TODO: interact with the running server */
@@ -434,10 +434,10 @@ For example, use a [plugin script](#graph-guard-script) with the [Server](#desig
 <!--- TEST_NAME Example09Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.driver
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
 import kotlin.time.Duration.Companion.seconds
 
 fun runExample09() {
@@ -461,22 +461,20 @@ import java.util.concurrent.atomic.AtomicInteger
 
 plugin {
   val rateLimiter = RateLimiter.of("message-limiter", RateLimiterConfig {})
-  intercept { message -> rateLimiter.executeSuspendFunction { message } }
+  intercept { _, message -> rateLimiter.executeSuspendFunction { message } }
 }
 
 plugin { 
   val messages = AtomicInteger()
-  intercept { message ->
+  intercept { _, message ->
     if (messages.getAndIncrement() == 0) println(message::class.simpleName)
     message
   }
 }
 """
 val plugin = Script.evaluate(script)
-val server = Server(URI(boltUrl), plugin)
-server.use(wait = 10.seconds) {
-  runMoviesQueries(adminPassword)
-}
+val server = Server(boltURI(), plugin)
+server.use(wait = 10.seconds) { server.driver.use(block = ::runMoviesQueries) }
 ```
 [//]: # (@formatter:on)
 

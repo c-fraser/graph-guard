@@ -13,7 +13,7 @@ class ScriptTest : FunSpec() {
     test("single plugin in script") {
       val plugin = Script.evaluate(MESSAGE_PRINTER)
       val message = Bolt.Goodbye
-      captureStandardOut { plugin.intercept(message) } shouldBe "$message"
+      captureStandardOut { plugin.intercept(Bolt.Session(""), message) } shouldBe "$message"
     }
 
     test("multiple plugins in script") {
@@ -27,7 +27,7 @@ class ScriptTest : FunSpec() {
       val message = Bolt.Goodbye
       val event = Server.Stopped
       captureStandardOut {
-        plugin.intercept(message)
+        plugin.intercept(Bolt.Session(""), message)
         plugin.observe(event)
       } shouldBe "$message$event"
     }
@@ -44,18 +44,18 @@ class ScriptTest : FunSpec() {
                 
               plugin {
                 fun process(message: Bolt.Message): Either<Nothing, Bolt.Message> = message.right().onRight(::print)
-                intercept { message -> either { process(message).bind() }.getOrNull().let(::checkNotNull) }
+                intercept { _, message -> either { process(message).bind() }.getOrNull().let(::checkNotNull) }
               }
               """
                   .trimIndent())
       val message = Bolt.Hello(emptyMap())
-      captureStandardOut { plugin.intercept(message) } shouldBe "$message"
+      captureStandardOut { plugin.intercept(Bolt.Session(""), message) } shouldBe "$message"
     }
   }
 
   private companion object {
 
-    const val MESSAGE_PRINTER = "plugin { intercept { message -> message.also(::print) } }"
+    const val MESSAGE_PRINTER = "plugin { intercept { _, message -> message.also(::print) } }"
     const val EVENT_PRINTER = "plugin { observe { event -> print(event) } }"
   }
 }

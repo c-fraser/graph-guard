@@ -27,6 +27,7 @@ application { mainClass.set("io.github.cfraser.graphguard.cli.Main") }
 dependencies {
   implementation(project(":graph-guard"))
   implementation(project(":graph-guard-script"))
+  implementation(libs.caffeine)
   implementation(libs.clikt)
   implementation(libs.jackson)
   implementation(libs.kotlinx.coroutines)
@@ -35,6 +36,7 @@ dependencies {
   runtimeOnly(libs.logback.encoder)
 
   testImplementation(testFixtures(project(":graph-guard")))
+  testRuntimeOnly(libs.slf4j.nop)
 }
 
 buildConfig {

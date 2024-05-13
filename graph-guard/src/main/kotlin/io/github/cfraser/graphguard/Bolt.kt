@@ -40,6 +40,14 @@ object Bolt {
     }
   }
 
+  /**
+   * A unique identifier for a
+   * [Bolt session](https://neo4j.com/docs/bolt/current/bolt/message/#session).
+   *
+   * @property id the unique [Bolt.Session] identifier
+   */
+  @JvmInline value class Session(val id: String)
+
   /** A [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages). */
   sealed interface Message {
 

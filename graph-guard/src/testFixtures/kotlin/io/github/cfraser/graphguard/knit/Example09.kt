@@ -18,10 +18,10 @@ limitations under the License.
 package io.github.cfraser.graphguard.knit
 
 import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.driver
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.URI
 import kotlin.time.Duration.Companion.seconds
 
 fun runExample09() {
@@ -39,21 +39,19 @@ import java.util.concurrent.atomic.AtomicInteger
 
 plugin {
   val rateLimiter = RateLimiter.of("message-limiter", RateLimiterConfig {})
-  intercept { message -> rateLimiter.executeSuspendFunction { message } }
+  intercept { _, message -> rateLimiter.executeSuspendFunction { message } }
 }
 
 plugin { 
   val messages = AtomicInteger()
-  intercept { message ->
+  intercept { _, message ->
     if (messages.getAndIncrement() == 0) println(message::class.simpleName)
     message
   }
 }
 """
 val plugin = Script.evaluate(script)
-val server = Server(URI(boltUrl), plugin)
-server.use(wait = 10.seconds) {
-  runMoviesQueries(adminPassword)
-}
+val server = Server(boltURI(), plugin)
+server.use(wait = 10.seconds) { server.driver.use(block = ::runMoviesQueries) }
   }
 }

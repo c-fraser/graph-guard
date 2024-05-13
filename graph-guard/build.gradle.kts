@@ -41,9 +41,9 @@ dependencies {
 
   testFixturesApi(project(":graph-guard-script"))
   testFixturesApi(libs.neo4j.java.driver)
-  testFixturesApi(libs.testcontainers)
-  testFixturesApi(libs.testcontainers.neo4j)
+  testFixturesApi(libs.neo4j.test.harness)
   testFixturesImplementation(libs.kotest.runner)
+  testFixturesRuntimeOnly(libs.slf4j.nop)
 }
 
 tasks {
