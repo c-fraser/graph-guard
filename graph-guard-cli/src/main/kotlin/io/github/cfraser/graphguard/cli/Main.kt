@@ -19,8 +19,6 @@ package io.github.cfraser.graphguard.cli
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
 import com.github.ajalt.clikt.parameters.options.convert
@@ -42,12 +40,11 @@ import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.plugin.Script
-import java.net.InetSocketAddress
-import java.net.URI
-import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
+import java.net.InetSocketAddress
+import java.net.URI
 
 /** [main] is the entry point for the [Server] application, run by the [Command]. */
 fun main(args: Array<String>) {
@@ -104,10 +101,7 @@ internal class Command :
   private val output by
       mutuallyExclusiveOptions(
           option("--debug", help = "Enable debug logging").flag().convert { Debug },
-          option("--styled", help = "Enable styled output").flag().convert { Styled() },
-          option("--inspect", help = "Enable message inspection", hidden = true).flag().convert {
-            Inspect
-          })
+          option("--inspect", help = "Inspect proxied Bolt messages").flag().convert { Inspect })
 
   override fun run() {
     var plugin =
@@ -118,7 +112,6 @@ internal class Command :
       Debug -> {
         logger("io.github.cfraser.graphguard").level = Level.DEBUG
       }
-      is Styled,
       is Inspect -> {
         logger(Logger.ROOT_LOGGER_NAME).detachAppender("STDOUT")
         plugin = plugin then checkNotNull(output as? Server.Plugin)
@@ -139,33 +132,6 @@ internal class Command :
   /** [Debug] logging. */
   private data object Debug : Output
 
-  /** [Styled] text output. */
-  private inner class Styled : Output, Server.Plugin {
-
-    override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) = message
-
-    override suspend fun observe(event: Server.Event) {
-      if (event !is Server.Proxied) return
-      val received = event.received
-      if (received !is Bolt.Run) return
-      val time = "${LocalDateTime.now()}".styled(TextColors.gray, TextStyles.underline.style)
-      val source =
-          "${event.source.address.hostString}:${event.source.address.port}"
-              .styled(TextColors.gray, TextStyles.underline.style)
-      val metadata = "$time $source"
-      val message = received.styled()
-      val output =
-          when (val sent = event.sent) {
-            is Bolt.Failure -> {
-              val violation = "${sent.metadata["message"]}".styled(TextColors.brightRed)
-              "❌ $metadata \"$violation\" $message"
-            }
-            else -> "✅ $metadata $message"
-          }
-      withContext(Dispatchers.IO) { terminal.println(output) }
-    }
-  }
-
   /** [Inspect] the [Bolt] traffic. */
   private data object Inspect : Output, Server.Plugin {
 
@@ -184,25 +150,32 @@ internal class Command :
 
     override suspend fun observe(event: Server.Event) {
       if (event !is Server.Proxied) return
-      val color =
-          sessions[
-              event.session, { _ -> colors[sessions.estimatedSize().toInt() % colors.lastIndex] }]
-      when (event.destination) {
-            is Server.Connection.Graph ->
-                when (val sent = event.sent) {
-                  is Bolt.Request -> listOf(sent)
-                  is Bolt.Messages -> sent.messages
-                  else -> error(sent)
-                }.map { sent -> "➡\uFE0F  $sent".styled(TextStyles.italic.style, TextColors.cyan) }
-            is Server.Connection.Client ->
-                when (val sent = event.sent) {
-                  is Bolt.Response -> listOf(sent)
-                  is Bolt.Messages -> sent.messages
-                  else -> error(sent)
-                }.map { sent -> "⬅\uFE0F  $sent".styled(TextStyles.bold.style, TextColors.yellow) }
+      val messages =
+      event.styled()
+      withContext(Dispatchers.IO) { messages.forEach(terminal::println) }
+    }
+
+    /** Style `this` [Server.Proxied] event. */
+    private fun Server.Proxied.styled(): List<String> {
+      fun Bolt.Message.styled() =
+          when (this) {
+            is Bolt.Request -> "➡\uFE0F  $this".styled(TextStyles.italic.style, TextColors.cyan)
+            is Bolt.Response -> "⬅\uFE0F  $this".styled(TextStyles.bold.style, TextColors.yellow)
+            else -> error(this)
           }
-          .map { message -> "${event.session.id} ".styled(color) + message }
-          .apply { withContext(Dispatchers.IO) { forEach(terminal::println) } }
+      val color =
+          sessions[session, { _ -> colors[sessions.estimatedSize().toInt() % colors.lastIndex] }]
+      @Suppress("RemoveExplicitTypeArguments")
+      return buildList<Bolt.Message> {
+            this += received
+            this +=
+                when (val sent = sent) {
+                  is Bolt.Messages -> sent.messages
+                  else -> listOf(sent)
+                }
+          }
+          .distinct()
+          .map { message -> "${session.id} ".styled(color) + message.styled() }
     }
   }
 
@@ -210,147 +183,6 @@ internal class Command :
 
     /** The [Terminal] to use to display styled text/widgets in the console. */
     private val terminal by lazy { Terminal().apply { info.updateTerminalSize() } }
-
-    /** An [ObjectMapper] to serialize the [Bolt.Run.parameters]. */
-    private val objectMapper by lazy { jacksonObjectMapper() }
-
-    /**
-     * A [Regex] for the Cypher
-     * [keywords](https://neo4j.com/docs/cypher-manual/current/syntax/reserved/).
-     * > Refer to [clauses](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_clauses),
-     * > [subclauses](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_subclauses),
-     * > [modifiers](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_modifiers),
-     * > [expressions](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_expressions),
-     * > [operators](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_operators),
-     * > [schema](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_schema),
-     * > [hints](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_hints),
-     * > [literals](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_literals), and keywords
-     * > reserved for
-     * > [future](https://neo4j.com/docs/cypher-manual/5/syntax/reserved/#_reserved_for_future_use)
-     * > use.
-     */
-    private val cypherKeywordsRegex by lazy {
-      val clauses =
-          arrayOf(
-              "call",
-              "create",
-              "delete",
-              "detach",
-              "foreach",
-              "load",
-              "match",
-              "merge",
-              "optional",
-              "remove",
-              "return",
-              "set",
-              "show",
-              "start",
-              "union",
-              "unwind",
-              "with",
-          )
-      val subclauses =
-          arrayOf(
-              "limit",
-              "order",
-              "skip",
-              "where",
-              "yield",
-          )
-      val modifiers =
-          arrayOf(
-              "asc",
-              "ascending",
-              "assert",
-              "by",
-              "csv",
-              "desc",
-              "descending",
-              "on",
-          )
-      val expressions =
-          arrayOf(
-              "all",
-              "case",
-              "count",
-              "else",
-              "end",
-              "exists",
-              "then",
-              "when",
-          )
-      val operators =
-          arrayOf(
-              "and",
-              "as",
-              "contains",
-              "distinct",
-              "ends",
-              "in",
-              "is",
-              "not",
-              "or",
-              "starts",
-              "xor",
-          )
-      val schema =
-          arrayOf(
-              "constraint",
-              "create",
-              "drop",
-              "exists",
-              "index",
-              "node",
-              "key",
-              "unique",
-          )
-      val hints =
-          arrayOf(
-              "index",
-              "join",
-              "scan",
-              "using",
-          )
-      val literals = arrayOf("false", "null", "true")
-      val future =
-          arrayOf(
-              "add",
-              "do",
-              "for",
-              "mandatory",
-              "of",
-              "require",
-              "scalar",
-          )
-      // cypher keywords/commands relating to interacting with the DBMS
-      val dbms =
-          arrayOf(
-              "built",
-              "defined",
-              "executable",
-              "functions",
-              "if",
-              "procedures",
-              "settings",
-              "terminate",
-              "transactions",
-              "use",
-              "user",
-          )
-      val keywords =
-          clauses +
-              subclauses +
-              modifiers +
-              expressions +
-              operators +
-              schema +
-              hints +
-              literals +
-              future +
-              dbms
-      Regex("\\b(${keywords.joinToString("|")})\\b", RegexOption.IGNORE_CASE)
-    }
 
     /** Get the [Logger] with the [name] or throw an [IllegalStateException]. */
     fun logger(name: String): Logger {
@@ -374,60 +206,9 @@ internal class Command :
               .styled(TextColors.brightBlue))
     }
 
-    /** Return the [Bolt.Run] message as a styled [String]. */
-    private fun Bolt.Run.styled(): String {
-      return "${parameters.styled()}\n${query.trim().styled(parameters)}\n"
-    }
-
-    /** Return the [Bolt.Run.parameters] as a styled [String]. */
-    private fun Map<String, Any?>.styled(): String {
-      val parameters =
-          mapKeys { (key, _) -> key.styled(TextColors.brightMagenta) }
-              .toList()
-              .joinToString { (key, value) ->
-                "$key: ${objectMapper.writeValueAsString(value).styled(TextColors.green)}"
-              }
-      return "${":params".styled(TextColors.brightBlue)} {$parameters}"
-    }
-
-    /** Style `this` [Bolt.Run.query]. */
-    private fun String.styled(parameters: Map<String, Any?>): String {
-      return parameters
-          .toList()
-          .fold(this) { query, (key, _) ->
-            query.replace("\$$key", "\$$key".styled(TextColors.brightMagenta))
-          }
-          .replace(Regex("^.*//.*\$")) { it.value.styled(TextColors.gray) }
-          .replace(cypherKeywordsRegex) { it.value.styled(TextColors.brightYellow) }
-          .replace(Regex("(-->|<--|--|\\||!|&|\\+|-|\\*|/|%|^|=|<>|=~|<|>|<=|>=)")) {
-            it.value.styled(TextColors.brightYellow)
-          }
-          .replace(Regex("\".*\"")) {
-            it.value.reset(TextColors.brightYellow).styled(TextColors.green)
-          }
-          .replace(Regex("'.*'")) {
-            it.value.reset(TextColors.brightYellow).styled(TextColors.green)
-          }
-          .replace(Regex("\\b[+-]?[\\d.]?\\d+\\b")) { it.value.styled(TextColors.green) }
-          .let {
-            Regex("\\s*:(\\w+)\\s*").findAll(it).fold(it) { query, match ->
-              val label = checkNotNull(match.groups[1]).value
-              query.replace(
-                  Regex("\\b$label\\b"), label.styled(TextColors.cyan, TextStyles.italic.style))
-            }
-          }
-    }
-
     /** Style `this` [String]. */
     private fun String.styled(style: TextStyle, vararg styles: TextStyle): String {
       return styles.fold(style, TextStyle::plus)(this)
-    }
-
-    /** Reset the [style] on `this` [String]. */
-    private fun String.reset(style: TextStyle): String {
-      val token = checkNotNull(Styled::class.qualifiedName)
-      val tag = style(token).substringBefore(token)
-      return replace(tag, "")
     }
   }
 }

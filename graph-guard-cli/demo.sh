@@ -36,4 +36,4 @@ sleep 10 && \
   > /dev/null 2>&1 &
 ./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist > /dev/null 2>&1
 python3 -c "import pathlib, re; print(re.search(r'\"{3}([\s\S]*?)\"{3}', pathlib.Path('$PROJECT_DIR/graph-guard/src/testFixtures/kotlin/io/github/cfraser/graphguard/knit/Example03.kt').read_text(), re.RegexFlag.MULTILINE)[1])" \
-  | timeout 15 ./graph-guard-cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --styled -s -
+  | timeout 15 ./graph-guard-cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --inspect -s -
