@@ -15,6 +15,7 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.plugin
 
+import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
 import org.neo4j.cypherdsl.core.KeyValueMapEntry
@@ -36,10 +37,9 @@ import org.neo4j.cypherdsl.parser.CypherParser
 import org.neo4j.cypherdsl.parser.ExpressionCreatedEventType
 import org.neo4j.cypherdsl.parser.Options
 import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
-import kotlin.jvm.optionals.getOrNull
 
 /**
- * A [Cypher](https://neo4j.com/docs/cypher-manual/current/introduction/) [Query].
+ * A *Cypher* [Query].
  *
  * @property nodes the node labels in the [Query]
  * @property relationships the relationships in the [Query]

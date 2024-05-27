@@ -47,11 +47,36 @@ dependencies {
 }
 
 tasks {
-  val grammarSrcDir = file("src/main/java/io/github/cfraser/graphguard/plugin")
+  /*val downloadCypherGrammar by creating {
+    doLast {
+      for ((i, file) in listOf("CypherLexer.g4", "CypherParser.g4").withIndex()) {
+        val grammarFile = projectDir.resolve("src/main/antlr/$file")
+        URL(
+          "https://raw.githubusercontent.com/neo4j/cypher-language-support/${libs.versions.cypher.language.support.get()}/packages/language-support/src/antlr-grammar/$file")
+          .openStream()
+          .use { input -> grammarFile.outputStream().use { output -> input.copyTo(output) } }
+        if (i == 0) continue
+        val grammar =
+          grammarFile
+            .readText()
+            .replace(
+              "parser grammar CypherParser;\n",
+              """|parser grammar CypherParser;
+                    |
+                    |@ header
+                    |{
+                    |package org.neo4j.cypher;
+                    |}"""
+                .trimMargin())
+        grammarFile.writeText(grammar)
+      }
+    }
+  }*/
+
   val modifyGrammarSource by creating {
     mustRunAfter(withType<AntlrTask>())
     doLast {
-      fileTree(grammarSrcDir) { include("*.java") }
+      fileTree(generateGrammarSource.get().outputDirectory) { include("*.java") }
           .forEach { file ->
             file.writeText(
                 file
@@ -64,8 +89,9 @@ tasks {
   }
 
   generateGrammarSource {
+    /*dependsOn(downloadCypherGrammar)*/
     finalizedBy(modifyGrammarSource)
-    outputDirectory = grammarSrcDir
+    outputDirectory = file("src/main/java/io/github/cfraser/graphguard/plugin")
   }
 
   withType<KotlinCompile> {

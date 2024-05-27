@@ -31,7 +31,6 @@ dependencies {
   implementation(libs.clikt)
   implementation(libs.jackson)
   implementation(libs.kotlinx.coroutines)
-  implementation(libs.micrometer.core)
   implementation(libs.logback.classic)
   runtimeOnly(libs.logback.encoder)
 

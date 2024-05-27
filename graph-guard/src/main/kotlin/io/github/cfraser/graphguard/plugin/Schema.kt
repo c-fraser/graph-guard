@@ -15,10 +15,6 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.plugin
 
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
-import io.github.cfraser.graphguard.Bolt
-import io.github.cfraser.graphguard.Server
 import java.time.Duration as JDuration
 import java.time.LocalDate as JLocalDate
 import java.time.LocalDate
@@ -33,22 +29,21 @@ import kotlin.Boolean as KBoolean
 import kotlin.String as KString
 import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
-import org.jetbrains.annotations.VisibleForTesting
-import org.slf4j.LoggerFactory
 
 /**
- * A [Schema] describes the nodes and relationships in a [Neo4j](https://neo4j.com/) database via
- * the (potentially) interconnected [graphs].
+ * A [Schema] describes the [nodes] and [relationships] in a [Neo4j](https://neo4j.com/) database
+ * via the (potentially) interconnected [graphs].
+ *
+ * [Schema] implements [Validator.Rule], thus has the capability to validate that a *Cypher* query
+ * adheres to the [nodes] and [relationships] defined in the [graphs].
  *
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
-data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
+data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Validator.Rule {
 
   /**
    * Initialize a [Schema] from the [schemaText].
@@ -85,38 +80,35 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
     }
   }
 
-  /**
-   * Validate that the *Cypher* [Query] and [parameters] adhere to the [nodes] and [relationships].
-   *
-   * Returns an [InvalidQuery] with [Bolt.Failure.metadata] if the [cypher] is invalid.
-   */
-  @VisibleForTesting
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
-  internal fun validate(cypher: KString, parameters: Map<KString, KAny?>): InvalidQuery? {
+  override fun validate(
+      cypher: KString,
+      parameters: Map<KString, KAny?>
+  ): Validator.Rule.Violation? {
     val query = Query.parse(cypher) ?: return null
     for (queryNode in query.nodes) {
-      val entity = InvalidQuery.Entity.Node(queryNode)
-      val schemaNode = nodes[queryNode] ?: return InvalidQuery.Unknown(entity)
+      val entity = Violation.Entity.Node(queryNode)
+      val schemaNode = nodes[queryNode] ?: return Violation.Unknown(entity).violation
       for (queryProperty in
           query.properties(queryNode) + query.mutatedProperties(queryNode, parameters)) {
         val schemaProperty =
             schemaNode.properties.matches(queryProperty)
-                ?: return InvalidQuery.UnknownProperty(entity, queryProperty.name)
-        return schemaProperty.validate(entity, queryProperty, parameters) ?: continue
+                ?: return Violation.UnknownProperty(entity, queryProperty.name).violation
+        return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
       }
     }
     for (queryRelationship in query.relationships) {
       val (label, source, target) = queryRelationship
       if (source == null || target == null) continue
-      val entity = InvalidQuery.Entity.Relationship(label, source, target)
+      val entity = Violation.Entity.Relationship(label, source, target)
       val schemaRelationship =
           relationships[Relationship.Id(label, source, target)]
-              ?: return InvalidQuery.Unknown(entity)
+              ?: return Violation.Unknown(entity).violation
       for (queryProperty in query.properties(label)) {
         val schemaProperty =
             schemaRelationship.properties.matches(queryProperty)
-                ?: return InvalidQuery.UnknownProperty(entity, queryProperty.name)
-        return schemaProperty.validate(entity, queryProperty, parameters) ?: continue
+                ?: return Violation.UnknownProperty(entity, queryProperty.name).violation
+        return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
       }
     }
     return null
@@ -301,52 +293,8 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
    */
   @JvmRecord data class Metadata internal constructor(val name: KString, val value: KString?)
 
-  /**
-   * [Schema.Validator] is a [Server.Plugin] that validates the [Bolt.Run.query] and
-   * [Bolt.Run.parameters] in a [Bolt.Run] message. If the data in the [Bolt.Message] is invalid,
-   * according to the [Schema], then a [Bolt.Failure] and [Bolt.Ignored] is returned upon the next
-   * [Bolt.Pull].
-   *
-   * @param cacheSize the maximum entries in the cache of validated queries
-   */
-  inner class Validator @JvmOverloads constructor(cacheSize: Long? = null) : Server.Plugin {
-
-    /** A [Mutex] for writing [failures]. */
-    private val lock = Mutex()
-
-    /**
-     * A [MutableMap] storing a [Bolt.Failure] for a [Bolt.Session].
-     * > The [Bolt.Failure] isn't returned immediately after the [Bolt.Run], but rather upon the
-     * > subsequent [Bolt.Pull].
-     */
-    private val failures: MutableMap<Bolt.Session, Bolt.Failure> = mutableMapOf()
-
-    /** A [LoadingCache] of validated *Cypher* queries. */
-    private val cache =
-        Caffeine.newBuilder().maximumSize(cacheSize ?: 1024).build<
-            Pair<KString, Map<KString, KAny?>>, InvalidQuery?> { (query, parameters) ->
-          validate(query, parameters)
-        }
-
-    override suspend fun intercept(session: Bolt.Session, message: Bolt.Message): Bolt.Message {
-      if (message is Bolt.Pull) {
-        val failure = failures[session]
-        if (failure != null) return failure and Bolt.Ignored
-      }
-      if (message !is Bolt.Run) return message
-      val invalid = cache[message.query to message.parameters] ?: return message
-      LOGGER.info("Cypher query '{}' is invalid: {}", message.query, invalid.message)
-      val failure =
-          Bolt.Failure(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message))
-      lock.withLock { failures[session] = failure }
-      return Bolt.Messages(emptyList())
-    }
-
-    override suspend fun observe(event: Server.Event) {}
-  }
-
-  /** An [InvalidQuery] describes a *Cypher* query with a [Schema] violation. */
-  internal sealed class InvalidQuery(val message: KString) {
+  /** An [Violation] describes a *Cypher* query with a [Schema] [violation]. */
+  internal sealed class Violation(val violation: Validator.Rule.Violation) {
 
     sealed class Entity(val name: KString) {
 
@@ -356,37 +304,19 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
           Entity("relationship $label from $source to $target")
     }
 
-    class Unknown(entity: Entity) : InvalidQuery("Unknown ${entity.name}")
+    class Unknown(entity: Entity) : Violation(Validator.Rule.Violation("Unknown ${entity.name}"))
 
     class UnknownProperty(entity: Entity, property: KString) :
-        InvalidQuery("Unknown property '$property' for ${entity.name}")
+        Violation(Validator.Rule.Violation("Unknown property '$property' for ${entity.name}"))
 
     class InvalidProperty(entity: Entity, property: Property, values: List<KAny?>) :
-        InvalidQuery(
-            @Suppress("MaxLineLength")
-            "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.name}")
-
-    @Suppress("WrongEqualsTypeParameter")
-    override fun equals(other: KAny?): KBoolean {
-      return when {
-        this === other -> true
-        javaClass != other?.javaClass -> false
-        else -> message == (other as? InvalidQuery)?.message
-      }
-    }
-
-    override fun hashCode(): Int {
-      return message.hashCode()
-    }
-
-    override fun toString(): KString {
-      return "${InvalidQuery::class.simpleName}(message='$message')"
-    }
+        Violation(
+            Validator.Rule.Violation(
+                @Suppress("MaxLineLength")
+                "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.name}"))
   }
 
   private companion object {
-
-    val LOGGER = LoggerFactory.getLogger(Validator::class.java)!!
 
     /**
      * [Map] of the [Query.Property.Type.Resolvable.name] of an invoked function to a synthetic
@@ -528,10 +458,10 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
 
     /** Validate the [property] of the [entity] per the schema [Property] and [parameters]. */
     fun Property.validate(
-        entity: InvalidQuery.Entity,
+        entity: Violation.Entity,
         property: Query.Property,
         parameters: Map<KString, KAny?>
-    ): InvalidQuery? {
+    ): Violation? {
       val resolvable = parameters + RESOLVABLE_FUNCTIONS
       // retain the unresolved value so function invocations can be returned as received
       val values =
@@ -547,7 +477,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) {
               .distinct()
       return if (values.map { (_, value) -> value }.isValid()) null
       else
-          InvalidQuery.InvalidProperty(
+          Violation.InvalidProperty(
               entity,
               this,
               // return the unresolved function invocation so the synthetic value remains internal

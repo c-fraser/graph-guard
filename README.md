@@ -6,8 +6,9 @@
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 `graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server,
-that's capable of performing realtime schema validation, for [Neo4j](https://neo4j.com/) 5+
-(compatible databases).
+that's capable of performing
+realtime [Cypher](https://neo4j.com/docs/cypher-manual/current/introduction/) query validation,
+for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
 
 <!--- TOC -->
 
@@ -46,19 +47,19 @@ enabling
 the [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
 to dynamically transform the incoming and outgoing data.
 
-[Schema.Validator](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard.plugin/-schema/-validator/index.html)
+[Validator](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard.plugin/-validator/index.html)
 is
 a [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
-that performs realtime [schema](#schema) validation by
+that performs realtime query validation by
 intercepting [RUN](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-run/index.html)
-requests then analyzing the [Cypher](https://neo4j.com/developer/cypher/) query (and parameters) for
+requests then analyzing the [Cypher](https://neo4j.com/developer/cypher/) (and parameters) for
 schema [violations](#violations). If the intercepted query is determined to be *invalid* according
 to the schema, then
 a [FAILURE](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-failure/index.html)
 response is sent to the *client*.
 
-For example, validate [movies](https://github.com/neo4j-graph-examples/movies) queries via
-the [Server](#design), using the [graph-guard](#usage) library.
+For example, validate [movies](https://github.com/neo4j-graph-examples/movies) queries align with
+the [schema](#schema) via the [Server](#design), using the [graph-guard](#usage) library.
 
 <!--- INCLUDE
 import org.neo4j.driver.Driver
@@ -92,12 +93,11 @@ fun runInvalidMoviesQueries(driver: Driver) {
 
 <!--- TEST_NAME Example02Test --> 
 <!--- INCLUDE
-import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.withNeo4j
 import java.net.InetSocketAddress
-import kotlin.concurrent.thread
-import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.Config
 import org.neo4j.driver.GraphDatabase
 
@@ -110,7 +110,7 @@ fun runExample02() {
 
 [//]: # (@formatter:off)
 ```kotlin
-val plugin = Schema(MOVIES_SCHEMA).Validator()
+val plugin = Validator(Schema(MOVIES_SCHEMA))
 val server = Server(boltURI(), plugin, InetSocketAddress("localhost", 8787))
 server.use {
   GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())

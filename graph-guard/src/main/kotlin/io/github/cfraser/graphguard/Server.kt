@@ -55,9 +55,6 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
@@ -73,7 +70,6 @@ import io.ktor.network.sockets.SocketAddress as KSocketAddress
  * @property address the [InetSocketAddress] to bind the [Server] to
  * @property parallelism the number of parallel coroutines used by the [Server]
  */
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalContracts::class)
 class Server
 @JvmOverloads
 constructor(
@@ -120,7 +116,9 @@ constructor(
       runBlocking(
           when (val parallelism = parallelism) {
             null -> Dispatchers.IO
-            else -> Dispatchers.IO.limitedParallelism(parallelism)
+            else ->
+                @OptIn(ExperimentalCoroutinesApi::class)
+                Dispatchers.IO.limitedParallelism(parallelism)
           }) {
             bind { selector, serverSocket ->
               while (isActive) {
@@ -151,7 +149,6 @@ constructor(
 
   /** Bind the proxy [ServerSocket] to the [address] then run the [block]. */
   private suspend fun bind(block: suspend CoroutineScope.(SelectorManager, ServerSocket) -> Unit) {
-    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graph") {
       try {
         SelectorManager(coroutineContext).use { selector ->
@@ -177,7 +174,6 @@ constructor(
       serverSocket: ServerSocket,
       block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
-    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     val socket = serverSocket.accept()
     val clientConnection = Connection.Client(socket.remoteAddress.toInetSocketAddress())
     coroutineScope.launch {
@@ -201,7 +197,6 @@ constructor(
       selector: SelectorManager,
       block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
-    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     val socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
     val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
     try {
@@ -527,7 +522,6 @@ constructor(
         vararg context: Pair<String, String>,
         block: suspend () -> Unit
     ) {
-      contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
       val reset = context.map { (key, value) -> MDC.putCloseable(key, value) }
       val result = withContext(MDCContext()) { runCatching { block() } }
       reset.runCatching { forEach(MDCCloseable::close) }
@@ -543,7 +537,6 @@ constructor(
     private suspend fun Socket.withChannels(
         block: suspend (ByteReadChannel, ByteWriteChannel) -> Unit
     ) {
-      contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
       use { socket ->
         val reader = socket.openReadChannel()
         val writer = socket.openWriteChannel(autoFlush = true)

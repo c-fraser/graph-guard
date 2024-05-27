@@ -53,22 +53,20 @@ class SchemaTest : FunSpec() {
           "" with emptyMap() expect null,
           "MATCH (person:Person)-[:ACTED_IN]->(tvShow:TVShow) RETURN person, tvShow" with
               emptyMap() expect
-              Schema.InvalidQuery.Unknown(Schema.InvalidQuery.Entity.Node("TVShow")),
+              Schema.Violation.Unknown(Schema.Violation.Entity.Node("TVShow")),
           "MATCH (TheMatrix:Movie {title:'The Matrix'}) SET TheMatrix.budget = 63000000" with
               emptyMap() expect
-              Schema.InvalidQuery.UnknownProperty(
-                  Schema.InvalidQuery.Entity.Node("Movie"), "budget"),
+              Schema.Violation.UnknownProperty(Schema.Violation.Entity.Node("Movie"), "budget"),
           "MATCH (person:Person)-[:WATCHED]->(movie:Movie) RETURN person, movie" with
               emptyMap() expect
-              Schema.InvalidQuery.Unknown(
-                  Schema.InvalidQuery.Entity.Relationship("WATCHED", "Person", "Movie")),
+              Schema.Violation.Unknown(
+                  Schema.Violation.Entity.Relationship("WATCHED", "Person", "Movie")),
           """MATCH (:Person)-[produced:PRODUCED]->(:Movie {title:'The Matrix'})
               |SET produced.company = 'Warner Bros.'"""
               .trimMargin() with
               emptyMap() expect
-              Schema.InvalidQuery.UnknownProperty(
-                  Schema.InvalidQuery.Entity.Relationship("PRODUCED", "Person", "Movie"),
-                  "company"),
+              Schema.Violation.UnknownProperty(
+                  Schema.Violation.Entity.Relationship("PRODUCED", "Person", "Movie"), "company"),
           MoviesGraph.CREATE.last() with emptyMap() expect null,
           MoviesGraph.MATCH_TOM_HANKS with emptyMap() expect null,
           MoviesGraph.MATCH_CLOUD_ATLAS with emptyMap() expect null,
@@ -86,13 +84,13 @@ class SchemaTest : FunSpec() {
               null,
           MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO with
               mapOf("name" to null) expect
-              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf(null, "Kevin Bacon")),
+              Schema.Violation.InvalidProperty(PERSON, NAME, listOf(null, "Kevin Bacon")),
           MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO with
               mapOf("name" to 123) expect
-              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf(123, "Kevin Bacon")),
+              Schema.Violation.InvalidProperty(PERSON, NAME, listOf(123, "Kevin Bacon")),
           MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO with
               mapOf("name" to listOf("Tom Hanks")) expect
-              Schema.InvalidQuery.InvalidProperty(
+              Schema.Violation.InvalidProperty(
                   PERSON, NAME, listOf(listOf("Tom Hanks"), "Kevin Bacon")),
           MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS with emptyMap() expect null,
           MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND with
@@ -103,30 +101,30 @@ class SchemaTest : FunSpec() {
               null,
           MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND with
               mapOf("name" to null) expect
-              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf("Tom Hanks", null)),
+              Schema.Violation.InvalidProperty(PERSON, NAME, listOf("Tom Hanks", null)),
           MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND with
               mapOf("name" to 123) expect
-              Schema.InvalidQuery.InvalidProperty(PERSON, NAME, listOf("Tom Hanks", 123)),
+              Schema.Violation.InvalidProperty(PERSON, NAME, listOf("Tom Hanks", 123)),
           MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND with
               mapOf("name" to listOf("Keanu Reeves")) expect
-              Schema.InvalidQuery.InvalidProperty(
+              Schema.Violation.InvalidProperty(
                   PERSON, NAME, listOf(listOf("Keanu Reeves"), "Tom Hanks")),
           MoviesGraph.MERGE_KEANU with emptyMap() expect null,
           MoviesGraph.MERGE_KEANU with mapOf("properties" to mapOf("born" to 1963L)) expect null,
           MoviesGraph.MERGE_KEANU with
               mapOf("properties" to mapOf("fullName" to "Keanu Charles Reeves")) expect
-              Schema.InvalidQuery.UnknownProperty(PERSON, "fullName"),
+              Schema.Violation.UnknownProperty(PERSON, "fullName"),
           "MATCH (theater:Theater)-[:SHOWING]->(movie:Movie) RETURN theater, movie" with
               emptyMap() expect
               null) { (query, parameters, expected) ->
-            MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected
+            MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
           }
     }
 
     context("validate cypher queries with union schema") {
       fun invalidProperty(vararg values: Any?) =
-          Schema.InvalidQuery.InvalidProperty(
-              Schema.InvalidQuery.Entity.Node("N"), UNION_PROPERTY, values.toList())
+          Schema.Violation.InvalidProperty(
+              Schema.Violation.Entity.Node("N"), UNION_PROPERTY, values.toList())
       withData(
           "CREATE (:N {p: true})" with emptyMap() expect null,
           "CREATE (:N {p: false})" with emptyMap() expect null,
@@ -142,7 +140,7 @@ class SchemaTest : FunSpec() {
           "CREATE (:N {p: 'TRUE'})" with emptyMap() expect invalidProperty("TRUE"),
           "CREATE (:N {p: \$p})" with mapOf("p" to "FALSE") expect invalidProperty("FALSE"),
       ) { (query, parameters, expected) ->
-        UNION_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected
+        UNION_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
       }
     }
 
@@ -162,22 +160,22 @@ class SchemaTest : FunSpec() {
           "CREATE (:A {a: [1, '2', 3.0, null]})" with emptyMap() expect null,
           "CREATE (:A {a: null})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(A, A_A, listOf(null)),
+              Schema.Violation.InvalidProperty(A, A_A, listOf(null)),
           "CREATE (:A {a: \$a})" with
               mapOf("a" to null) expect
-              Schema.InvalidQuery.InvalidProperty(A, A_A, listOf(null)),
+              Schema.Violation.InvalidProperty(A, A_A, listOf(null)),
           "CREATE (:B {b: []})" with emptyMap() expect null,
           "CREATE (:B {b: [1, '2', 3.0]})" with emptyMap() expect null,
           "CREATE (:B {b: [null]]})" with emptyMap() expect null,
           "CREATE (:B {b: \$b})" with mapOf("b" to listOf(null)) expect null,
           "CREATE (:B {b: null})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(B, B_B, listOf(null)),
+              Schema.Violation.InvalidProperty(B, B_B, listOf(null)),
           "CREATE (:B {b: \$b})" with
               mapOf("b" to null) expect
-              Schema.InvalidQuery.InvalidProperty(B, B_B, listOf(null))) {
+              Schema.Violation.InvalidProperty(B, B_B, listOf(null))) {
               (query, parameters, expected) ->
-            schema.validate(query, parameters) shouldBe expected
+            schema.validate(query, parameters) shouldBe expected?.violation
           }
     }
 
@@ -205,45 +203,45 @@ class SchemaTest : FunSpec() {
           "CREATE (:C {c: \$c})" with mapOf("c" to localDate) expect null,
           "CREATE (:C {c: time()})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(C, C_C, listOf("time()")),
+              Schema.Violation.InvalidProperty(C, C_C, listOf("time()")),
           "CREATE (:C {c: \$c})" with
               mapOf("c" to offsetTime) expect
-              Schema.InvalidQuery.InvalidProperty(C, C_C, listOf(offsetTime)),
+              Schema.Violation.InvalidProperty(C, C_C, listOf(offsetTime)),
           "CREATE (:D {d: \$d})" with mapOf("d" to offsetTime) expect null,
           "CREATE (:D {d: localtime()})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(D, D_D, listOf("localtime()")),
+              Schema.Violation.InvalidProperty(D, D_D, listOf("localtime()")),
           "CREATE (:D {d: \$d})" with
               mapOf("d" to localTime) expect
-              Schema.InvalidQuery.InvalidProperty(D, D_D, listOf(localTime)),
+              Schema.Violation.InvalidProperty(D, D_D, listOf(localTime)),
           "CREATE (:E {e: \$e})" with mapOf("e" to localTime) expect null,
           "CREATE (:E {e: datetime()})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(E, E_E, listOf("datetime()")),
+              Schema.Violation.InvalidProperty(E, E_E, listOf("datetime()")),
           "CREATE (:E {e: \$e})" with
               mapOf("e" to zonedDateTime) expect
-              Schema.InvalidQuery.InvalidProperty(E, E_E, listOf(zonedDateTime)),
+              Schema.Violation.InvalidProperty(E, E_E, listOf(zonedDateTime)),
           "CREATE (:F {f: \$f})" with mapOf("f" to zonedDateTime) expect null,
           "CREATE (:F {f: localdatetime()})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(F, F_F, listOf("localdatetime()")),
+              Schema.Violation.InvalidProperty(F, F_F, listOf("localdatetime()")),
           "CREATE (:F {f: \$f})" with
               mapOf("f" to localDateTime) expect
-              Schema.InvalidQuery.InvalidProperty(F, F_F, listOf(localDateTime)),
+              Schema.Violation.InvalidProperty(F, F_F, listOf(localDateTime)),
           "CREATE (:G {g: \$g})" with mapOf("g" to localDateTime) expect null,
           "CREATE (:G {g: date()})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(G, G_G, listOf("date()")),
+              Schema.Violation.InvalidProperty(G, G_G, listOf("date()")),
           "CREATE (:G {g: \$g})" with
               mapOf("g" to localDate) expect
-              Schema.InvalidQuery.InvalidProperty(G, G_G, listOf(localDate)),
+              Schema.Violation.InvalidProperty(G, G_G, listOf(localDate)),
           "CREATE (:H {h: \$h})" with mapOf("h" to duration) expect null,
           "CREATE (:H {h: date()})" with
               emptyMap() expect
-              Schema.InvalidQuery.InvalidProperty(H, H_H, listOf("date()")),
+              Schema.Violation.InvalidProperty(H, H_H, listOf("date()")),
           "CREATE (:H {h: \$h})" with
               mapOf("h" to "") expect
-              Schema.InvalidQuery.InvalidProperty(H, H_H, listOf("")),
+              Schema.Violation.InvalidProperty(H, H_H, listOf("")),
           *listOf(
                   "C" to "date",
                   "D" to "time",
@@ -258,7 +256,7 @@ class SchemaTest : FunSpec() {
                     }
               }
               .toTypedArray()) { (query, parameters, expected) ->
-            schema.validate(query, parameters) shouldBe expected
+            schema.validate(query, parameters) shouldBe expected?.violation
           }
     }
 
@@ -339,7 +337,7 @@ class SchemaTest : FunSpec() {
   private data class Data(
       val query: String,
       val parameters: Map<String, Any?>,
-      val expected: Schema.InvalidQuery?
+      val expected: Schema.Violation?
   )
 
   private companion object {
@@ -529,30 +527,30 @@ class SchemaTest : FunSpec() {
 
     infix fun String.with(parameters: Map<String, Any?>) = this to parameters
 
-    infix fun Pair<String, Map<String, Any?>>.expect(expected: Schema.InvalidQuery?) =
+    infix fun Pair<String, Map<String, Any?>>.expect(expected: Schema.Violation?) =
         Data(first, second, expected)
 
-    val PERSON = Schema.InvalidQuery.Entity.Node("Person")
+    val PERSON = Schema.Violation.Entity.Node("Person")
     val NAME = Schema.Property("name", Schema.Property.Type.String, emptySet())
 
-    val A = Schema.InvalidQuery.Entity.Node("A")
+    val A = Schema.Violation.Entity.Node("A")
     val A_A =
         Schema.Property(
             "a", Schema.Property.Type.Any, emptySet(), isList = true, allowsNullable = true)
-    val B = Schema.InvalidQuery.Entity.Node("B")
+    val B = Schema.Violation.Entity.Node("B")
     val B_B =
         Schema.Property("b", Schema.Property.Type.Any, emptySet(), isList = true, isNullable = true)
-    val C = Schema.InvalidQuery.Entity.Node("C")
+    val C = Schema.Violation.Entity.Node("C")
     val C_C = Schema.Property("c", Schema.Property.Type.Date, emptySet())
-    val D = Schema.InvalidQuery.Entity.Node("D")
+    val D = Schema.Violation.Entity.Node("D")
     val D_D = Schema.Property("d", Schema.Property.Type.Time, emptySet())
-    val E = Schema.InvalidQuery.Entity.Node("E")
+    val E = Schema.Violation.Entity.Node("E")
     val E_E = Schema.Property("e", Schema.Property.Type.LocalTime, emptySet())
-    val F = Schema.InvalidQuery.Entity.Node("F")
+    val F = Schema.Violation.Entity.Node("F")
     val F_F = Schema.Property("f", Schema.Property.Type.DateTime, emptySet())
-    val G = Schema.InvalidQuery.Entity.Node("G")
+    val G = Schema.Violation.Entity.Node("G")
     val G_G = Schema.Property("g", Schema.Property.Type.LocalDateTime, emptySet())
-    val H = Schema.InvalidQuery.Entity.Node("H")
+    val H = Schema.Violation.Entity.Node("H")
     val H_H = Schema.Property("h", Schema.Property.Type.Duration, emptySet())
   }
 }

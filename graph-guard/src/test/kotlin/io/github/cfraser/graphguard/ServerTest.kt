@@ -21,6 +21,7 @@ import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.knit.use
 import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.plugin.Validator
 import io.kotest.assertions.fail
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -88,7 +89,7 @@ class ServerTest : FunSpec() {
         }
       }
       withNeo4j {
-        withServer(plugin = Schema(MOVIES_SCHEMA).Validator() then observer) { driver ->
+        withServer(plugin = Validator(Schema(MOVIES_SCHEMA)) then observer) { driver ->
           driver.session().use { session ->
             session.run(MoviesGraph.MATCH_TOM_HANKS).list().shouldBeEmpty()
             session.runCatching { run("MATCH (n:N) RETURN n") }
@@ -101,7 +102,7 @@ class ServerTest : FunSpec() {
           clientConnections.flatMap {
             listOf(Server.Connected(it), Server.Connected(graphConnection))
           }
-      var ran = AtomicInteger()
+      val ran = AtomicInteger()
       events.filterIsInstance<Server.Proxied>().forEach { event ->
         when (val message = event.received) {
           is Bolt.Hello,

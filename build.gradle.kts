@@ -253,7 +253,7 @@ configure<JReleaserExtension> {
     authors.set(listOf("c-fraser"))
     license.set("Apache-2.0")
     inceptionYear.set("2023")
-    description.set("Graph schema validation proxy server")
+    description.set("Graph query validation proxy server")
     links { homepage.set("https://github.com/c-fraser/graph-guard") }
   }
 

@@ -40,11 +40,12 @@ import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.plugin.Script
+import io.github.cfraser.graphguard.plugin.Validator
+import java.net.InetSocketAddress
+import java.net.URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
-import java.net.URI
 
 /** [main] is the entry point for the [Server] application, run by the [Command]. */
 fun main(args: Array<String>) {
@@ -53,7 +54,7 @@ fun main(args: Array<String>) {
 
 /** [Command] runs [Server] with the CLI input. */
 internal class Command :
-    CliktCommand(name = "graph-guard", help = "Graph schema validation proxy server") {
+    CliktCommand(name = "graph-guard", help = "Graph query validation proxy server") {
 
   init {
     versionOption(BuildConfig.VERSION)
@@ -105,7 +106,7 @@ internal class Command :
 
   override fun run() {
     var plugin =
-        listOfNotNull(schema?.let { Schema(it).Validator() }, script?.let(Script::evaluate))
+        listOfNotNull(schema?.let(::Schema)?.let { Validator(it) }, script?.let(Script::evaluate))
             .fold(plugin {}, Server.Plugin::then)
     when (val output = output) {
       null -> {}
@@ -150,8 +151,7 @@ internal class Command :
 
     override suspend fun observe(event: Server.Event) {
       if (event !is Server.Proxied) return
-      val messages =
-      event.styled()
+      val messages = event.styled()
       withContext(Dispatchers.IO) { messages.forEach(terminal::println) }
     }
 
