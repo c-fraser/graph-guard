@@ -42,20 +42,21 @@ constructor(
 
   override suspend fun intercept(session: Bolt.Session, message: Bolt.Message): Bolt.Message {
     when (message) {
+      is Bolt.Run -> {
+        val violation = cache[message.query to message.parameters] ?: return message
+        LOGGER.info("Cypher query '{}' is invalid: {}", message.query, violation.message)
+        val failure =
+            Bolt.Failure(
+                mapOf("code" to "GraphGuard.Invalid.Query", "message" to violation.message))
+        lock.withLock { failures[session] = failure }
+        return Bolt.Messages(emptyList())
+      }
       is Bolt.Pull -> {
         val failure = failures[session] ?: return message
         failures -= session
         return failure and Bolt.Ignored
       }
-      !is Bolt.Run -> return message
-      else -> {
-        val invalid = cache[message.query to message.parameters] ?: return message
-        LOGGER.info("Cypher query '{}' is invalid: {}", message.query, invalid.message)
-        val failure =
-            Bolt.Failure(mapOf("code" to "GraphGuard.Invalid.Query", "message" to invalid.message))
-        lock.withLock { failures[session] = failure }
-        return Bolt.Messages(emptyList())
-      }
+      else -> return message
     }
   }
 
