@@ -18,3 +18,5 @@ docs/cli/*
 graph-guard-cli/neo4j.cid
 # generated antlr files
 graph-guard/src/main/java
+# dev notes
+TODO.md

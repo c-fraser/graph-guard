@@ -4,22 +4,23 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.Server
+import io.github.cfraser.graphguard.plugin.Validator.Rule
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 
 /**
  * [Validator] is a [Server.Plugin] that validates the [Bolt.Run.query] and [Bolt.Run.parameters] in
- * a [Bolt.Run] message. If the data in the [Bolt.Message] is invalid, according to the [rules],
- * then a [Bolt.Failure] and [Bolt.Ignored] is returned upon the next [Bolt.Pull].
+ * a [Bolt.Run] message. If the data in the [Bolt.Message] is invalid, according to the [rule], then
+ * a [Bolt.Failure] and [Bolt.Ignored] is returned upon the next [Bolt.Pull].
  *
- * @param rules the [Rule]s to validate
+ * @param rule the [Rule] to validate
  * @param cacheSize the maximum entries in the cache of validated queries
  */
 class Validator
 @JvmOverloads
 constructor(
-    private vararg val rules: Rule,
+    private val rule: Rule,
     cacheSize: Long? = null,
 ) : Server.Plugin {
 
@@ -37,7 +38,7 @@ constructor(
   private val cache =
       Caffeine.newBuilder().maximumSize(cacheSize ?: 1024).build<
           Pair<String, Map<String, Any?>>, Rule.Violation?> { (query, parameters) ->
-        rules.firstNotNullOfOrNull { rule -> rule.validate(query, parameters) }
+        rule.validate(query, parameters)
       }
 
   override suspend fun intercept(session: Bolt.Session, message: Bolt.Message): Bolt.Message {
@@ -73,6 +74,19 @@ constructor(
      * @return [Violation] if the [cypher] and [parameters] violate the [Rule], otherwise `null`
      */
     fun validate(cypher: String, parameters: Map<String, Any?>): Violation?
+
+    /**
+     * Run `this` [Validator.Rule] then [that].
+     *
+     * @param that the [Validator.Rule] to chain with `this`
+     * @return a [Validator.Rule] that invokes `this` then [that]
+     */
+    infix fun then(that: Rule): Rule {
+      return Rule { cypher, parameters ->
+        validate(cypher, parameters)
+        that.validate(cypher, parameters)
+      }
+    }
 
     /**
      * An [Violation] describes why a *Cypher* query violates a [Rule].

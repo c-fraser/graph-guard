@@ -25,6 +25,12 @@ import kotlinx.coroutines.sync.withLock
 class ValidatorTest : FunSpec() {
 
   init {
+    test("validate rule chain") {
+      val expected = Validator.Rule.Violation("invalid")
+      val rule = Validator.Rule { _, _ -> null } then Validator.Rule { _, _ -> expected }
+      rule.validate("", emptyMap()) shouldBe expected
+    }
+
     test("observe server events") {
       val lock = Mutex()
       val clientAddresses = mutableListOf<InetSocketAddress>()
