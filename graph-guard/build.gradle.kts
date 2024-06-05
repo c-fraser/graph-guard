@@ -43,36 +43,9 @@ dependencies {
   testFixturesApi(libs.neo4j.java.driver)
   testFixturesApi(libs.neo4j.test.harness)
   testFixturesImplementation(libs.kotest.runner)
-  testFixturesRuntimeOnly(libs.slf4j.nop)
 }
 
 tasks {
-  /*val downloadCypherGrammar by creating {
-    doLast {
-      for ((i, file) in listOf("CypherLexer.g4", "CypherParser.g4").withIndex()) {
-        val grammarFile = projectDir.resolve("src/main/antlr/$file")
-        URL(
-          "https://raw.githubusercontent.com/neo4j/cypher-language-support/${libs.versions.cypher.language.support.get()}/packages/language-support/src/antlr-grammar/$file")
-          .openStream()
-          .use { input -> grammarFile.outputStream().use { output -> input.copyTo(output) } }
-        if (i == 0) continue
-        val grammar =
-          grammarFile
-            .readText()
-            .replace(
-              "parser grammar CypherParser;\n",
-              """|parser grammar CypherParser;
-                    |
-                    |@ header
-                    |{
-                    |package org.neo4j.cypher;
-                    |}"""
-                .trimMargin())
-        grammarFile.writeText(grammar)
-      }
-    }
-  }*/
-
   val modifyGrammarSource by creating {
     mustRunAfter(withType<AntlrTask>())
     doLast {
@@ -89,14 +62,13 @@ tasks {
   }
 
   generateGrammarSource {
-    /*dependsOn(downloadCypherGrammar)*/
     finalizedBy(modifyGrammarSource)
     outputDirectory = file("src/main/java/io/github/cfraser/graphguard/plugin")
   }
 
   withType<KotlinCompile> {
     dependsOn(withType<AntlrTask>())
-    kotlinOptions { freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers") }
+    compilerOptions { freeCompilerArgs.add("-Xcontext-receivers") }
   }
 
   withType<Jar> { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }

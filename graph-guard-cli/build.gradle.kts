@@ -35,7 +35,6 @@ dependencies {
   runtimeOnly(libs.logback.encoder)
 
   testImplementation(testFixtures(project(":graph-guard")))
-  testRuntimeOnly(libs.slf4j.nop)
 }
 
 buildConfig {

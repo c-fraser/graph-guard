@@ -116,7 +116,11 @@ class SchemaTest : FunSpec() {
               Schema.Violation.UnknownProperty(PERSON, "fullName"),
           "MATCH (theater:Theater)-[:SHOWING]->(movie:Movie) RETURN theater, movie" with
               emptyMap() expect
-              null) { (query, parameters, expected) ->
+              null,
+          "MATCH (person:Person {name: 'Keanu Reeves'}) SET person.name = 'Keanu Charles Reeves', person.born = '09/02/1964' RETURN person" with
+              emptyMap() expect
+              Schema.Violation.InvalidProperty(PERSON, BORN, listOf("09/02/1964"))) {
+              (query, parameters, expected) ->
             MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
           }
     }
@@ -342,7 +346,7 @@ class SchemaTest : FunSpec() {
 
   private companion object {
 
-    /** The [Schema.Graph] for the `MOVIES_SCHEMA`. */
+    /** The [Schema.Graph] for the [MOVIES_SCHEMA]. */
     val MOVIES_GRAPH =
         Schema.Graph(
             name = "Movies",
@@ -423,7 +427,7 @@ class SchemaTest : FunSpec() {
                         metadata = emptySet()),
                 ))
 
-    /** The [Schema.Graph] for the `PLACES_SCHEMA`. */
+    /** The [Schema.Graph] for the [PLACES_SCHEMA]. */
     val PLACES_GRAPH =
         Schema.Graph(
             name = "Places",
@@ -532,6 +536,7 @@ class SchemaTest : FunSpec() {
 
     val PERSON = Schema.Violation.Entity.Node("Person")
     val NAME = Schema.Property("name", Schema.Property.Type.String, emptySet())
+    val BORN = Schema.Property("born", Schema.Property.Type.Integer, emptySet())
 
     val A = Schema.Violation.Entity.Node("A")
     val A_A =

@@ -15,6 +15,9 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.plugin
 
+import kotlin.collections.Set
+import kotlin.collections.component1
+import kotlin.collections.component2
 import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
@@ -28,7 +31,9 @@ import org.neo4j.cypherdsl.core.Operation
 import org.neo4j.cypherdsl.core.Operator
 import org.neo4j.cypherdsl.core.Parameter
 import org.neo4j.cypherdsl.core.PatternElement
+import org.neo4j.cypherdsl.core.Property as CypherProperty
 import org.neo4j.cypherdsl.core.RelationshipBase
+import org.neo4j.cypherdsl.core.Set as CypherSet
 import org.neo4j.cypherdsl.core.Statement
 import org.neo4j.cypherdsl.core.StatementCatalog
 import org.neo4j.cypherdsl.core.SymbolicName
@@ -191,13 +196,39 @@ internal data class Query(
     private val Statement.properties: Set<Property>
       get() {
         val options = mutableMapOf<String, Set<String?>>()
-        val propertyTypes =
-            catalog.allPropertyFilters
-                .map { (property, filters) ->
-                  "${property.owningToken.firstOrNull()?.value.orEmpty()}.${property.name}" to
-                      filters.collectOptions(options).mapTypes().toSet()
-                }
-                .toMap()
+        val propertyTypes = buildMap {
+          catalog.allPropertyFilters.forEach { (property, filters) ->
+            this +=
+                "${property.owningToken.firstOrNull()?.value.orEmpty()}.${property.name}" to
+                    filters.collectOptions(options).mapPropertyType().toSet()
+          }
+          val properties =
+              catalog.properties
+                  .mapNotNull { property ->
+                    property.owningToken.firstOrNull()?.value?.let { owner ->
+                      property.name to owner
+                    }
+                  }
+                  .toMap()
+          val entities = mutableMapOf<String, Collection<String>>()
+          accept { visitable ->
+            when (visitable) {
+              is NodeBase<*> -> {
+                val name = visitable.symbolicName.getOrNull()?.value ?: return@accept
+                entities += name to visitable.labels.map(NodeLabel::getValue)
+              }
+              is CypherSet ->
+                  for ((left, operator, right) in visitable.getOperations()) {
+                    if (operator != Operator.SET) continue
+                    val reference = left.containerReference.cypher() ?: continue
+                    val label =
+                        entities[reference]?.firstOrNull { label -> label == properties[left.name] }
+                            ?: continue
+                    this += "$label.${left.name}" to setOf(right)
+                  }
+            }
+          }
+        }
         return catalog.properties
             .mapNotNull { property ->
               val owner = property.owningToken.firstOrNull()?.value
@@ -238,27 +269,54 @@ internal data class Query(
       }
     }
 
+    /**
+     * Get the [CypherProperty], [Operator], and [Property.Type] for each of the [Operation]s in the
+     * [CypherSet].
+     */
+    private fun CypherSet.getOperations(): Set<Triple<CypherProperty, Operator, Property.Type>> {
+      return buildSet {
+        accept { visitable ->
+          if (visitable !is Operation) return@accept
+          var left: CypherProperty? = null
+          var operator: Operator? = null
+          var right: Property.Type? = null
+          visitable.accept { component ->
+            when {
+              component is Operation -> {}
+              left == null && component is CypherProperty -> left = component
+              operator == null && component is Operator -> operator = component
+              right == null && component is Expression -> right = component.toPropertyType()
+            }
+          }
+          this += Triple(left ?: return@accept, operator ?: return@accept, right ?: return@accept)
+        }
+      }
+    }
+
     /** Convert each [StatementCatalog.PropertyFilter] to a [Property.Type]. */
-    private fun Collection<StatementCatalog.PropertyFilter>.mapTypes(): List<Property.Type> {
-      return mapNotNull { filter ->
-        when (val expression = filter.right) {
-          is NullLiteral -> Property.Type.Value(null, expression.cypher())
-          is Literal<*> -> Property.Type.Value(expression.content, expression.cypher())
-          is ListExpression ->
-              buildList {
-                    expression.accept { visitable ->
-                      when (visitable) {
-                        is NullLiteral -> this += null
-                        is Literal<*> -> this += visitable.content
-                      }
+    private fun Collection<StatementCatalog.PropertyFilter>.mapPropertyType(): List<Property.Type> {
+      return mapNotNull { filter -> filter.right.toPropertyType() }
+    }
+
+    /** Convert the [Expression] to a [Property.Type]. */
+    private fun Expression.toPropertyType(): Property.Type? {
+      return when (val expression = this) {
+        is NullLiteral -> Property.Type.Value(null, expression.cypher())
+        is Literal<*> -> Property.Type.Value(expression.content, expression.cypher())
+        is ListExpression ->
+            buildList {
+                  expression.accept { visitable ->
+                    when (visitable) {
+                      is NullLiteral -> this += null
+                      is Literal<*> -> this += visitable.content
                     }
                   }
-                  .let { Property.Type.Container(it) }
-          is Parameter<*> -> Property.Type.Resolvable(expression.name)
-          is FunctionInvocation ->
-              Property.Type.Resolvable(expression.cypher() ?: "${expression.functionName}()")
-          else -> null
-        }
+                }
+                .let { Property.Type.Container(it) }
+        is Parameter<*> -> Property.Type.Resolvable(expression.name)
+        is FunctionInvocation ->
+            Property.Type.Resolvable(expression.cypher() ?: "${expression.functionName}()")
+        else -> null
       }
     }
   }
