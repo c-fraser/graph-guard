@@ -16,11 +16,37 @@ coroutines:
       - '**/src/test/**/*.kt'
 
 style:
+  AlsoCouldBeApply:
+    active: true
+  CollapsibleIfStatements:
+    active: true
+  DataClassShouldBeImmutable:
+    active: true
+  ExplicitItLambdaParameter:
+    active: true
+  ExpressionBodySyntax:
+    active: true
+  ForbiddenAnnotation:
+    active: true
   ForbiddenComment:
     active: false
   LoopWithTooManyJumpStatements:
     maxJumpCount: 3
   MagicNumber:
     active: false
+  NullableBooleanCheck:
+    active: true
+  OptionalUnit:
+    active: true
+  PreferToOverPairSyntax:
+    active: true
+  RedundantExplicitType:
+    active: true
   ReturnCount:
     max: 7
+  UnusedImports:
+    active: true
+  UseIfInsteadOfWhen:
+    active: true
+  UseLet:
+    active: true
