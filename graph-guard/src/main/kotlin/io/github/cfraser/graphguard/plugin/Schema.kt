@@ -13,37 +13,41 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package io.github.cfraser.graphguard.plugin
 
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.OffsetTime
-import java.time.ZonedDateTime as JZonedDateTime
-import java.time.ZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Any
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
+import java.time.LocalDate
+import java.time.OffsetTime
+import java.time.ZonedDateTime
+import kotlin.Any
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.ZonedDateTime as JZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.collections.List as KList
 
 /**
- * A [Schema] describes the [nodes] and [relationships] in a [Neo4j](https://neo4j.com/) database
+ * A [Schema] describes the *nodes* and *relationships* in a [Neo4j](https://neo4j.com/) database
  * via the (potentially) interconnected [graphs].
  *
  * [Schema] implements [Validator.Rule], thus has the capability to validate that a *Cypher* query
- * adheres to the [nodes] and [relationships] defined in the [graphs].
+ * adheres to the *nodes* and *relationships* defined in the [graphs].
  *
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
-data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Validator.Rule {
+@JvmRecord
+@Suppress("MemberVisibilityCanBePrivate")
+data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rule {
 
   /**
    * Initialize a [Schema] from the [schemaText].
@@ -63,22 +67,30 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
                 .graphs
           })
 
-  /** The [Schema.Node]s in the [graphs] indexed by [Schema.Node.name]. */
-  @JvmField val nodes: Map<KString, Node> = graphs.flatMap(Graph::nodes).associateBy(Node::name)
-
-  /** The [Schema.Relationship]s in the [graphs] indexed by [Relationship.Id]. */
-  @JvmField
-  val relationships: Map<Relationship.Id, Relationship> = buildMap {
-    graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
-      val key =
-          Relationship.Id(
-              relationship.name, relationship.source.validate(), relationship.target.validate())
-      require(key !in this) {
-        "Duplicate relationship ${key.name} from ${key.source} to ${key.target}"
-      }
-      this[key] = relationship
-    }
+  init {
+    // Initialize/validate graph entities
+    val (_, _) = nodes.value to relationships.value
   }
+
+  /** The [Node]s in the [graphs] indexed by [Node.name]. */
+  private val nodes: Lazy<Map<KString, Node>>
+    get() = lazy { graphs.flatMap(Graph::nodes).associateBy(Node::name) }
+
+  /** The [Relationship]s in the [graphs] indexed by [Relationship.Id]. */
+  private val relationships: Lazy<Map<Relationship.Id, Relationship>>
+    get() = lazy {
+      buildMap {
+        graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
+          val key =
+              Relationship.Id(
+                  relationship.name, relationship.source.validate(), relationship.target.validate())
+          require(key !in this) {
+            "Duplicate relationship ${key.name} from ${key.source} to ${key.target}"
+          }
+          this[key] = relationship
+        }
+      }
+    }
 
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
   override fun validate(
@@ -88,7 +100,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
     val query = Query.parse(cypher) ?: return null
     for (queryNode in query.nodes) {
       val entity = Violation.Entity.Node(queryNode)
-      val schemaNode = nodes[queryNode] ?: return Violation.Unknown(entity).violation
+      val schemaNode = nodes.value[queryNode] ?: return Violation.Unknown(entity).violation
       for (queryProperty in
           query.properties(queryNode) + query.mutatedProperties(queryNode, parameters)) {
         val schemaProperty =
@@ -102,7 +114,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
       if (source == null || target == null) continue
       val entity = Violation.Entity.Relationship(label, source, target)
       val schemaRelationship =
-          relationships[Relationship.Id(label, source, target)]
+          relationships.value[Relationship.Id(label, source, target)]
               ?: return Violation.Unknown(entity).violation
       for (queryProperty in query.properties(label)) {
         val schemaProperty =
@@ -124,17 +136,17 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
             "Invalid graph reference '$graph.$label'"
           }
       node.name
-    } else apply { require(this in nodes) { "Invalid node reference '$this'" } }
+    } else apply { require(this in nodes.value) { "Invalid node reference '$this'" } }
   }
 
   /**
-   * A [Graph] is a [Set] of [nodes] that specify the expected entities in a *Neo4j* database.
+   * A [Graph] is a [KList] of [nodes] that specify the expected entities in a *Neo4j* database.
    *
    * @property name the name of the graph
    * @property nodes the nodes and relationships in the graph
    */
   @JvmRecord
-  data class Graph internal constructor(val name: KString, val nodes: Set<Node>) {
+  data class Graph internal constructor(val name: KString, val nodes: KList<Node>) {
 
     override fun toString(): KString {
       return "graph $name {\n${nodes.joinToString("\n", transform = Node::toString)}\n}"
@@ -153,9 +165,9 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
   data class Node
   internal constructor(
       val name: KString,
-      val properties: Set<Property>,
-      val relationships: Set<Relationship>,
-      val metadata: Set<Metadata>
+      val properties: KList<Property>,
+      val relationships: KList<Relationship>,
+      val metadata: KList<Metadata>
   ) {
 
     override fun toString(): KString {
@@ -184,8 +196,8 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
       val source: KString,
       val target: KString,
       val isDirected: KBoolean,
-      val properties: Set<Property>,
-      val metadata: Set<Metadata>
+      val properties: KList<Property>,
+      val metadata: KList<Metadata>
   ) {
 
     /**
@@ -195,7 +207,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
      * @property source the name of the node the relationship comes from
      * @property target the name of the node the relationship goes to
      */
-    @JvmRecord data class Id(val name: KString, val source: KString, val target: KString)
+    @JvmRecord internal data class Id(val name: KString, val source: KString, val target: KString)
 
     override fun toString(): KString {
       val direction = if (isDirected) "->" else "--"
@@ -209,30 +221,13 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
    * @property name the name of the property
    * @property type the property type
    * @property metadata the property metadata
-   * @property isList whether the [Property] is a
-   *   [List](https://neo4j.com/docs/cypher-manual/5/values-and-types/lists/) of the [type]
-   * @property isNullable whether the [Property] value is nullable
-   * @property allowsNullable whether the [Property] (container) allows nullable values
    */
   @JvmRecord
   data class Property
-  internal constructor(
-      val name: KString,
-      val type: Type,
-      val metadata: Set<Metadata>,
-      val isList: KBoolean = false,
-      val isNullable: KBoolean = false,
-      val allowsNullable: KBoolean = false
-  ) {
+  internal constructor(val name: KString, val type: Type, val metadata: KList<Metadata>) {
 
     override fun toString(): KString {
-      val type =
-          if (isList) {
-            val nullable = if (allowsNullable) "?" else ""
-            "List<$type$nullable>"
-          } else "$type"
-      val nullable = if (isNullable) "?" else ""
-      return "$name: $type$nullable"
+      return "$name: $type"
     }
 
     /**
@@ -267,7 +262,13 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
 
       data object Time : Type(OffsetTime::class)
 
-      /** A [Type.LiteralString] [value]. */
+      data class List(val type: Type) : Type(Unit::class) {
+
+        override fun toString(): KString {
+          return "List<$type>"
+        }
+      }
+
       data class LiteralString(val value: KString) : Type(KString::class) {
 
         override fun toString(): KString {
@@ -275,8 +276,52 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
         }
       }
 
+      /** A [Nullable] [Type]. */
+      sealed class Nullable(clazz: KClass<*>) : Type(clazz) {
+
+        override fun toString(): KString {
+          return "$this?"
+        }
+
+        data object Any : Nullable(KAny::class)
+
+        data object Boolean : Nullable(KBoolean::class)
+
+        data object Date : Nullable(LocalDate::class)
+
+        data object DateTime : Nullable(ZonedDateTime::class)
+
+        data object Duration : Nullable(JDuration::class)
+
+        data object Float : Nullable(Double::class)
+
+        data object Integer : Nullable(Long::class)
+
+        data object LocalDateTime : Nullable(JLocalDateTime::class)
+
+        data object LocalTime : Nullable(JLocalTime::class)
+
+        data object String : Nullable(KString::class)
+
+        data object Time : Nullable(OffsetTime::class)
+
+        data class List(val type: Type) : Nullable(Unit::class) {
+
+          override fun toString(): KString {
+            return "List<$type>?"
+          }
+        }
+
+        data class LiteralString(val value: KString) : Nullable(KString::class) {
+
+          override fun toString(): KString {
+            return "\"$value\""
+          }
+        }
+      }
+
       /** A [Type.Union] of [types]. */
-      data class Union(val types: List<Type>) : Type(Unit::class) {
+      data class Union(val types: KList<Type>) : Type(Unit::class) {
 
         override fun toString(): KString {
           return types.joinToString(" | ")
@@ -309,7 +354,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
     class UnknownProperty(entity: Entity, property: KString) :
         Violation(Validator.Rule.Violation("Unknown property '$property' for ${entity.name}"))
 
-    class InvalidProperty(entity: Entity, property: Property, values: List<KAny?>) :
+    class InvalidProperty(entity: Entity, property: Property, values: KList<KAny?>) :
         Violation(
             Validator.Rule.Violation(
                 @Suppress("MaxLineLength")
@@ -402,8 +447,8 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
       this += "duration.inSeconds()" to duration
     }
 
-    /** Parenthesize the [Set] of properties. */
-    fun Set<Property>.parenthesize(): KString {
+    /** Parenthesize the [KList] of properties. */
+    fun KList<Property>.parenthesize(): KString {
       return if (isEmpty()) "" else "(${joinToString(transform = Property::toString)})"
     }
 
@@ -442,7 +487,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
                               is KString,
                               is JZonedDateTime,
                               null -> Query.Property.Type.Value(value)
-                              is List<*> -> Query.Property.Type.Container(value)
+                              is KList<*> -> Query.Property.Type.Container(value)
                               else -> error("Unexpected parameter value")
                             }))
                   }
@@ -452,7 +497,7 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
     }
 
     /** Find the [Property] that matches the [Query.Property]. */
-    fun Set<Property>.matches(property: Query.Property): Property? {
+    fun KList<Property>.matches(property: Query.Property): Property? {
       return find { property.name == it.name }
     }
 
@@ -499,17 +544,29 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
       }
     }
 
-    /** Determine if `this` [List] of [Property] value(s) is valid. */
+    /** Determine if `this` [KList] of [Property] value(s) is valid. */
     context(Property)
-    fun List<KAny?>.isValid(): KBoolean {
-      fun List<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
+    fun KList<KAny?>.isValid(): KBoolean {
+      fun KList<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
+      val isList = type is Property.Type.List || type is Property.Type.Nullable.List
+      val allowsNullable =
+          isList &&
+              when (type) {
+                is Property.Type.List -> type.type is Property.Type.Nullable
+                is Property.Type.Nullable.List -> type.type is Property.Type.Nullable
+                else -> false
+              }
       if (isList && filterNullIf(allowsNullable).any { it !is MutableList<*> }) return false
       if (!isList && filterNotNull().any { it is MutableList<*> }) return false
+      val isNullable = type is Property.Type.Nullable
       return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
           .filterNullIf(isNullable)
           .all { value ->
             when (type) {
+              is Property.Type.List -> type.type.clazz.isInstance(value)
+              is Property.Type.Nullable.List -> type.type.clazz.isInstance(value)
               is Property.Type.LiteralString -> type.value == value
+              is Property.Type.Nullable.LiteralString -> type.value == value
               is Property.Type.Union ->
                   type.types.any { t ->
                     if (t is Property.Type.LiteralString) t.value == value
@@ -525,20 +582,20 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
    * [Collector] is a [io.github.cfraser.graphguard.plugin.SchemaListener] that collects [graphs]
    * while walking the parse tree.
    */
-  private class Collector(val graphs: MutableSet<Graph> = mutableSetOf()) : SchemaBaseListener() {
+  private class Collector(val graphs: MutableList<Graph> = mutableListOf()) : SchemaBaseListener() {
 
     private var graph by notNull<Graph>()
     private var node by notNull<Node>()
 
     override fun enterGraph(ctx: SchemaParser.GraphContext) {
-      graph = Graph(ctx.name().get(), emptySet())
+      graph = Graph(ctx.name().get(), emptyList())
     }
 
     override fun enterNode(ctx: SchemaParser.NodeContext) {
       val name = ctx.name().get()
       val properties = ctx.properties().get()
       val metadata = ctx.metadata().get()
-      node = Node(name, properties, emptySet(), metadata)
+      node = Node(name, properties, emptyList(), metadata)
     }
 
     override fun enterRelationship(ctx: SchemaParser.RelationshipContext) {
@@ -572,8 +629,8 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
 
       /** Get the [Metadata] from the [SchemaParser.MetadataContext]. */
       tailrec fun SchemaParser.MetadataContext?.get(
-          collected: MutableSet<Metadata> = mutableSetOf()
-      ): Set<Metadata> {
+          collected: MutableList<Metadata> = mutableListOf()
+      ): KList<Metadata> {
         return if (this == null) collected
         else {
           val name = name().get()
@@ -584,23 +641,25 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
       }
 
       /** Get the properties from the [SchemaParser.PropertiesContext]. */
-      fun SchemaParser.PropertiesContext?.get(): Set<Property> {
-        return this?.property()
-            ?.map { ctx ->
-              val name = ctx.name().get()
-              val type =
-                  when (val type = ctx.type() ?: ctx.union()) {
-                    is SchemaParser.TypeContext -> type.get()
-                    is SchemaParser.UnionContext -> type.get()
-                    else -> error("Unknown type")
-                  }
-              val metadata = ctx.metadata().get()
-              val isList = ctx.type()?.list() != null
-              val isNullable = ctx.type()?.QM() != null
-              val allowsNullable = ctx.type()?.list()?.QM() != null
-              Property(name, type, metadata, isList, isNullable, allowsNullable)
-            }
-            ?.toSet() ?: emptySet()
+      fun SchemaParser.PropertiesContext?.get(): KList<Property> {
+        return this?.property()?.map { ctx ->
+          val name = ctx.name().get()
+          val innerType =
+              when (val type = ctx.type() ?: ctx.union()) {
+                is SchemaParser.TypeContext -> type.get()
+                is SchemaParser.UnionContext -> type.get()
+                else -> error("Unknown type")
+              }
+          val metadata = ctx.metadata().get()
+          val isList = ctx.type()?.list() != null
+          val isNullable = ctx.type()?.QM() != null
+          val type =
+              if (isList) {
+                if (isNullable) Property.Type.Nullable.List(innerType)
+                else Property.Type.List(innerType)
+              } else innerType
+          Property(name, type, metadata)
+        } ?: emptyList()
       }
 
       /** Get the [Property.Type] from the [SchemaParser.TypeContext]. */
@@ -613,19 +672,27 @@ data class Schema internal constructor(@JvmField val graphs: Set<Graph>) : Valid
               is SchemaParser.ListContext -> ctx.typeValue().get()
               else -> error("Unknown type value")
             }
+        // If a list, check the nullability of the inner type
+        val isNullable = if (list() != null) list()?.QM() != null else QM() != null
         return when (value) {
-          "Any" -> Property.Type.Any
-          "Boolean" -> Property.Type.Boolean
-          "Date" -> Property.Type.Date
-          "DateTime" -> Property.Type.DateTime
-          "Duration" -> Property.Type.Duration
-          "Float" -> Property.Type.Float
-          "Integer" -> Property.Type.Integer
-          "LocalDateTime" -> Property.Type.LocalDateTime
-          "LocalTime" -> Property.Type.LocalTime
-          "String" -> Property.Type.String
-          "Time" -> Property.Type.Time
-          else -> Property.Type.LiteralString(value.drop(1).dropLast(1))
+          "Any" -> if (isNullable) Property.Type.Nullable.Any else Property.Type.Any
+          "Boolean" -> if (isNullable) Property.Type.Nullable.Boolean else Property.Type.Boolean
+          "Date" -> if (isNullable) Property.Type.Nullable.Date else Property.Type.Date
+          "DateTime" -> if (isNullable) Property.Type.Nullable.DateTime else Property.Type.DateTime
+          "Duration" -> if (isNullable) Property.Type.Nullable.Duration else Property.Type.Duration
+          "Float" -> if (isNullable) Property.Type.Nullable.Float else Property.Type.Float
+          "Integer" -> if (isNullable) Property.Type.Nullable.Integer else Property.Type.Integer
+          "LocalDateTime" ->
+              if (isNullable) Property.Type.Nullable.LocalDateTime else Property.Type.LocalDateTime
+          "LocalTime" ->
+              if (isNullable) Property.Type.Nullable.LocalTime else Property.Type.LocalTime
+          "String" -> if (isNullable) Property.Type.Nullable.String else Property.Type.String
+          "Time" -> if (isNullable) Property.Type.Nullable.Time else Property.Type.Time
+          else -> {
+            val literalValue = value.drop(1).dropLast(1)
+            if (isNullable) Property.Type.Nullable.LiteralString(literalValue)
+            else Property.Type.LiteralString(literalValue)
+          }
         }
       }
 

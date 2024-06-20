@@ -35,6 +35,7 @@ dependencies {
   runtimeOnly(libs.logback.encoder)
 
   testImplementation(testFixtures(project(":graph-guard")))
+  testImplementation(libs.neo4j.test.harness) { exclude(module = "neo4j-slf4j-provider") }
 }
 
 buildConfig {
