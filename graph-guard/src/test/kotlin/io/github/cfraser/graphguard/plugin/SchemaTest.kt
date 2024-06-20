@@ -20,9 +20,6 @@ import io.github.cfraser.graphguard.knit.METADATA_SCHEMA
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.knit.PLACES_SCHEMA
 import io.github.cfraser.graphguard.knit.UNION_SCHEMA
-import io.github.cfraser.graphguard.plugin.Schema.DSL.graph
-import io.github.cfraser.graphguard.plugin.Schema.DSL.node
-import io.github.cfraser.graphguard.plugin.Schema.DSL.schema
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
@@ -49,11 +46,6 @@ class SchemaTest : FunSpec() {
 
     test("render union schema") {
       "${UNION_GRAPH_SCHEMA.graphs.first()}" shouldBe UNION_SCHEMA.trim()
-    }
-
-    test("schema dsl") {
-      schema { graph("Movies") { node("Person") { TODO() } } } shouldBe
-          MOVIES_AND_PLACES_GRAPH_SCHEMA
     }
 
     context("validate cypher queries") {

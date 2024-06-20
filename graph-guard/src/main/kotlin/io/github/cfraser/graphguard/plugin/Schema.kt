@@ -16,25 +16,25 @@ limitations under the License.
 
 package io.github.cfraser.graphguard.plugin
 
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.OffsetTime
-import java.time.ZonedDateTime as JZonedDateTime
-import java.time.ZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Any
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
-import kotlin.collections.List as KList
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
+import java.time.LocalDate
+import java.time.OffsetTime
+import java.time.ZonedDateTime
+import kotlin.Any
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.ZonedDateTime as JZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.collections.List as KList
 
 /**
  * A [Schema] describes the *nodes* and *relationships* in a [Neo4j](https://neo4j.com/) database
@@ -139,65 +139,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
     } else apply { require(this in nodes.value) { "Invalid node reference '$this'" } }
   }
 
-  /** [DSL] to build a [Schema]. */
-  object DSL {
-
-    /**
-     * Build a [Schema] with the [builder] function.
-     *
-     * @param builder the function that builds the [Schema]
-     * @return the built [Schema]
-     */
-    fun schema(builder: Builder.() -> Unit): Schema {
-      return Builder().apply(builder).build()
-    }
-
-    /**
-     * Build then add the [graph] to the [Schema.graphs].
-     *
-     * @param name the [Graph.Builder.name]
-     * @param builder the function that builds the [Schema.Graph] to add
-     * @return `this` [Schema.Builder]
-     */
-    fun Builder.graph(name: KString, builder: Graph.Builder.() -> Unit): Builder {
-      return graph(Graph.Builder().name(name).apply(builder).build())
-    }
-
-    /**
-     * Build then add the [node] to the [Graph.Builder.nodes].
-     *
-     * @param name the [Node.Builder.name]
-     * @param builder the function that builds the [Node] to add
-     * @return `this` [Graph.Builder]
-     */
-    fun Graph.Builder.node(name: KString, builder: Node.Builder.() -> Unit): Graph.Builder {
-      return node(Node.Builder().name(name).apply(builder).build())
-    }
-  }
-
-  /** [Schema.Builder] builds a [Schema]. */
-  class Builder {
-
-    private val graphs = mutableListOf<Graph>()
-
-    /**
-     * Add the [graph] to the [Schema.graphs].
-     *
-     * @param graph the [Graph] to add
-     * @return `this` [Schema.Builder]
-     */
-    fun graph(graph: Graph): Builder = apply { graphs += graph }
-
-    /**
-     * Build the [Schema].
-     *
-     * @return the built [Schema]
-     */
-    fun build(): Schema {
-      return Schema(graphs)
-    }
-  }
-
   /**
    * A [Graph] is a [KList] of [nodes] that specify the expected entities in a *Neo4j* database.
    *
@@ -209,43 +150,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
 
     override fun toString(): KString {
       return "graph $name {\n${nodes.joinToString("\n", transform = Node::toString)}\n}"
-    }
-
-    /** [Graph.Builder] builds a [Graph]. */
-    class Builder {
-
-      private var name: KString? = null
-      private val nodes = mutableListOf<Node>()
-
-      /**
-       * Set the [Graph.name].
-       *
-       * @param name the name of the [Graph]
-       * @return `this` [Graph.Builder]
-       * @throws IllegalStateException if [Graph.name] has already been set
-       */
-      fun name(name: KString): Builder = apply {
-        check(this.name.isNullOrBlank()) { "Graph has name '${this.name}'" }
-        this.name = name
-      }
-
-      /**
-       * Add the [node] to the [Graph.nodes].
-       *
-       * @param node the [Node] to add
-       * @return `this` [Graph.Builder]
-       */
-      fun node(node: Node): Builder = apply { nodes += node }
-
-      /**
-       * Build the [Graph].
-       *
-       * @return the built [Graph]
-       * @throws IllegalStateException if [Graph.name] has not been set
-       */
-      fun build(): Graph {
-        return Graph(checkNotNull(name) { "Graph name is required" }, nodes)
-      }
     }
   }
 
@@ -272,64 +176,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
               .takeUnless { relationships.isEmpty() }
               .orEmpty()
       return "  node $name${properties.parenthesize()}$relationships;"
-    }
-
-    /** [Node.Builder] builds a [Node]. */
-    class Builder {
-
-      private var name: KString? = null
-      private val properties = mutableListOf<Property>()
-      private val relationships = mutableListOf<Relationship>()
-      private val metadata = mutableListOf<Metadata>()
-
-      /**
-       * Set the [Node.name].
-       *
-       * @param name the name of the [Node]
-       * @return `this` [Node.Builder]
-       * @throws IllegalStateException if [Node.name] has already been set
-       */
-      fun name(name: KString): Builder = apply {
-        check(this.name.isNullOrBlank()) { "Node has name '${this.name}'" }
-        this.name = name
-      }
-
-      /**
-       * Add the [property] to the [Node.properties].
-       *
-       * @param property the [Property] to add
-       * @return `this` [Node.Builder]
-       */
-      fun property(property: Property): Builder = apply { properties += property }
-
-      /**
-       * Add the [relationship] to the [Node.relationships].
-       *
-       * @param relationship the [Relationship] to add
-       * @return `this` [Node.Builder]
-       */
-      fun relationship(relationship: Relationship): Builder = apply {
-        relationships += relationship
-      }
-
-      /**
-       * Add the [metadata] to the [Node.metadata].
-       *
-       * @param metadata the [Metadata] to add
-       * @return `this` [Node.Builder]
-       */
-      fun metadata(metadata: Metadata): Builder = apply { this.metadata += metadata }
-
-      /**
-       * Build the [Node].
-       *
-       * @return the built [Node]
-       * @throws IllegalStateException if [Node.name] has not been set
-       */
-      fun build(): Node {
-        return Node(
-            checkNotNull(name) { "Node name is required" }, properties, relationships, metadata)
-      }
     }
   }
 
@@ -366,101 +212,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
     override fun toString(): KString {
       val direction = if (isDirected) "->" else "--"
       return "    $name${properties.parenthesize()} $direction $target"
-    }
-
-    /** [Relationship.Builder] builds a [Relationship]. */
-    class Builder {
-
-      private var name: KString? = null
-      private var source: KString? = null
-      private var target: KString? = null
-      private var isDirected: KBoolean? = null
-      private val properties = mutableListOf<Property>()
-      private val metadata = mutableListOf<Metadata>()
-
-      /**
-       * Set the [Relationship.name].
-       *
-       * @param name the name of the [Relationship]
-       * @return `this` [Relationship.Builder]
-       * @throws IllegalStateException if [Relationship.name] has already been set
-       */
-      fun name(name: KString): Builder = apply {
-        check(this.name.isNullOrBlank()) { "Relationship has name '${this.name}'" }
-        this.name = name
-      }
-
-      /**
-       * Set the [Relationship.source].
-       *
-       * @param source the source of the [Relationship]
-       * @return `this` [Relationship.Builder]
-       * @throws IllegalStateException if [Relationship.source] has already been set
-       */
-      fun source(source: KString): Builder = apply {
-        check(this.source.isNullOrBlank()) { "Relationship has source '${this.source}'" }
-        this.source = source
-      }
-
-      /**
-       * Set the [Relationship.target].
-       *
-       * @param target the target of the [Relationship]
-       * @return `this` [Relationship.Builder]
-       * @throws IllegalStateException if [Relationship.target] has already been set
-       */
-      fun target(target: KString): Builder = apply {
-        check(this.target.isNullOrBlank()) { "Relationship has target '${this.target}'" }
-        this.target = target
-      }
-
-      /**
-       * Set whether the [Relationship.isDirected].
-       *
-       * @param isDirected whether the [Relationship] is directed
-       * @return `this` [Relationship.Builder]
-       * @throws IllegalStateException if [Relationship.isDirected] has already been set
-       */
-      fun isDirected(isDirected: KBoolean): Builder = apply {
-        check(this.isDirected == null) {
-          "Relationship is${this.isDirected?.toString()?.let { _ -> "n't" }.orEmpty()} directed"
-        }
-        this.isDirected = isDirected
-      }
-
-      /**
-       * Add the [property] to the [Relationship.properties].
-       *
-       * @param property the [Property] to add
-       * @return `this` [Relationship.Builder]
-       */
-      fun property(property: Property): Builder = apply { properties += property }
-
-      /**
-       * Add the [metadata] to the [Relationship.metadata].
-       *
-       * @param metadata the [Metadata] to add
-       * @return `this` [Relationship.Builder]
-       */
-      fun metadata(metadata: Metadata): Builder = apply { this.metadata += metadata }
-
-      /**
-       * Build the [Relationship].
-       * > The built [Relationship] [isDirected], unless specified otherwise.
-       *
-       * @return the built [Relationship]
-       * @throws IllegalStateException if [Relationship.name], [Relationship.source], or
-       *   [Relationship.target] has not been set
-       */
-      fun build(): Relationship {
-        return Relationship(
-            checkNotNull(name) { "Relationship name is required" },
-            checkNotNull(source) { "Relationship source is required" },
-            checkNotNull(target) { "Relationship target is required" },
-            isDirected ?: true,
-            properties,
-            metadata)
-      }
     }
   }
 
@@ -575,59 +326,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
         override fun toString(): KString {
           return types.joinToString(" | ")
         }
-      }
-    }
-
-    /** [Property.Builder] builds a [Property]. */
-    class Builder {
-
-      private var name: KString? = null
-      private var type: Type? = null
-      private val metadata = mutableListOf<Metadata>()
-
-      /**
-       * Set the [Property.name].
-       *
-       * @param name the name of the [Property]
-       * @return `this` [Property.Builder]
-       * @throws IllegalStateException if [Property.name] has already been set
-       */
-      fun name(name: KString): Builder = apply {
-        check(this.name.isNullOrBlank()) { "Property has name '${this.name}'" }
-        this.name = name
-      }
-
-      /**
-       * Set the [Property.type].
-       *
-       * @param type the type of the [Property]
-       * @return `this` [Property.Builder]
-       * @throws IllegalStateException if [Property.type] has already been set
-       */
-      fun type(type: Type): Builder = apply {
-        check(this.type == null) { "Property has type '${this.type}'" }
-        this.type = type
-      }
-
-      /**
-       * Add the [metadata] to the [Property.metadata].
-       *
-       * @param metadata the [Metadata] to add
-       * @return `this` [Property.Builder]
-       */
-      fun metadata(metadata: Metadata): Builder = apply { this.metadata += metadata }
-
-      /**
-       * Build the [Property].
-       *
-       * @return the built [Property]
-       * @throws IllegalStateException if [Property.name] has not been set
-       */
-      fun build(): Property {
-        return Property(
-            checkNotNull(name) { "Property name is required" },
-            checkNotNull(type) { "Property type is required" },
-            metadata)
       }
     }
   }

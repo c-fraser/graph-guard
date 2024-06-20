@@ -360,19 +360,6 @@ public final class io/github/cfraser/graphguard/plugin/Schema : java/lang/Record
 	public fun validate-1eTvv0c (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/plugin/Schema$Builder {
-	public fun <init> ()V
-	public final fun build ()Lio/github/cfraser/graphguard/plugin/Schema;
-	public final fun graph (Lio/github/cfraser/graphguard/plugin/Schema$Graph;)Lio/github/cfraser/graphguard/plugin/Schema$Builder;
-}
-
-public final class io/github/cfraser/graphguard/plugin/Schema$DSL {
-	public static final field INSTANCE Lio/github/cfraser/graphguard/plugin/Schema$DSL;
-	public final fun graph (Lio/github/cfraser/graphguard/plugin/Schema$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/cfraser/graphguard/plugin/Schema$Builder;
-	public final fun node (Lio/github/cfraser/graphguard/plugin/Schema$Graph$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/cfraser/graphguard/plugin/Schema$Graph$Builder;
-	public final fun schema (Lkotlin/jvm/functions/Function1;)Lio/github/cfraser/graphguard/plugin/Schema;
-}
-
 public final class io/github/cfraser/graphguard/plugin/Schema$Graph : java/lang/Record {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/List;
@@ -383,13 +370,6 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Graph : java/lang/
 	public final fun name ()Ljava/lang/String;
 	public final fun nodes ()Ljava/util/List;
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/cfraser/graphguard/plugin/Schema$Graph$Builder {
-	public fun <init> ()V
-	public final fun build ()Lio/github/cfraser/graphguard/plugin/Schema$Graph;
-	public final fun name (Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Graph$Builder;
-	public final fun node (Lio/github/cfraser/graphguard/plugin/Schema$Node;)Lio/github/cfraser/graphguard/plugin/Schema$Graph$Builder;
 }
 
 public final class io/github/cfraser/graphguard/plugin/Schema$Metadata : java/lang/Record {
@@ -420,15 +400,6 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Node : java/lang/R
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/plugin/Schema$Node$Builder {
-	public fun <init> ()V
-	public final fun build ()Lio/github/cfraser/graphguard/plugin/Schema$Node;
-	public final fun metadata (Lio/github/cfraser/graphguard/plugin/Schema$Metadata;)Lio/github/cfraser/graphguard/plugin/Schema$Node$Builder;
-	public final fun name (Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Node$Builder;
-	public final fun property (Lio/github/cfraser/graphguard/plugin/Schema$Property;)Lio/github/cfraser/graphguard/plugin/Schema$Node$Builder;
-	public final fun relationship (Lio/github/cfraser/graphguard/plugin/Schema$Relationship;)Lio/github/cfraser/graphguard/plugin/Schema$Node$Builder;
-}
-
 public final class io/github/cfraser/graphguard/plugin/Schema$Property : java/lang/Record {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;
@@ -441,14 +412,6 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Property : java/la
 	public final fun name ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 	public final fun type ()Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;
-}
-
-public final class io/github/cfraser/graphguard/plugin/Schema$Property$Builder {
-	public fun <init> ()V
-	public final fun build ()Lio/github/cfraser/graphguard/plugin/Schema$Property;
-	public final fun metadata (Lio/github/cfraser/graphguard/plugin/Schema$Metadata;)Lio/github/cfraser/graphguard/plugin/Schema$Property$Builder;
-	public final fun name (Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Property$Builder;
-	public final fun type (Lio/github/cfraser/graphguard/plugin/Schema$Property$Type;)Lio/github/cfraser/graphguard/plugin/Schema$Property$Builder;
 }
 
 public abstract class io/github/cfraser/graphguard/plugin/Schema$Property$Type {
@@ -687,17 +650,6 @@ public final class io/github/cfraser/graphguard/plugin/Schema$Relationship : jav
 	public final fun source ()Ljava/lang/String;
 	public final fun target ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/cfraser/graphguard/plugin/Schema$Relationship$Builder {
-	public fun <init> ()V
-	public final fun build ()Lio/github/cfraser/graphguard/plugin/Schema$Relationship;
-	public final fun isDirected (Z)Lio/github/cfraser/graphguard/plugin/Schema$Relationship$Builder;
-	public final fun metadata (Lio/github/cfraser/graphguard/plugin/Schema$Metadata;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship$Builder;
-	public final fun name (Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship$Builder;
-	public final fun property (Lio/github/cfraser/graphguard/plugin/Schema$Property;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship$Builder;
-	public final fun source (Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship$Builder;
-	public final fun target (Ljava/lang/String;)Lio/github/cfraser/graphguard/plugin/Schema$Relationship$Builder;
 }
 
 public final class io/github/cfraser/graphguard/plugin/Validator : io/github/cfraser/graphguard/Server$Plugin {

@@ -37,11 +37,12 @@ dependencies {
 
   testImplementation(libs.kotest.datatest)
   testImplementation(libs.knit.test)
+  testRuntimeOnly(libs.neo4j.test.harness) { exclude(module = "neo4j-slf4j-provider") }
   testRuntimeOnly(libs.slf4j.nop)
 
   testFixturesApi(project(":graph-guard-script"))
   testFixturesApi(libs.neo4j.java.driver)
-  testFixturesApi(libs.neo4j.test.harness)
+  testFixturesCompileOnly(libs.neo4j.test.harness)
   testFixturesImplementation(libs.kotest.runner)
 }
 

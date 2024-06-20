@@ -81,7 +81,10 @@ subprojects project@{
       "testImplementation"(libs.kotest.runner)
     }
 
-    tasks.withType<Test> { useJUnitPlatform() }
+    tasks.withType<Test> {
+      useJUnitPlatform()
+      systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
+    }
   }
 
   plugins.withType<DokkaPlugin> {
