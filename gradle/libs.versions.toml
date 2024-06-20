@@ -1,11 +1,10 @@
 [versions]
 knit = "0.5.0"
-kotest = "5.9.0"
+kotest = "5.9.1"
 kotlin = "2.0.0"
 kotlinx-coroutines = "1.8.0"
-ktfmt = "0.49"
+ktfmt = "0.50"
 ktor = "2.3.10"
-neo4j = "5.20.0"
 slf4j = "2.0.12"
 
 [libraries]
@@ -24,9 +23,9 @@ ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.6" }
 logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "7.4" }
 mordant = { module = "com.github.ajalt.mordant:mordant-jvm", version = "2.2.0" }
-neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2023.9.7" }
-neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4j" }
-neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
+neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2024.0.1" }
+neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "5.21.0" }
+neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "5.20.0" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
@@ -39,7 +38,7 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.6" }
 dokka = { id = "org.jetbrains.dokka", version = "1.9.20" }
 jreleaser = { id = "org.jreleaser", version = "1.12.0" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kover = { id = "org.jetbrains.kotlinx.kover", version = "0.8.0" }
+kover = { id = "org.jetbrains.kotlinx.kover", version = "0.8.1" }
 nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
 spotless = { id = "com.diffplug.spotless", version = "6.25.0" }
