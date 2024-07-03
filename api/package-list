@@ -8,3 +8,5 @@ module:graph-guard-cli
 io.github.cfraser.graphguard.cli
 module:graph-guard-script
 io.github.cfraser.graphguard.plugin
+module:graph-guard-validate
+io.github.cfraser.graphguard.validate

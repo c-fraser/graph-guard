@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.28">
     
     
       
@@ -522,8 +522,7 @@
 <a href="https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard"><img alt="Maven Central" src="https://img.shields.io/maven-central/v/io.github.c-fraser/graph-guard.svg" /></a>
 <a href="https://www.apache.org/licenses/LICENSE-2.0"><img alt="Apache License 2.0" src="https://img.shields.io/badge/License-Apache2-blue.svg" /></a></p>
 <p><code>graph-guard</code> is an extensible <a href="https://neo4j.com/docs/bolt/current/bolt/">Bolt</a> proxy server,
-that's capable of performing
-realtime <a href="https://neo4j.com/docs/cypher-manual/current/introduction/">Cypher</a> query validation,
+that's capable of performing realtime <a href="https://opencypher.org/">Cypher</a> query validation,
 for <a href="https://neo4j.com/">Neo4j</a> 5+ (compatible databases).</p>
 <h2 id="design">Design</h2>
 <p>The <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html">Server</a>
@@ -540,7 +539,7 @@ is
 a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html">Plugin</a>
 that performs realtime query validation by
 intercepting <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-run/index.html">RUN</a>
-requests then analyzing the <a href="https://neo4j.com/developer/cypher/">Cypher</a> (and parameters) for
+requests then analyzing the <a href="https://opencypher.org/">Cypher</a> (and parameters) for
 schema <a href="#violations">violations</a>. If the intercepted query is determined to be <em>invalid</em> according
 to the schema, then
 a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-failure/index.html">FAILURE</a>
@@ -577,7 +576,7 @@ import org.neo4j.driver.exceptions.DatabaseException
 <!--- TEST_NAME Example02Test -->
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.withNeo4j
 import java.net.InetSocketAddress
@@ -736,7 +735,7 @@ const val METADATA_SCHEMA =
 <h4 id="grammar">Grammar</h4>
 <p>Refer to
 the (<a href="https://github.com/antlr/antlr4">antlr4</a>)
-<a href="https://github.com/c-fraser/graph-guard/blob/main/graph-guard/src/main/antlr/Schema.g4">grammar</a>
+<a href="https://github.com/c-fraser/graph-guard/blob/main/graph-guard-validate/src/main/antlr/Schema.g4">grammar</a>
 for an exact specification of the <a href="#schema">schema</a> DSL.</p>
 <h2 id="usage">Usage</h2>
 <p>The <code>graph-guard*</code> libraries are accessible
@@ -976,7 +975,7 @@ limitations under the License.
     <script id="__config" type="application/json">{"base": ".", "features": ["toc.integrate", "content.code.copy", "content.code.select"], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.ad660dcc.min.js"></script>
+      <script src="assets/javascripts/bundle.fe8b6f2b.min.js"></script>
       
     
   </body>
