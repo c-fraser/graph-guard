@@ -45,7 +45,7 @@ class ServerTest : FunSpec() {
 
     test("proxy bolt messages with async plugin") {
       withNeo4j {
-        val server = Utils.server(boltURI())
+        val server = JServer.initialize(boltURI())
         server.use { server.driver.use(::runMoviesQueries) }
       }
     }

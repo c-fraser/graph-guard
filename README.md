@@ -6,8 +6,7 @@
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 `graph-guard` is an extensible [Bolt](https://neo4j.com/docs/bolt/current/bolt/) proxy server,
-that's capable of performing
-realtime [Cypher](https://neo4j.com/docs/cypher-manual/current/introduction/) query validation,
+that's capable of performing realtime [Cypher](https://opencypher.org/) query validation,
 for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
 
 <!--- TOC -->
@@ -52,7 +51,7 @@ is
 a [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
 that performs realtime query validation by
 intercepting [RUN](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-run/index.html)
-requests then analyzing the [Cypher](https://neo4j.com/developer/cypher/) (and parameters) for
+requests then analyzing the [Cypher](https://opencypher.org/) (and parameters) for
 schema [violations](#violations). If the intercepted query is determined to be *invalid* according
 to the schema, then
 a [FAILURE](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-bolt/-failure/index.html)
@@ -94,7 +93,7 @@ fun runInvalidMoviesQueries(driver: Driver) {
 <!--- TEST_NAME Example02Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.withNeo4j
 import java.net.InetSocketAddress
@@ -285,7 +284,7 @@ The Cypher query validation prevents the following [schema](#schema) violations.
 
 Refer to
 the ([antlr4](https://github.com/antlr/antlr4))
-[grammar](https://github.com/c-fraser/graph-guard/blob/main/graph-guard/src/main/antlr/Schema.g4)
+[grammar](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-validate/src/main/antlr/Schema.g4)
 for an exact specification of the [schema](#schema) DSL.
 
 ## Usage

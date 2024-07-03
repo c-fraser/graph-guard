@@ -13,12 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  antlr
   `java-library`
   `java-test-fixtures`
   `maven-publish`
@@ -26,13 +23,12 @@ plugins {
 }
 
 dependencies {
-  antlr(libs.antlr4)
+  api(project(":graph-guard-validate"))
   implementation(kotlin("reflect"))
   implementation(libs.kotlinx.coroutines)
   implementation(libs.kotlinx.coroutines.slf4j)
   implementation(libs.ktor.network)
   implementation(libs.caffeine)
-  implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
 
   testImplementation(libs.kotest.datatest)
@@ -47,34 +43,5 @@ dependencies {
 }
 
 tasks {
-  val modifyGrammarSource by creating {
-    mustRunAfter(withType<AntlrTask>())
-    doLast {
-      fileTree(generateGrammarSource.get().outputDirectory) { include("*.java") }
-          .forEach { file ->
-            file.writeText(
-                file
-                    .readText()
-                    // reduce visibility of generated types
-                    .replace("public class", "class")
-                    .replace("public interface", "interface"))
-          }
-    }
-  }
-
-  generateGrammarSource {
-    finalizedBy(modifyGrammarSource)
-    outputDirectory = file("src/main/java/io/github/cfraser/graphguard/plugin")
-  }
-
-  withType<KotlinCompile> {
-    dependsOn(withType<AntlrTask>())
-    compilerOptions { freeCompilerArgs.add("-Xcontext-receivers") }
-  }
-
-  withType<Jar> { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
-  named("sourcesJar") { dependsOn(withType<AntlrTask>()) }
-
-  withType<DokkaTask> { mustRunAfter(withType<AntlrTask>()) }
-  withType<DokkaTaskPartial> { mustRunAfter(withType<AntlrTask>()) }
+  withType<KotlinCompile> { compilerOptions { freeCompilerArgs.add("-Xcontext-receivers") } }
 }

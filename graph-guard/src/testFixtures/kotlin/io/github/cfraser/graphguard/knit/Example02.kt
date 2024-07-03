@@ -18,7 +18,7 @@ limitations under the License.
 package io.github.cfraser.graphguard.knit
 
 import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.plugin.Schema
+import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.withNeo4j
 import java.net.InetSocketAddress

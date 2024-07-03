@@ -14,40 +14,40 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package io.github.cfraser.graphguard.plugin
+package io.github.cfraser.graphguard.validate
 
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.OffsetTime
+import java.time.ZonedDateTime as JZonedDateTime
+import java.time.ZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Any
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.collections.List as KList
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
-import java.time.LocalDate
-import java.time.OffsetTime
-import java.time.ZonedDateTime
-import kotlin.Any
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.ZonedDateTime as JZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
-import kotlin.collections.List as KList
 
 /**
  * A [Schema] describes the *nodes* and *relationships* in a [Neo4j](https://neo4j.com/) database
  * via the (potentially) interconnected [graphs].
  *
- * [Schema] implements [Validator.Rule], thus has the capability to validate that a *Cypher* query
+ * [Schema] implements [Rule], thus has the capability to [Rule.validate] that a *Cypher* query
  * adheres to the *nodes* and *relationships* defined in the [graphs].
  *
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
 @JvmRecord
 @Suppress("MemberVisibilityCanBePrivate")
-data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rule {
+data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
   /**
    * Initialize a [Schema] from the [schemaText].
@@ -93,10 +93,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
     }
 
   @Suppress("CyclomaticComplexMethod", "ReturnCount")
-  override fun validate(
-      cypher: KString,
-      parameters: Map<KString, KAny?>
-  ): Validator.Rule.Violation? {
+  override fun validate(cypher: KString, parameters: Map<KString, KAny?>): Rule.Violation? {
     val query = Query.parse(cypher) ?: return null
     for (queryNode in query.nodes) {
       val entity = Violation.Entity.Node(queryNode)
@@ -339,7 +336,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
   @JvmRecord data class Metadata internal constructor(val name: KString, val value: KString?)
 
   /** An [Violation] describes a *Cypher* query with a [Schema] [violation]. */
-  internal sealed class Violation(val violation: Validator.Rule.Violation) {
+  internal sealed class Violation(val violation: Rule.Violation) {
 
     sealed class Entity(val name: KString) {
 
@@ -349,14 +346,14 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
           Entity("relationship $label from $source to $target")
     }
 
-    class Unknown(entity: Entity) : Violation(Validator.Rule.Violation("Unknown ${entity.name}"))
+    class Unknown(entity: Entity) : Violation(Rule.Violation("Unknown ${entity.name}"))
 
     class UnknownProperty(entity: Entity, property: KString) :
-        Violation(Validator.Rule.Violation("Unknown property '$property' for ${entity.name}"))
+        Violation(Rule.Violation("Unknown property '$property' for ${entity.name}"))
 
     class InvalidProperty(entity: Entity, property: Property, values: KList<KAny?>) :
         Violation(
-            Validator.Rule.Violation(
+            Rule.Violation(
                 @Suppress("MaxLineLength")
                 "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.name}"))
   }
@@ -579,7 +576,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Validator.Rul
   }
 
   /**
-   * [Collector] is a [io.github.cfraser.graphguard.plugin.SchemaListener] that collects [graphs]
+   * [Collector] is a [io.github.cfraser.graphguard.validate.SchemaListener] that collects [graphs]
    * while walking the parse tree.
    */
   private class Collector(val graphs: MutableList<Graph> = mutableListOf()) : SchemaBaseListener() {

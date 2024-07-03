@@ -20,9 +20,9 @@ import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import org.jetbrains.annotations.NotNull;
 
-final class Utils {
+final class JServer {
 
-  private Utils() {}
+  private JServer() {}
 
   /**
    * Initialize a {@link Server} in <i>Java</i>.
@@ -30,7 +30,7 @@ final class Utils {
    * @param boltUri the URL of the graph database
    * @return the {@link Server}
    */
-  static Server server(URI boltUri) {
+  static Server initialize(URI boltUri) {
     return new Server(
         boltUri,
         new Server.Plugin.Async() {

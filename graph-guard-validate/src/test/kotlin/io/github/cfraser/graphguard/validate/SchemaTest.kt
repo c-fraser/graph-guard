@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF Any KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package io.github.cfraser.graphguard.plugin
+package io.github.cfraser.graphguard.validate
 
 import io.github.cfraser.graphguard.MoviesGraph
 import io.github.cfraser.graphguard.knit.METADATA_SCHEMA

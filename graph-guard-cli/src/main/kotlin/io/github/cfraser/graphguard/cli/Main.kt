@@ -38,9 +38,9 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
-import io.github.cfraser.graphguard.plugin.Schema
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.plugin.Validator
+import io.github.cfraser.graphguard.validate.Schema
 import java.net.InetSocketAddress
 import java.net.URI
 import kotlinx.coroutines.Dispatchers

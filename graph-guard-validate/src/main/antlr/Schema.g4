@@ -17,7 +17,7 @@ grammar Schema;
 
 @ header
 {
-package io.github.cfraser.graphguard.plugin;
+package io.github.cfraser.graphguard.validate;
 }
 start
    : graph+ EOF

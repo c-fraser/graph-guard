@@ -4,7 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.plugin.Validator.Rule
+import io.github.cfraser.graphguard.validate.Rule
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
@@ -62,39 +62,6 @@ constructor(
   }
 
   override suspend fun observe(event: Server.Event) {}
-
-  /** [validate] a [Cypher](https://neo4j.com/docs/cypher-manual/current/introduction/) query. */
-  fun interface Rule {
-
-    /**
-     * Validate the [cypher] and [parameters].
-     *
-     * @param cypher a *Cypher* query
-     * @param parameters the [cypher] parameters
-     * @return [Violation] if the [cypher] and [parameters] violate the [Rule], otherwise `null`
-     */
-    fun validate(cypher: String, parameters: Map<String, Any?>): Violation?
-
-    /**
-     * Run `this` [Validator.Rule] then [that].
-     *
-     * @param that the [Validator.Rule] to chain with `this`
-     * @return a [Validator.Rule] that invokes `this` then [that]
-     */
-    infix fun then(that: Rule): Rule {
-      return Rule { cypher, parameters ->
-        validate(cypher, parameters)
-        that.validate(cypher, parameters)
-      }
-    }
-
-    /**
-     * An [Violation] describes why a *Cypher* query violates a [Rule].
-     *
-     * @property message the description of the [Rule] violation
-     */
-    @JvmInline value class Violation(val message: String)
-  }
 
   private companion object {
 

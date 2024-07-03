@@ -54,7 +54,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.16.0"
+  version = "0.17.0"
 
   repositories { mavenCentral() }
 }
@@ -208,7 +208,7 @@ configure<SpotlessExtension> {
     target(
         fileTree(rootProject.rootDir) {
           include("**/src/**/*.java")
-          exclude("**/plugin/Schema*")
+          exclude("**/validate/Schema*")
         })
   }
 

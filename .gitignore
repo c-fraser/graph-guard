@@ -18,6 +18,6 @@ docs/cli/*
 # runtime metadata
 graph-guard-cli/neo4j.cid
 # generated antlr files
-graph-guard/src/main/java
+graph-guard-validate/src/main/java
 # dev notes
 TODO.md
