@@ -21,7 +21,7 @@ const val METADATA_SCHEMA =
     """
 
 graph G {
-  node @a N(@b(c) p: Any):
-    @d R(@e(f) @g p: Any) -- N;
+  node @a N(@b("c") p: Any):
+    @d R(@e("f") @g p: Any) -- N;
 }
 """

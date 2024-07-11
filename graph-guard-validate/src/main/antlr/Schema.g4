@@ -81,7 +81,7 @@ metadata
    ;
 
 metadataValue
-   : LP (name) RP
+   : LP (stringLiteral) RP
    ;
 
 AT

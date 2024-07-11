@@ -261,14 +261,15 @@ const val METADATA_SCHEMA =
 [//]: # (@formatter:off)
 ```kotlin
 graph G {
-  node @a N(@b(c) p: Any):
-    @d R(@e(f) @g p: Any) -- N;
+  node @a N(@b("c") p: Any):
+    @d R(@e("f") @g p: Any) -- N;
 }
 ```
 [//]: # (@formatter:on)
 <!--- KNIT Example06.kt --> 
 
-The metadata annotations can have any name, and may include a value within parenthesis.
+The metadata annotations can have any name, and may include a string literal value within
+parenthesis.
 
 #### Violations
 
