@@ -716,13 +716,14 @@ const val METADATA_SCHEMA =
 -->
 
 <div class="language-kotlin highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">graph</span><span class="w"> </span><span class="n">G</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="nd">@a</span><span class="w"> </span><span class="n">N</span><span class="p">(</span><span class="nd">@b</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="kt">Any</span><span class="p">):</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nd">@d</span><span class="w"> </span><span class="n">R</span><span class="p">(</span><span class="nd">@e</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="nd">@g</span><span class="w"> </span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="kt">Any</span><span class="p">)</span><span class="w"> </span><span class="o">--</span><span class="w"> </span><span class="n">N</span><span class="p">;</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="nd">@a</span><span class="w"> </span><span class="n">N</span><span class="p">(</span><span class="nd">@b</span><span class="p">(</span><span class="s">&quot;c&quot;</span><span class="p">)</span><span class="w"> </span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="kt">Any</span><span class="p">):</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nd">@d</span><span class="w"> </span><span class="n">R</span><span class="p">(</span><span class="nd">@e</span><span class="p">(</span><span class="s">&quot;f&quot;</span><span class="p">)</span><span class="w"> </span><span class="nd">@g</span><span class="w"> </span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="kt">Any</span><span class="p">)</span><span class="w"> </span><span class="o">--</span><span class="w"> </span><span class="n">N</span><span class="p">;</span>
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">}</span>
 </span></code></pre></div>
 <!--- KNIT Example06.kt -->
 
-<p>The metadata annotations can have any name, and may include a value within parenthesis.</p>
+<p>The metadata annotations can have any name, and may include a string literal value within
+parenthesis.</p>
 <h4 id="violations">Violations</h4>
 <p>The Cypher query validation prevents the following <a href="#schema">schema</a> violations.</p>
 <ul>
