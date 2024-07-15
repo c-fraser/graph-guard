@@ -149,11 +149,12 @@ const val MOVIES_SCHEMA =
 ```kotlin
 graph Movies {
   node Person(name: String, born: Integer):
-    ACTED_IN(roles: List<String>) -> Movie,
-    DIRECTED -> Movie,
-    PRODUCED -> Movie,
-    WROTE -> Movie,
-    REVIEWED(summary: String, rating: Integer) -> Movie;
+      ACTED_IN(roles: List<String>) -> Movie,
+      DIRECTED -> Movie,
+      PRODUCED -> Movie,
+      WROTE -> Movie,
+      REVIEWED(summary: String, rating: Integer) -> Movie;
+
   node Movie(title: String, released: Integer, tagline: String);
 }
 ```
@@ -177,7 +178,7 @@ const val PLACES_SCHEMA =
 ```kotlin
 graph Places {
   node Theater(name: String):
-    SHOWING(times: List<Integer>) -> Movies.Movie;
+      SHOWING(times: List<Integer>) -> Movies.Movie;
 }
 ```
 [//]: # (@formatter:on)
@@ -262,7 +263,7 @@ const val METADATA_SCHEMA =
 ```kotlin
 graph G {
   node @a N(@b("c") p: Any):
-    @d R(@e("f") @g p: Any) -- N;
+      @d R(@e("f") @g p: Any) -- N;
 }
 ```
 [//]: # (@formatter:on)

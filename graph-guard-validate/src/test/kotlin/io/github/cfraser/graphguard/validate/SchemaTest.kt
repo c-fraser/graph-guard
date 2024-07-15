@@ -48,6 +48,8 @@ class SchemaTest : FunSpec() {
       "${UNION_GRAPH_SCHEMA.graphs.first()}" shouldBe UNION_SCHEMA.trim()
     }
 
+    test("render metadata schema") { "$METADATA_GRAPH_SCHEMA" shouldBe METADATA_SCHEMA.trim() }
+
     context("validate cypher queries") {
       withData(
           "" with emptyMap() expect null,

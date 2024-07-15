@@ -24,6 +24,7 @@ import java.time.LocalDate
 import java.time.OffsetTime
 import java.time.ZonedDateTime
 import kotlin.Any
+import kotlin.String
 import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
 import java.time.Duration as JDuration
@@ -46,7 +47,6 @@ import kotlin.collections.List as KList
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
 @JvmRecord
-@Suppress("MemberVisibilityCanBePrivate")
 data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
   /**
@@ -136,6 +136,10 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     } else apply { require(this in nodes.value) { "Invalid node reference '$this'" } }
   }
 
+  override fun toString(): String {
+    return graphs.joinToString("${System.lineSeparator()}${System.lineSeparator()}")
+  }
+
   /**
    * A [Graph] is a [KList] of [nodes] that specify the expected entities in a *Neo4j* database.
    *
@@ -146,7 +150,17 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
   data class Graph internal constructor(val name: KString, val nodes: KList<Node>) {
 
     override fun toString(): KString {
-      return "graph $name {\n${nodes.joinToString("\n", transform = Node::toString)}\n}"
+      return buildString {
+        append("graph ")
+        append(name)
+        append(" {")
+        append(System.lineSeparator())
+        append(
+            nodes.joinToString(
+                "${System.lineSeparator()}${System.lineSeparator()}", transform = Node::toString))
+        append(System.lineSeparator())
+        append("}")
+      }
     }
   }
 
@@ -168,11 +182,20 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
   ) {
 
     override fun toString(): KString {
-      val relationships =
-          ":\n${relationships.joinToString(",\n", transform = Relationship::toString)}"
-              .takeUnless { relationships.isEmpty() }
-              .orEmpty()
-      return "  node $name${properties.parenthesize()}$relationships;"
+      return buildString {
+        append("  node ")
+        metadata.append()
+        append(name)
+        append(properties.parenthesize("    "))
+        if (relationships.isNotEmpty()) {
+          append(":")
+          append(System.lineSeparator())
+          append(
+              relationships.joinToString(
+                  ",${System.lineSeparator()}", transform = Relationship::toString))
+        }
+        append(";")
+      }
     }
   }
 
@@ -207,8 +230,16 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     @JvmRecord internal data class Id(val name: KString, val source: KString, val target: KString)
 
     override fun toString(): KString {
-      val direction = if (isDirected) "->" else "--"
-      return "    $name${properties.parenthesize()} $direction $target"
+      return buildString {
+        append("      ")
+        metadata.append()
+        append(name)
+        append(properties.parenthesize("        "))
+        append(" ")
+        append(if (isDirected) "->" else "--")
+        append(" ")
+        append(target)
+      }
     }
   }
 
@@ -224,7 +255,12 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
   internal constructor(val name: KString, val type: Type, val metadata: KList<Metadata>) {
 
     override fun toString(): KString {
-      return "$name: $type"
+      return buildString {
+        metadata.append()
+        append(name)
+        append(": ")
+        append(type)
+      }
     }
 
     /**
@@ -445,8 +481,34 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     }
 
     /** Parenthesize the [KList] of properties. */
-    fun KList<Property>.parenthesize(): KString {
-      return if (isEmpty()) "" else "(${joinToString(transform = Property::toString)})"
+    fun KList<Property>.parenthesize(indent: String): KString {
+      if (isEmpty()) return ""
+      val formatted = buildString {
+        append("(")
+        append(System.lineSeparator())
+        append(indent)
+        append(joinToString(",${System.lineSeparator()}$indent", transform = Property::toString))
+        append(")")
+      }
+      // keep multiline formatted properties if line length is greater than ~100
+      return if (formatted.length > (88 + (indent.length * size))) formatted
+      else
+      // format properties on single line
+      formatted.replace(System.lineSeparator(), "").replace("($indent", "(").replace(indent, " ")
+    }
+
+    /** Append the [KList] of [Metadata] to the [StringBuilder]. */
+    context(StringBuilder)
+    fun KList<Metadata>.append() {
+      forEach { (name, value) ->
+        append("@$name")
+        if (value.isNullOrBlank()) append(" ")
+        else {
+          append("(\"")
+          append(value)
+          append("\") ")
+        }
+      }
     }
 
     /** Filter the properties in the [Query] with the [label]. */

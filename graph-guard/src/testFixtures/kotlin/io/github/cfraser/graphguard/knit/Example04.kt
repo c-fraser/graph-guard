@@ -22,6 +22,6 @@ const val PLACES_SCHEMA =
 
 graph Places {
   node Theater(name: String):
-    SHOWING(times: List<Integer>) -> Movies.Movie;
+      SHOWING(times: List<Integer>) -> Movies.Movie;
 }
 """
