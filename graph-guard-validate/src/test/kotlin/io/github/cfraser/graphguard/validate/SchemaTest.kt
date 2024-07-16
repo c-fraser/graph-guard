@@ -127,7 +127,7 @@ class SchemaTest : FunSpec() {
           }
     }
 
-    context("validate cypher queries with union schema") {
+    context("validate union types") {
       fun invalidProperty(vararg values: Any?) =
           Schema.Violation.InvalidProperty(
               Schema.Violation.Entity.Node("N"), UNION_PROPERTY, values.toList())
@@ -336,6 +336,105 @@ class SchemaTest : FunSpec() {
               .filterNot(String::isBlank)) { query ->
             schema.validate(query, emptyMap()) shouldBe null
           }
+    }
+
+    context("validate any types") {
+      val schema =
+          """
+          graph G {
+            node I(i: Any);
+            node J(j: Any?);
+          }
+          """
+              .trimIndent()
+              .let(::Schema)
+      withData(
+          "CREATE (:I {i: ''})" with emptyMap() expect null,
+          "CREATE (:I {i: 1})" with emptyMap() expect null,
+          "CREATE (:I {i: []})" with emptyMap() expect null,
+          "CREATE (:I {i: ['']})" with emptyMap() expect null,
+          "CREATE (:I {i: null})" with
+              emptyMap() expect
+              Schema.Violation.InvalidProperty(I, I_I, listOf(null)),
+          "CREATE (:J {j: ''})" with emptyMap() expect null,
+          "CREATE (:J {j: 1})" with emptyMap() expect null,
+          "CREATE (:J {j: []})" with emptyMap() expect null,
+          "CREATE (:J {j: ['']})" with emptyMap() expect null,
+          "CREATE (:J {j: null})" with emptyMap() expect null) { (query, parameters, expected) ->
+            schema.validate(query, parameters) shouldBe expected?.violation
+          }
+    }
+
+    test("default to nullable any type") {
+      val schema =
+          """
+          graph G {
+            node A(b, c, d: Integer): E(@f g, h: List<Any>, i: String?) -> J;
+            node J;
+          }
+          """
+              .trimIndent()
+              .let(::Schema)
+      schema shouldBe
+          Schema(
+              graphs =
+                  listOf(
+                      Schema.Graph(
+                          name = "G",
+                          nodes =
+                              listOf(
+                                  Schema.Node(
+                                      name = "A",
+                                      properties =
+                                          listOf(
+                                              Schema.Property(
+                                                  name = "b",
+                                                  type = Schema.Property.Type.Nullable.Any,
+                                                  metadata = emptyList()),
+                                              Schema.Property(
+                                                  name = "c",
+                                                  type = Schema.Property.Type.Nullable.Any,
+                                                  metadata = emptyList()),
+                                              Schema.Property(
+                                                  name = "d",
+                                                  type = Schema.Property.Type.Integer,
+                                                  metadata = emptyList())),
+                                      relationships =
+                                          listOf(
+                                              Schema.Relationship(
+                                                  name = "E",
+                                                  source = "A",
+                                                  target = "J",
+                                                  isDirected = true,
+                                                  properties =
+                                                      listOf(
+                                                          Schema.Property(
+                                                              name = "g",
+                                                              type =
+                                                                  Schema.Property.Type.Nullable.Any,
+                                                              metadata =
+                                                                  listOf(
+                                                                      Schema.Metadata("f", null))),
+                                                          Schema.Property(
+                                                              name = "h",
+                                                              type =
+                                                                  Schema.Property.Type.List(
+                                                                      Schema.Property.Type.Any),
+                                                              metadata = emptyList()),
+                                                          Schema.Property(
+                                                              name = "i",
+                                                              type =
+                                                                  Schema.Property.Type.Nullable
+                                                                      .String,
+                                                              metadata = emptyList())),
+                                                  metadata = emptyList(),
+                                              )),
+                                      metadata = emptyList()),
+                                  Schema.Node(
+                                      name = "J",
+                                      properties = emptyList(),
+                                      relationships = emptyList(),
+                                      metadata = emptyList())))))
     }
   }
 
@@ -564,5 +663,9 @@ class SchemaTest : FunSpec() {
     val G_G = Schema.Property("g", Schema.Property.Type.LocalDateTime, emptyList())
     val H = Schema.Violation.Entity.Node("H")
     val H_H = Schema.Property("h", Schema.Property.Type.Duration, emptyList())
+    val I = Schema.Violation.Entity.Node("I")
+    val I_I = Schema.Property("i", Schema.Property.Type.Any, emptyList())
+    val J = Schema.Violation.Entity.Node("J")
+    val J_J = Schema.Property("j", Schema.Property.Type.Nullable.Any, emptyList())
   }
 }

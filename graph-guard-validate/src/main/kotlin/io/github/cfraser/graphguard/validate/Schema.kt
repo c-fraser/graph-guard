@@ -16,26 +16,26 @@ limitations under the License.
 
 package io.github.cfraser.graphguard.validate
 
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.OffsetTime
+import java.time.ZonedDateTime as JZonedDateTime
+import java.time.ZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Any
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.String
+import kotlin.collections.List as KList
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
-import java.time.LocalDate
-import java.time.OffsetTime
-import java.time.ZonedDateTime
-import kotlin.Any
-import kotlin.String
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.ZonedDateTime as JZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
-import kotlin.collections.List as KList
 
 /**
  * A [Schema] describes the *nodes* and *relationships* in a [Neo4j](https://neo4j.com/) database
@@ -607,6 +607,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     context(Property)
     fun KList<KAny?>.isValid(): KBoolean {
       fun KList<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
+      val isAny = type is Property.Type.Any || type is Property.Type.Nullable.Any
       val isList = type is Property.Type.List || type is Property.Type.Nullable.List
       val allowsNullable =
           isList &&
@@ -616,7 +617,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
                 else -> false
               }
       if (isList && filterNullIf(allowsNullable).any { it !is MutableList<*> }) return false
-      if (!isList && filterNotNull().any { it is MutableList<*> }) return false
+      if (!isAny && !isList && filterNotNull().any { it is MutableList<*> }) return false
       val isNullable = type is Property.Type.Nullable
       return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
           .filterNullIf(isNullable)
@@ -707,7 +708,8 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
               when (val type = ctx.type() ?: ctx.union()) {
                 is SchemaParser.TypeContext -> type.get()
                 is SchemaParser.UnionContext -> type.get()
-                else -> error("Unknown type")
+                null -> Property.Type.Nullable.Any
+                else -> error("Unexpected type")
               }
           val metadata = ctx.metadata().get()
           val isList = ctx.type()?.list() != null
@@ -729,7 +731,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
               is SchemaParser.TypeValueContext,
               is SchemaParser.StringLiteralContext -> ctx.get()
               is SchemaParser.ListContext -> ctx.typeValue().get()
-              else -> error("Unknown type value")
+              else -> error("Unexpected type value")
             }
         // If a list, check the nullability of the inner type
         val isNullable = if (list() != null) list()?.QM() != null else QM() != null

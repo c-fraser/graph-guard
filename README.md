@@ -226,6 +226,9 @@ property types are listed below.
 A property can be designated as nullable by including the `?` suffix on the type, for
 example `String?` and `List<Any?>`.
 
+> The omission of a *type* results in the usage of `Any?`, which effectively disables property value
+> validation.
+
 A [property](#properties) may specify multiple types of values with the *union type* syntax, as
 shown below.
 

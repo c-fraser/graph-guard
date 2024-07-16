@@ -40,7 +40,7 @@ properties
    ;
 
 property
-   : metadata? name COLON (type | union)
+   : metadata? name (COLON (type | union))?
    ;
 
 type
