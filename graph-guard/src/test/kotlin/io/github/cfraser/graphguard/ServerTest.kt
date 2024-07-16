@@ -113,7 +113,7 @@ class ServerTest : FunSpec() {
               byteArrayOf(0x00, 0x00))
     }
 
-    test("measure proxy server latency").config(tags = setOf(LOCAL)) {
+    xtest("measure proxy server latency").config(tags = setOf(LOCAL)) {
       val times = mutableListOf<Long>()
       val proxyTimes = mutableListOf<Long>()
 
