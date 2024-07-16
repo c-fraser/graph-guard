@@ -688,6 +688,10 @@ supported <a href="https://neo4j.com/docs/cypher-manual/current/values-and-types
 </ul>
 <p>A property can be designated as nullable by including the <code>?</code> suffix on the type, for
 example <code>String?</code> and <code>List&lt;Any?&gt;</code>.</p>
+<blockquote>
+<p>The omission of a <em>type</em> results in the usage of <code>Any?</code>, which effectively disables property value
+validation.</p>
+</blockquote>
 <p>A <a href="#properties">property</a> may specify multiple types of values with the <em>union type</em> syntax, as
 shown below.</p>
 <!--- INCLUDE
