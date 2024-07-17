@@ -16,26 +16,26 @@ limitations under the License.
 
 package io.github.cfraser.graphguard.validate
 
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.OffsetTime
-import java.time.ZonedDateTime as JZonedDateTime
-import java.time.ZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Any
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
-import kotlin.String
-import kotlin.collections.List as KList
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
+import java.time.LocalDate
+import java.time.OffsetTime
+import java.time.ZonedDateTime
+import kotlin.Any
+import kotlin.String
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.ZonedDateTime as JZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.collections.List as KList
 
 /**
  * A [Schema] describes the *nodes* and *relationships* in a [Neo4j](https://neo4j.com/) database
@@ -260,6 +260,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
         append(name)
         append(": ")
         append(type)
+        if (type is Type.Nullable) append("?")
       }
     }
 
@@ -312,10 +313,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       /** A [Nullable] [Type]. */
       sealed class Nullable(clazz: KClass<*>) : Type(clazz) {
 
-        override fun toString(): KString {
-          return "$this?"
-        }
-
         data object Any : Nullable(KAny::class)
 
         data object Boolean : Nullable(KBoolean::class)
@@ -341,7 +338,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
         data class List(val type: Type) : Nullable(Unit::class) {
 
           override fun toString(): KString {
-            return "List<$type>?"
+            return "List<$type>"
           }
         }
 

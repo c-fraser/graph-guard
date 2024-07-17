@@ -435,6 +435,15 @@ class SchemaTest : FunSpec() {
                                       properties = emptyList(),
                                       relationships = emptyList(),
                                       metadata = emptyList())))))
+      "$schema" shouldBe
+          """graph G {
+          |  node A(b: Any?, c: Any?, d: Integer):
+          |      E(@f g: Any?, h: List<Any>, i: String?) -> J;
+          |
+          |  node J;
+          |}
+          """
+              .trimMargin()
     }
   }
 
