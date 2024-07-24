@@ -20,6 +20,7 @@ import io.github.cfraser.graphguard.knit.use
 import io.kotest.assertions.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
+import java.net.URI
 import org.neo4j.driver.AuthToken
 import org.neo4j.driver.Config
 import org.neo4j.driver.Driver
@@ -27,7 +28,6 @@ import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
 import org.neo4j.harness.Neo4j
 import org.neo4j.harness.Neo4jBuilders
-import java.net.URI
 
 val LOCAL = NamedTag("Local")
 
@@ -693,5 +693,13 @@ RETURN tom, m, coActors, m2, p
       """
 MERGE (Keanu:Person {name:'Keanu Reeves'})-[:ACTED_IN {roles:['Neo']}]->(:Movie {title:'The Matrix', released:1999, tagline:'Welcome to the Real World'})
 SET Keanu += ${"$"}properties
+"""
+
+  const val CREATE_MATRIX_SHOWING =
+      """
+MERGE (TheMatrix:Movie {title:'The Matrix', released:1999, tagline:'Welcome to the Real World'})
+MERGE (AMC:Theater {name: 'AMC'})
+CREATE (AMC)-[Showing:SHOWING]->(TheMatrix)
+SET Showing += ${"$"}properties
 """
 }

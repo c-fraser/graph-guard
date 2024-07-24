@@ -16,26 +16,26 @@ limitations under the License.
 
 package io.github.cfraser.graphguard.validate
 
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.OffsetTime
+import java.time.ZonedDateTime as JZonedDateTime
+import java.time.ZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Any
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.String
+import kotlin.collections.List as KList
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
-import java.time.LocalDate
-import java.time.OffsetTime
-import java.time.ZonedDateTime
-import kotlin.Any
-import kotlin.String
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.ZonedDateTime as JZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
-import kotlin.collections.List as KList
 
 /**
  * A [Schema] describes the *nodes* and *relationships* in a [Neo4j](https://neo4j.com/) database
@@ -113,7 +113,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       val schemaRelationship =
           relationships.value[Relationship.Id(label, source, target)]
               ?: return Violation.Unknown(entity).violation
-      for (queryProperty in query.properties(label)) {
+      for (queryProperty in query.properties(label) + query.mutatedProperties(label, parameters)) {
         val schemaProperty =
             schemaRelationship.properties.matches(queryProperty)
                 ?: return Violation.UnknownProperty(entity, queryProperty.name).violation
@@ -613,10 +613,10 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
                 is Property.Type.Nullable.List -> type.type is Property.Type.Nullable
                 else -> false
               }
-      if (isList && filterNullIf(allowsNullable).any { it !is MutableList<*> }) return false
-      if (!isAny && !isList && filterNotNull().any { it is MutableList<*> }) return false
+      if (isList && filterNullIf(allowsNullable).any { it !is KList<*> }) return false
+      if (!isAny && !isList && filterNotNull().any { it is KList<*> }) return false
       val isNullable = type is Property.Type.Nullable
-      return flatMap { if (it is MutableList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
+      return flatMap { if (it is KList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
           .filterNullIf(isNullable)
           .all { value ->
             when (type) {

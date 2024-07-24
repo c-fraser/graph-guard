@@ -15,10 +15,6 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.validate
 
-import kotlin.collections.Set
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
 import org.neo4j.cypherdsl.core.KeyValueMapEntry
@@ -31,9 +27,7 @@ import org.neo4j.cypherdsl.core.Operation
 import org.neo4j.cypherdsl.core.Operator
 import org.neo4j.cypherdsl.core.Parameter
 import org.neo4j.cypherdsl.core.PatternElement
-import org.neo4j.cypherdsl.core.Property as CypherProperty
 import org.neo4j.cypherdsl.core.RelationshipBase
-import org.neo4j.cypherdsl.core.Set as CypherSet
 import org.neo4j.cypherdsl.core.Statement
 import org.neo4j.cypherdsl.core.StatementCatalog
 import org.neo4j.cypherdsl.core.SymbolicName
@@ -42,6 +36,12 @@ import org.neo4j.cypherdsl.parser.CypherParser
 import org.neo4j.cypherdsl.parser.ExpressionCreatedEventType
 import org.neo4j.cypherdsl.parser.Options
 import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
+import kotlin.collections.Set
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.jvm.optionals.getOrNull
+import org.neo4j.cypherdsl.core.Property as CypherProperty
+import org.neo4j.cypherdsl.core.Set as CypherSet
 
 /**
  * A *Cypher* [Query].
@@ -85,13 +85,13 @@ internal data class Query(
 
     /** Parse the [cypher] as a [Query]. */
     fun parse(cypher: String): Query? {
-      val nodes = mutableMapOf<String, Set<String>>()
+      val entities = mutableMapOf<String, Set<String>>()
       val mutatedProperties = mutableSetOf<MutatedProperty>()
       val options =
           Options.newOptions()
-              .withCallback(PatternElementCreatedEventType.ON_MATCH) { nodes.collect(it) }
-              .withCallback(PatternElementCreatedEventType.ON_CREATE) { nodes.collect(it) }
-              .withCallback(PatternElementCreatedEventType.ON_MERGE) { nodes.collect(it) }
+              .withCallback(PatternElementCreatedEventType.ON_MATCH) { entities.collect(it) }
+              .withCallback(PatternElementCreatedEventType.ON_CREATE) { entities.collect(it) }
+              .withCallback(PatternElementCreatedEventType.ON_MERGE) { entities.collect(it) }
               .withCallback(
                   ExpressionCreatedEventType.ON_ADD_AND_SET_VARIABLE, Operation::class.java) {
                     mutatedProperties.collect(it)
@@ -105,7 +105,7 @@ internal data class Query(
             statement.properties,
             mutatedProperties
                 .mapNotNull { mutatedProperty ->
-                  nodes[mutatedProperty.owner]?.firstOrNull()?.let { label ->
+                  entities[mutatedProperty.owner]?.firstOrNull()?.let { label ->
                     mutatedProperty.copy(owner = label)
                   }
                 }
@@ -115,7 +115,7 @@ internal data class Query(
       }
     }
 
-    /** Collect the symbolic name to node label(s) mapping from the [patternElement]. */
+    /** Collect the symbolic name to entity label(s) mapping from the [patternElement]. */
     private fun MutableMap<String, Set<String>>.collect(
         patternElement: PatternElement
     ): PatternElement {
@@ -125,12 +125,23 @@ internal data class Query(
             node.labels.takeUnless(List<*>::isEmpty)?.map(NodeLabel::getValue)?.toSet() ?: return
         this += symbolicName to labels
       }
+      fun collect(relationship: RelationshipBase<*, *, *>) {
+        var value: String? = null
+        relationship.details.accept { visitable ->
+          if (visitable is SymbolicName) value = visitable.value
+        }
+        val symbolicName = value ?: return
+        val labels = relationship.details.types.takeUnless(List<*>::isEmpty)?.toSet() ?: return
+        this += symbolicName to labels
+      }
       when (patternElement) {
         is NodeBase<*> -> collect(patternElement)
-        is RelationshipBase<*, *, *> ->
-            listOf(patternElement.left, patternElement.right)
-                .filterIsInstance<NodeBase<*>>()
-                .forEach(::collect)
+        is RelationshipBase<*, *, *> -> {
+          listOf(patternElement.left, patternElement.right)
+              .filterIsInstance<NodeBase<*>>()
+              .forEach(::collect)
+          collect(patternElement)
+        }
       }
       return patternElement
     }

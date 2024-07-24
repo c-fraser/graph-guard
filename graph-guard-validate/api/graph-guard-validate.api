@@ -179,7 +179,6 @@ public final class io/github/cfraser/graphguard/validate/Schema$Property$Type$Lo
 
 public abstract class io/github/cfraser/graphguard/validate/Schema$Property$Type$Nullable : io/github/cfraser/graphguard/validate/Schema$Property$Type {
 	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Property$Type$Nullable$Any : io/github/cfraser/graphguard/validate/Schema$Property$Type$Nullable {

@@ -25,6 +25,7 @@ import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -51,6 +52,7 @@ class SchemaTest : FunSpec() {
     test("render metadata schema") { "$METADATA_GRAPH_SCHEMA" shouldBe METADATA_SCHEMA.trim() }
 
     context("validate cypher queries") {
+      val dateTime = LocalDateTime.now()
       withData(
           "" with emptyMap() expect null,
           "MATCH (person:Person)-[:ACTED_IN]->(tvShow:TVShow) RETURN person, tvShow" with
@@ -121,8 +123,18 @@ class SchemaTest : FunSpec() {
               null,
           "MATCH (person:Person {name: 'Keanu Reeves'}) SET person.name = 'Keanu Charles Reeves', person.born = '09/02/1964' RETURN person" with
               emptyMap() expect
-              Schema.Violation.InvalidProperty(PERSON, BORN, listOf("09/02/1964"))) {
-              (query, parameters, expected) ->
+              Schema.Violation.InvalidProperty(PERSON, BORN, listOf("09/02/1964")),
+          MoviesGraph.CREATE_MATRIX_SHOWING with emptyMap() expect null,
+          MoviesGraph.CREATE_MATRIX_SHOWING with
+              mapOf("properties" to mapOf("times" to listOf(Instant.now().toEpochMilli()))) expect
+              null,
+          MoviesGraph.CREATE_MATRIX_SHOWING with
+              mapOf("properties" to mapOf("times" to listOf("$dateTime"))) expect
+              Schema.Violation.InvalidProperty(SHOWING, TIMES, listOf(listOf("$dateTime"))),
+          MoviesGraph.CREATE_MATRIX_SHOWING with
+              mapOf("properties" to mapOf("times" to emptyList<Long>(), "capacity" to 100)) expect
+              Schema.Violation.UnknownProperty(SHOWING, "capacity")) { (query, parameters, expected)
+            ->
             MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
           }
     }
@@ -651,6 +663,10 @@ class SchemaTest : FunSpec() {
     val PERSON = Schema.Violation.Entity.Node("Person")
     val NAME = Schema.Property("name", Schema.Property.Type.String, emptyList())
     val BORN = Schema.Property("born", Schema.Property.Type.Integer, emptyList())
+    val SHOWING = Schema.Violation.Entity.Relationship("SHOWING", "Theater", "Movie")
+    val TIMES =
+        Schema.Property(
+            "times", Schema.Property.Type.List(Schema.Property.Type.Integer), emptyList())
 
     val A = Schema.Violation.Entity.Node("A")
     val A_A =
@@ -674,7 +690,5 @@ class SchemaTest : FunSpec() {
     val H_H = Schema.Property("h", Schema.Property.Type.Duration, emptyList())
     val I = Schema.Violation.Entity.Node("I")
     val I_I = Schema.Property("i", Schema.Property.Type.Any, emptyList())
-    val J = Schema.Violation.Entity.Node("J")
-    val J_J = Schema.Property("j", Schema.Property.Type.Nullable.Any, emptyList())
   }
 }
