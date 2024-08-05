@@ -15,6 +15,10 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.validate
 
+import kotlin.collections.Set
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
 import org.neo4j.cypherdsl.core.KeyValueMapEntry
@@ -27,7 +31,9 @@ import org.neo4j.cypherdsl.core.Operation
 import org.neo4j.cypherdsl.core.Operator
 import org.neo4j.cypherdsl.core.Parameter
 import org.neo4j.cypherdsl.core.PatternElement
+import org.neo4j.cypherdsl.core.Property as CypherProperty
 import org.neo4j.cypherdsl.core.RelationshipBase
+import org.neo4j.cypherdsl.core.Set as CypherSet
 import org.neo4j.cypherdsl.core.Statement
 import org.neo4j.cypherdsl.core.StatementCatalog
 import org.neo4j.cypherdsl.core.SymbolicName
@@ -36,12 +42,6 @@ import org.neo4j.cypherdsl.parser.CypherParser
 import org.neo4j.cypherdsl.parser.ExpressionCreatedEventType
 import org.neo4j.cypherdsl.parser.Options
 import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
-import kotlin.collections.Set
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.jvm.optionals.getOrNull
-import org.neo4j.cypherdsl.core.Property as CypherProperty
-import org.neo4j.cypherdsl.core.Set as CypherSet
 
 /**
  * A *Cypher* [Query].
@@ -306,7 +306,7 @@ internal data class Query(
 
     /** Convert each [StatementCatalog.PropertyFilter] to a [Property.Type]. */
     private fun Collection<StatementCatalog.PropertyFilter>.mapPropertyType(): List<Property.Type> {
-      return mapNotNull { filter -> filter.right.toPropertyType() }
+      return mapNotNull { filter -> filter.right?.toPropertyType() }
     }
 
     /** Convert the [Expression] to a [Property.Type]. */
