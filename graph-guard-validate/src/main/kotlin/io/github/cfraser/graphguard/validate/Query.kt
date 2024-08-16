@@ -50,12 +50,14 @@ import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
  * @property relationships the relationships in the [Query]
  * @property properties the properties in the [Query]
  * @property mutatedProperties the mutated properties in the [Query]
+ * @property entities a map of symbolic name to entity labels
  */
 internal data class Query(
     val nodes: Set<String>,
     val relationships: Set<Relationship>,
     val properties: Set<Property>,
-    val mutatedProperties: Set<MutatedProperty>
+    val mutatedProperties: Set<MutatedProperty>,
+    val entities: Map<String, Set<String>>
 ) {
 
   /** A [Relationship] with the [label] from the [source] to the [target]. */
@@ -109,7 +111,8 @@ internal data class Query(
                     mutatedProperty.copy(owner = label)
                   }
                 }
-                .toSet())
+                .toSet(),
+            entities)
       } catch (_: Throwable) {
         null
       }
@@ -122,7 +125,7 @@ internal data class Query(
       fun collect(node: NodeBase<*>) {
         val symbolicName = node.symbolicName.getOrNull()?.value ?: return
         val labels =
-            node.labels.takeUnless(List<*>::isEmpty)?.map(NodeLabel::getValue)?.toSet() ?: return
+            node.labels.takeUnless(List<*>::isEmpty)?.map(NodeLabel::getValue)?.toSet().orEmpty()
         this += symbolicName to labels
       }
       fun collect(relationship: RelationshipBase<*, *, *>) {
@@ -131,7 +134,7 @@ internal data class Query(
           if (visitable is SymbolicName) value = visitable.value
         }
         val symbolicName = value ?: return
-        val labels = relationship.details.types.takeUnless(List<*>::isEmpty)?.toSet() ?: return
+        val labels = relationship.details.types.takeUnless(List<*>::isEmpty)?.toSet().orEmpty()
         this += symbolicName to labels
       }
       when (patternElement) {
