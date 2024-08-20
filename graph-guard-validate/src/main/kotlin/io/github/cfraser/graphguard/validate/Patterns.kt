@@ -7,12 +7,12 @@ package io.github.cfraser.graphguard.validate
 object Patterns {
 
   /**
-   * A [Rule] that prevents *Cypher* statements with an [UnlabeledNode].
+   * A [Rule] that prevents *Cypher* statements with an [UnlabeledEntity].
    *
-   * @param excludes do **not** [Rule.validate] for [UnlabeledNode] if the *Cypher* statement
+   * @param excludes do **not** [Rule.validate] for [UnlabeledEntity] if the *Cypher* statement
    *   matches any of the [Regex]es
    */
-  class UnlabeledNode(excludes: Collection<Regex> = emptyList()) :
+  class UnlabeledEntity(excludes: Collection<Regex> = emptyList()) :
       Rule by Rule({ cypher, _ ->
         cypher
             .takeUnless { _ -> excludes.any { exclude -> exclude.matches(cypher) } }
@@ -20,6 +20,6 @@ object Patterns {
             ?.entities
             ?.toList()
             ?.firstOrNull { (_, labels) -> labels.isEmpty() }
-            ?.let { (symbolicName, _) -> Rule.Violation("Node '$symbolicName' is unlabeled") }
+            ?.let { (symbolicName, _) -> Rule.Violation("Entity '$symbolicName' is unlabeled") }
       })
 }

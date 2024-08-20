@@ -2,7 +2,7 @@ public final class io/github/cfraser/graphguard/validate/Patterns {
 	public static final field INSTANCE Lio/github/cfraser/graphguard/validate/Patterns;
 }
 
-public final class io/github/cfraser/graphguard/validate/Patterns$UnlabeledNode : io/github/cfraser/graphguard/validate/Rule {
+public final class io/github/cfraser/graphguard/validate/Patterns$UnlabeledEntity : io/github/cfraser/graphguard/validate/Rule {
 	public fun <init> ()V
 	public fun <init> (Ljava/util/Collection;)V
 	public synthetic fun <init> (Ljava/util/Collection;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

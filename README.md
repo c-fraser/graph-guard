@@ -26,7 +26,8 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Java](#java)
   * [Documentation](#documentation)
   * [CLI](#cli)
-* [Plugins](#plugins)
+* [Libraries](#libraries)
+  * [graph-guard-validate](#graph-guard-validate)
   * [graph-guard-script](#graph-guard-script)
 * [License](#license)
 
@@ -415,23 +416,38 @@ tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
 > Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
 > (and [source script](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-cli/demo.sh)).
 
-## Plugins
+## Libraries
 
-The following `graph-guard-*` projects contain
-additional [Plugin](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
-implementations to
-augment [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
+The following `graph-guard-*` libraries provide types and/or implementations to facilitate
+augmenting [Server](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html)
 functionality.
+
+### graph-guard-validate
+
+`graph-guard-validate`
+defines [Rule](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html),
+which is the basis for query validation, through
+the [Validator](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard.plugin/-validator/index.html)
+plugin. [Schema](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-schema/index.html)
+is
+the [Rule](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html)
+that evaluates whether a Cypher query contains [schema](#schema) violations. Refer
+to [Patterns](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-patterns/index.html)
+for additional
+Cypher [Rule](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html)
+implementations.
 
 ### graph-guard-script
 
-[Script.evaluate](https://c-fraser.github.io/graph-guard/api/plugin/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html)
-enables [plugins](#plugins) to be compiled and loaded from
+[Script.evaluate](https://c-fraser.github.io/graph-guard/api/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html)
+enables [plugins](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html)
+to be compiled and loaded from
 a [Kotlin script](https://kotlinlang.org/docs/custom-script-deps-tutorial.html).
-The [Script.Context](https://c-fraser.github.io/graph-guard/api/plugin/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/index.html)
+The [Script.Context](https://c-fraser.github.io/graph-guard/api/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/index.html)
 exposes
 a [DSL](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html)
-to build [plugins](#plugins).
+to
+build [plugins](https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html).
 
 For example, use a [plugin script](#graph-guard-script) with the [Server](#design).
 

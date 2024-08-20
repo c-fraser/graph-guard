@@ -54,7 +54,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.19.4"
+  version = "0.20.0"
 
   repositories { mavenCentral() }
 }
