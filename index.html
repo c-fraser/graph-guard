@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
     
     
       
@@ -458,14 +458,23 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugins" class="md-nav__link">
+  <a href="#libraries" class="md-nav__link">
     <span class="md-ellipsis">
-      Plugins
+      Libraries
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Plugins">
+    <nav class="md-nav" aria-label="Libraries">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph-guard-validate" class="md-nav__link">
+    <span class="md-ellipsis">
+      graph-guard-validate
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#graph-guard-script" class="md-nav__link">
@@ -845,20 +854,33 @@ fun runExample08() {
 <p>Refer to the <a href="https://c-fraser.github.io/graph-guard/cli/">demo</a>
 (and <a href="https://github.com/c-fraser/graph-guard/blob/main/graph-guard-cli/demo.sh">source script</a>).</p>
 </blockquote>
-<h2 id="plugins">Plugins</h2>
-<p>The following <code>graph-guard-*</code> projects contain
-additional <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html">Plugin</a>
-implementations to
-augment <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html">Server</a>
+<h2 id="libraries">Libraries</h2>
+<p>The following <code>graph-guard-*</code> libraries provide types and/or implementations to facilitate
+augmenting <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/index.html">Server</a>
 functionality.</p>
+<h3 id="graph-guard-validate">graph-guard-validate</h3>
+<p><code>graph-guard-validate</code>
+defines <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html">Rule</a>,
+which is the basis for query validation, through
+the <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard.plugin/-validator/index.html">Validator</a>
+plugin. <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-schema/index.html">Schema</a>
+is
+the <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html">Rule</a>
+that evaluates whether a Cypher query contains <a href="#schema">schema</a> violations. Refer
+to <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-patterns/index.html">Patterns</a>
+for additional
+Cypher <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html">Rule</a>
+implementations.</p>
 <h3 id="graph-guard-script">graph-guard-script</h3>
-<p><a href="https://c-fraser.github.io/graph-guard/api/plugin/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html">Script.evaluate</a>
-enables <a href="#plugins">plugins</a> to be compiled and loaded from
+<p><a href="https://c-fraser.github.io/graph-guard/api/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html">Script.evaluate</a>
+enables <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html">plugins</a>
+to be compiled and loaded from
 a <a href="https://kotlinlang.org/docs/custom-script-deps-tutorial.html">Kotlin script</a>.
-The <a href="https://c-fraser.github.io/graph-guard/api/plugin/script/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/index.html">Script.Context</a>
+The <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-context/index.html">Script.Context</a>
 exposes
 a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/-d-s-l/index.html">DSL</a>
-to build <a href="#plugins">plugins</a>.</p>
+to
+build <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html">plugins</a>.</p>
 <p>For example, use a <a href="#graph-guard-script">plugin script</a> with the <a href="#design">Server</a>.</p>
 <!--- TEST_NAME Example09Test -->
 <!--- INCLUDE
@@ -981,7 +1003,7 @@ limitations under the License.
     <script id="__config" type="application/json">{"base": ".", "features": ["toc.integrate", "content.code.copy", "content.code.select"], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      <script src="assets/javascripts/bundle.471ce7a9.min.js"></script>
       
     
   </body>
