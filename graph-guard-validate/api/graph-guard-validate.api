@@ -3,19 +3,20 @@ public final class io/github/cfraser/graphguard/validate/Patterns {
 }
 
 public final class io/github/cfraser/graphguard/validate/Patterns$UnlabeledEntity : io/github/cfraser/graphguard/validate/Rule {
-	public fun <init> ()V
-	public fun <init> (Ljava/util/Collection;)V
-	public synthetic fun <init> (Ljava/util/Collection;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final field INSTANCE Lio/github/cfraser/graphguard/validate/Patterns$UnlabeledEntity;
+	public fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
 	public fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;
 	public fun validate-uxJLViw (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 }
 
 public abstract interface class io/github/cfraser/graphguard/validate/Rule {
+	public abstract fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
 	public abstract fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;
 	public abstract fun validate-uxJLViw (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/validate/Rule$DefaultImpls {
+	public static fun excludes (Lio/github/cfraser/graphguard/validate/Rule;Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
 	public static fun then (Lio/github/cfraser/graphguard/validate/Rule;Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;
 }
 
@@ -39,6 +40,7 @@ public final class io/github/cfraser/graphguard/validate/Schema : java/lang/Reco
 	public final fun copy (Ljava/util/List;)Lio/github/cfraser/graphguard/validate/Schema;
 	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Schema;Ljava/util/List;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Schema;
 	public fun equals (Ljava/lang/Object;)Z
+	public fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
 	public final fun graphs ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;

@@ -26,6 +26,20 @@ fun interface Rule {
   }
 
   /**
+   * Exclude the *Cypher* query from [Rule] validation if it matches any of the [regexes].
+   *
+   * @param regexes the [Collection] of [Regex] to exclude
+   * @return a [Rule] excluding matching *Cypher* statements
+   */
+  infix fun excludes(regexes: Collection<Regex>): Rule {
+    return Rule { cypher, parameters ->
+      cypher
+          .takeIf { _ -> regexes.none { exclude -> cypher.let(exclude::matches) } }
+          ?.let { _ -> validate(cypher, parameters) }
+    }
+  }
+
+  /**
    * An [Violation] describes why a *Cypher* query violates a [Rule].
    *
    * @property message the description of the [Rule] violation
