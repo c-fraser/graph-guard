@@ -28,6 +28,7 @@ dependencies {
   implementation(libs.kotlinx.coroutines)
   implementation(libs.kotlinx.coroutines.slf4j)
   implementation(libs.ktor.network)
+  implementation(libs.ktor.network.tls)
   implementation(libs.caffeine)
   implementation(libs.slf4j.api)
 

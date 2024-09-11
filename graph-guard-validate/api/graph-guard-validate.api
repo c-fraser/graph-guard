@@ -9,6 +9,13 @@ public final class io/github/cfraser/graphguard/validate/Patterns$UnlabeledEntit
 	public fun validate-uxJLViw (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 }
 
+public final class io/github/cfraser/graphguard/validate/Patterns$UnparameterizedValue : io/github/cfraser/graphguard/validate/Rule {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/validate/Patterns$UnparameterizedValue;
+	public fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
+	public fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;
+	public fun validate-uxJLViw (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
+}
+
 public abstract interface class io/github/cfraser/graphguard/validate/Rule {
 	public abstract fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
 	public abstract fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;

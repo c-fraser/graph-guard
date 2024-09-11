@@ -20,6 +20,7 @@ kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kote
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-slf4j = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j", version.ref = "kotlinx-coroutines" }
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
+ktor-network-tls = { module = "io.ktor:ktor-network-tls", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.7" }
 logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "8.0" }
 mordant = { module = "com.github.ajalt.mordant:mordant-jvm", version = "2.2.0" }

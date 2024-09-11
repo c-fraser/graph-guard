@@ -18,29 +18,26 @@ package io.github.cfraser.graphguard
 import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
 import io.github.cfraser.graphguard.knit.use
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.writeFully
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withTimeout
 import java.net.URI
 import java.nio.ByteBuffer
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeout
+import org.neo4j.configuration.connectors.BoltConnector
+import org.neo4j.harness.Neo4jBuilders
 
 class ServerTest : FunSpec() {
 
   init {
-    test("TLS unsupported") {
-      shouldThrow<IllegalStateException> { Server(URI("bolt+s://localhost:7687")) }
-    }
-
     test("proxy bolt messages") { withNeo4j { withServer(block = ::runMoviesQueries) } }
 
     test("proxy bolt messages with async plugin") {
@@ -111,6 +108,18 @@ class ServerTest : FunSpec() {
               byteArrayOf(0x0, 0x2) +
               PackStreamTest.byteArrayOfSize(2) +
               byteArrayOf(0x00, 0x00))
+    }
+
+    test("encrypted connection to graph") {
+      Neo4jBuilders.newInProcessBuilder()
+          .withConfig(BoltConnector.enabled, true)
+          .withConfig(BoltConnector.encryption_level, BoltConnector.EncryptionLevel.REQUIRED)
+          .build()
+          .use { neo4j ->
+            val boltURI = neo4j.boltURI().let { uri -> URI("bolt+ssc://${uri.host}:${uri.port}/") }
+            val server = Server(boltURI, trustManager = Server.InsecureTrustManager)
+            server.use { server.driver.use { driver -> runMoviesQueries(driver) } }
+          }
     }
 
     xtest("measure proxy server latency").config(tags = setOf(LOCAL)) {

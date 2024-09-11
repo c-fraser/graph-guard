@@ -226,7 +226,8 @@ public final class io/github/cfraser/graphguard/Server : java/lang/Runnable {
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;Ljava/lang/Integer;)V
-	public synthetic fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;Ljava/lang/Integer;Ljavax/net/ssl/TrustManager;)V
+	public synthetic fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;Ljava/lang/Integer;Ljavax/net/ssl/TrustManager;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAddress ()Ljava/net/InetSocketAddress;
 	public final fun getGraph ()Ljava/net/URI;
 	public fun run ()V
@@ -283,6 +284,13 @@ public final class io/github/cfraser/graphguard/Server$Disconnected : java/lang/
 }
 
 public abstract interface class io/github/cfraser/graphguard/Server$Event {
+}
+
+public final class io/github/cfraser/graphguard/Server$InsecureTrustManager : javax/net/ssl/X509TrustManager {
+	public static final field INSTANCE Lio/github/cfraser/graphguard/Server$InsecureTrustManager;
+	public fun checkClientTrusted ([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V
+	public fun checkServerTrusted ([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V
+	public fun getAcceptedIssuers ()[Ljava/security/cert/X509Certificate;
 }
 
 public abstract interface class io/github/cfraser/graphguard/Server$Plugin {

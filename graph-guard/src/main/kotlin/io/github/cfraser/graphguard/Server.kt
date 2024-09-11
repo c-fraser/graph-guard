@@ -26,6 +26,7 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.sockets.toJavaAddress
+import io.ktor.network.tls.tls
 import io.ktor.util.network.hostname
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
@@ -53,8 +54,11 @@ import org.slf4j.MDC.MDCCloseable
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
+import java.security.cert.X509Certificate
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
@@ -69,6 +73,7 @@ import io.ktor.network.sockets.SocketAddress as KSocketAddress
  * @property graph the [URI] of the graph database to proxy data to/from
  * @property address the [InetSocketAddress] to bind the [Server] to
  * @property parallelism the number of parallel coroutines used by the [Server]
+ * @property trustManager the [TrustManager] to use for the TLS connection to the [graph]
  */
 class Server
 @JvmOverloads
@@ -76,12 +81,9 @@ constructor(
     val graph: URI,
     plugin: Plugin = Plugin.DSL.plugin {},
     val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
-    private val parallelism: Int? = null
+    private val parallelism: Int? = null,
+    private val trustManager: TrustManager? = null
 ) : Runnable {
-
-  init {
-    check("+s" !in graph.scheme) { "${Server::class.simpleName} doesn't support TLS" }
-  }
 
   /**
    * The [Server.Plugin] used by the [Server].
@@ -197,7 +199,12 @@ constructor(
       selector: SelectorManager,
       block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
-    val socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
+    var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
+    if ("+s" in graph.scheme)
+        socket =
+            socket.tls(coroutineContext = coroutineContext) {
+              trustManager = this@Server.trustManager
+            }
     val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
     try {
       socket.withChannels { reader, writer ->
@@ -511,6 +518,21 @@ constructor(
 
   /** The [Server] has stopped. */
   data object Stopped : Event
+
+  /**
+   * [InsecureTrustManager] is a [X509TrustManager] with certificate validation disabled.
+   * > [InsecureTrustManager] can be used, perhaps naively, to trust self-signed certificates.
+   */
+  object InsecureTrustManager : X509TrustManager {
+
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+    override fun getAcceptedIssuers(): Array<X509Certificate> {
+      return emptyArray()
+    }
+  }
 
   @VisibleForTesting
   internal companion object {
