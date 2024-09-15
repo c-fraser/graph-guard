@@ -286,13 +286,6 @@ public final class io/github/cfraser/graphguard/Server$Disconnected : java/lang/
 public abstract interface class io/github/cfraser/graphguard/Server$Event {
 }
 
-public final class io/github/cfraser/graphguard/Server$InsecureTrustManager : javax/net/ssl/X509TrustManager {
-	public static final field INSTANCE Lio/github/cfraser/graphguard/Server$InsecureTrustManager;
-	public fun checkClientTrusted ([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V
-	public fun checkServerTrusted ([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V
-	public fun getAcceptedIssuers ()[Ljava/security/cert/X509Certificate;
-}
-
 public abstract interface class io/github/cfraser/graphguard/Server$Plugin {
 	public abstract fun intercept-zufs0ZA (Ljava/lang/String;Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun observe (Lio/github/cfraser/graphguard/Server$Event;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

@@ -28,6 +28,8 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.writeFully
 import java.net.URI
 import java.nio.ByteBuffer
+import java.security.cert.X509Certificate
+import javax.net.ssl.X509TrustManager
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
@@ -117,7 +119,7 @@ class ServerTest : FunSpec() {
           .build()
           .use { neo4j ->
             val boltURI = neo4j.boltURI().let { uri -> URI("bolt+ssc://${uri.host}:${uri.port}/") }
-            val server = Server(boltURI, trustManager = Server.InsecureTrustManager)
+            val server = Server(boltURI, trustManager = InsecureTrustManager)
             server.use { server.driver.use { driver -> runMoviesQueries(driver) } }
           }
     }
@@ -140,6 +142,21 @@ class ServerTest : FunSpec() {
 
       // time with proxy server - time communicating directly with neo4j = proxy server latency
       println("Proxy server latency = ${proxyTimes.average() - times.average()}ms")
+    }
+  }
+
+  /**
+   * [InsecureTrustManager] is a [X509TrustManager] with certificate validation disabled.
+   * > [InsecureTrustManager] can be used, perhaps naively, to trust self-signed certificates.
+   */
+  private object InsecureTrustManager : X509TrustManager {
+
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+    override fun getAcceptedIssuers(): Array<X509Certificate> {
+      return emptyArray()
     }
   }
 }

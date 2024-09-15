@@ -519,21 +519,6 @@ constructor(
   /** The [Server] has stopped. */
   data object Stopped : Event
 
-  /**
-   * [InsecureTrustManager] is a [X509TrustManager] with certificate validation disabled.
-   * > [InsecureTrustManager] can be used, perhaps naively, to trust self-signed certificates.
-   */
-  object InsecureTrustManager : X509TrustManager {
-
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-
-    override fun getAcceptedIssuers(): Array<X509Certificate> {
-      return emptyArray()
-    }
-  }
-
   @VisibleForTesting
   internal companion object {
 
