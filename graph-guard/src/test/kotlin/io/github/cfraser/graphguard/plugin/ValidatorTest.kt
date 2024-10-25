@@ -38,10 +38,10 @@ class ValidatorTest : FunSpec() {
           lock.withLock {
             when (event) {
               is Server.Connected ->
-                  when (event.connection) {
-                    is Server.Connection.Client -> clientAddresses += event.connection.address
-                    is Server.Connection.Graph -> graphAddress = event.connection.address
-                  }
+                when (event.connection) {
+                  is Server.Connection.Client -> clientAddresses += event.connection.address
+                  is Server.Connection.Graph -> graphAddress = event.connection.address
+                }
               else -> {}
             }
             events += event
@@ -59,9 +59,9 @@ class ValidatorTest : FunSpec() {
       lock.isLocked shouldBe false
       events.forExactly(1) { it shouldBe Server.Started }
       events.filterIsInstance<Server.Connected>() shouldContainInOrder
-          clientConnections.flatMap {
-            listOf(Server.Connected(it), Server.Connected(graphConnection))
-          }
+        clientConnections.flatMap {
+          listOf(Server.Connected(it), Server.Connected(graphConnection))
+        }
       val ran = AtomicInteger()
       events.filterIsInstance<Server.Proxied>().forEach { event ->
         when (val message = event.received) {
@@ -79,31 +79,31 @@ class ValidatorTest : FunSpec() {
             message shouldBe event.sent
           }
           is Bolt.Run ->
-              if (message.query.contains("Tom Hanks")) {
-                ran.getAndIncrement() shouldBe 0
-                event.source.address shouldBeOneOf clientConnections.map { it.address }
-                event.destination.address shouldBe graphConnection.address
-                message shouldBe event.sent
-              } else {
-                ran.getAndIncrement() shouldBe 1
-                event.source.address shouldBe event.destination.address
-                event.sent.shouldBeTypeOf<Bolt.Messages>()
-                (event.sent as Bolt.Messages).messages.map { it::class } shouldBe emptyList()
-              }
+            if (message.query.contains("Tom Hanks")) {
+              ran.getAndIncrement() shouldBe 0
+              event.source.address shouldBeOneOf clientConnections.map { it.address }
+              event.destination.address shouldBe graphConnection.address
+              message shouldBe event.sent
+            } else {
+              ran.getAndIncrement() shouldBe 1
+              event.source.address shouldBe event.destination.address
+              event.sent.shouldBeTypeOf<Bolt.Messages>()
+              (event.sent as Bolt.Messages).messages.map { it::class } shouldBe emptyList()
+            }
           is Bolt.Pull ->
-              if (ran.get() == 2) {
-                event.source.address shouldBe event.destination.address
-                event.sent.shouldBeTypeOf<Bolt.Messages>()
-                (event.sent as Bolt.Messages).messages.map { it::class } shouldBe
-                    listOf(Bolt.Failure::class, Bolt.Ignored::class)
-              }
+            if (ran.get() == 2) {
+              event.source.address shouldBe event.destination.address
+              event.sent.shouldBeTypeOf<Bolt.Messages>()
+              (event.sent as Bolt.Messages).messages.map { it::class } shouldBe
+                listOf(Bolt.Failure::class, Bolt.Ignored::class)
+            }
           else -> fail("Received unexpected '$message'")
         }
       }
       events.filterIsInstance<Server.Disconnected>() shouldContainAll
-          clientConnections.flatMap {
-            listOf(Server.Disconnected(graphConnection), Server.Disconnected(it))
-          }
+        clientConnections.flatMap {
+          listOf(Server.Disconnected(graphConnection), Server.Disconnected(it))
+        }
       events.forExactly(1) { it shouldBe Server.Stopped }
     }
   }

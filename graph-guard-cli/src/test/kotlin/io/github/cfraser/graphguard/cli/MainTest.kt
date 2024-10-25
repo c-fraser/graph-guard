@@ -1,5 +1,6 @@
 package io.github.cfraser.graphguard.cli
 
+import com.github.ajalt.clikt.core.main
 import io.github.cfraser.graphguard.driver
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j

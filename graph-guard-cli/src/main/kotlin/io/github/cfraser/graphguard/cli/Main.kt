@@ -20,6 +20,8 @@ package io.github.cfraser.graphguard.cli
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
@@ -53,8 +55,7 @@ fun main(args: Array<String>) {
 }
 
 /** [Command] runs [Server] with the CLI input. */
-internal class Command :
-    CliktCommand(name = "graph-guard", help = "Graph query validation proxy server") {
+internal class Command : CliktCommand(name = "graph-guard") {
 
   init {
     versionOption(BuildConfig.VERSION)
@@ -127,6 +128,8 @@ internal class Command :
         .run()
   }
 
+  override fun help(context: Context) = "Graph query validation proxy server"
+
   /** [Command] output options. */
   private sealed interface Output
 
@@ -182,7 +185,7 @@ internal class Command :
   private companion object {
 
     /** The [Terminal] to use to display styled text/widgets in the console. */
-    private val terminal by lazy { Terminal().apply { info.updateTerminalSize() } }
+    private val terminal by lazy { Terminal().apply(Terminal::updateSize) }
 
     /** Get the [Logger] with the [name] or throw an [IllegalStateException]. */
     fun logger(name: String): Logger {

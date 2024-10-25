@@ -47,6 +47,7 @@ import org.antlr.v4.runtime.tree.RuleNode
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
  */
 @JvmRecord
+@ConsistentCopyVisibility
 data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
   /**
@@ -147,6 +148,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
    * @property nodes the nodes and relationships in the graph
    */
   @JvmRecord
+  @ConsistentCopyVisibility
   data class Graph internal constructor(val name: KString, val nodes: KList<Node>) {
 
     override fun toString(): KString {
@@ -173,6 +175,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
    * @property metadata the node metadata
    */
   @JvmRecord
+  @ConsistentCopyVisibility
   data class Node
   internal constructor(
       val name: KString,
@@ -184,7 +187,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     override fun toString(): KString {
       return buildString {
         append("  node ")
-        metadata.append()
+        this += metadata
         append(name)
         append(properties.parenthesize("    "))
         if (relationships.isNotEmpty()) {
@@ -210,6 +213,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
    * @property metadata the relationship metadata
    */
   @JvmRecord
+  @ConsistentCopyVisibility
   data class Relationship
   internal constructor(
       val name: KString,
@@ -232,7 +236,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     override fun toString(): KString {
       return buildString {
         append("      ")
-        metadata.append()
+        this += metadata
         append(name)
         append(properties.parenthesize("        "))
         append(" ")
@@ -251,12 +255,13 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
    * @property metadata the property metadata
    */
   @JvmRecord
+  @ConsistentCopyVisibility
   data class Property
   internal constructor(val name: KString, val type: Type, val metadata: KList<Metadata>) {
 
     override fun toString(): KString {
       return buildString {
-        metadata.append()
+        this += metadata
         append(name)
         append(": ")
         append(type)
@@ -366,7 +371,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
    * @property name the name of the metadata
    * @property value the optional value of the metadata
    */
-  @JvmRecord data class Metadata internal constructor(val name: KString, val value: KString?)
+  @JvmRecord @ConsistentCopyVisibility data class Metadata internal constructor(val name: KString, val value: KString?)
 
   /** An [Violation] describes a *Cypher* query with a [Schema] [violation]. */
   internal sealed class Violation(val violation: Rule.Violation) {
@@ -494,10 +499,9 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       formatted.replace(System.lineSeparator(), "").replace("($indent", "(").replace(indent, " ")
     }
 
-    /** Append the [KList] of [Metadata] to the [StringBuilder]. */
-    context(StringBuilder)
-    fun KList<Metadata>.append() {
-      forEach { (name, value) ->
+    /** Append the [metadata] to the [StringBuilder]. */
+    operator fun StringBuilder.plusAssign(metadata: KList<Metadata>) {
+      metadata.forEach { (name, value) ->
         append("@$name")
         if (value.isNullOrBlank()) append(" ")
         else {
@@ -576,7 +580,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
               }
               .filter { (_, value) -> value !is Unit }
               .distinct()
-      return if (values.map { (_, value) -> value }.isValid()) null
+      return if (values.map { (_, value) -> value }.isValid(this)) null
       else
           Violation.InvalidProperty(
               entity,
@@ -600,36 +604,35 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       }
     }
 
-    /** Determine if `this` [KList] of [Property] value(s) is valid. */
-    context(Property)
-    fun KList<KAny?>.isValid(): KBoolean {
+    /** Determine if `this` [KList] of [property] value(s) is valid. */
+    fun KList<KAny?>.isValid(property: Property): KBoolean {
       fun KList<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
-      val isAny = type is Property.Type.Any || type is Property.Type.Nullable.Any
-      val isList = type is Property.Type.List || type is Property.Type.Nullable.List
+      val isAny = property.type is Property.Type.Any || property.type is Property.Type.Nullable.Any
+      val isList = property.type is Property.Type.List || property.type is Property.Type.Nullable.List
       val allowsNullable =
           isList &&
-              when (type) {
-                is Property.Type.List -> type.type is Property.Type.Nullable
-                is Property.Type.Nullable.List -> type.type is Property.Type.Nullable
+              when (property.type) {
+                is Property.Type.List -> property.type.type is Property.Type.Nullable
+                is Property.Type.Nullable.List -> property.type.type is Property.Type.Nullable
                 else -> false
               }
       if (isList && filterNullIf(allowsNullable).any { it !is KList<*> }) return false
       if (!isAny && !isList && filterNotNull().any { it is KList<*> }) return false
-      val isNullable = type is Property.Type.Nullable
+      val isNullable = property.type is Property.Type.Nullable
       return flatMap { if (it is KList<*>) it.filterNullIf(allowsNullable) else listOf(it) }
           .filterNullIf(isNullable)
           .all { value ->
-            when (type) {
-              is Property.Type.List -> type.type.clazz.isInstance(value)
-              is Property.Type.Nullable.List -> type.type.clazz.isInstance(value)
-              is Property.Type.LiteralString -> type.value == value
-              is Property.Type.Nullable.LiteralString -> type.value == value
+            when (property.type) {
+              is Property.Type.List -> property.type.type.clazz.isInstance(value)
+              is Property.Type.Nullable.List -> property.type.type.clazz.isInstance(value)
+              is Property.Type.LiteralString -> property.type.value == value
+              is Property.Type.Nullable.LiteralString -> property.type.value == value
               is Property.Type.Union ->
-                  type.types.any { t ->
+                property.type.types.any { t ->
                     if (t is Property.Type.LiteralString) t.value == value
                     else t.clazz.isInstance(value)
                   }
-              else -> type.clazz.isInstance(value)
+              else -> property.type.clazz.isInstance(value)
             }
           }
     }

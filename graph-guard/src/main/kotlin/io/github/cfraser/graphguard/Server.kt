@@ -20,8 +20,10 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
+import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -32,10 +34,17 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.core.use
 import io.ktor.utils.io.writeFully
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.ByteBuffer
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import javax.net.ssl.TrustManager
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
@@ -51,18 +60,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
-import java.net.InetSocketAddress
-import java.net.URI
-import java.nio.ByteBuffer
-import java.security.cert.X509Certificate
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
-import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -118,23 +115,21 @@ constructor(
       runBlocking(
           when (val parallelism = parallelism) {
             null -> Dispatchers.IO
-            else ->
-                @OptIn(ExperimentalCoroutinesApi::class)
-                Dispatchers.IO.limitedParallelism(parallelism)
+            else -> Dispatchers.IO.limitedParallelism(parallelism)
           }) {
             bind { selector, serverSocket ->
               while (isActive) {
                 try {
                   accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
                     connect(selector) { graphConnection, graphReader, graphWriter ->
-                      Bolt.Session("${UUID.randomUUID()}")
-                          .proxy(
-                              clientConnection,
-                              clientReader,
-                              clientWriter,
-                              graphConnection,
-                              graphReader,
-                              graphWriter)
+                      proxy(
+                          Bolt.Session("${UUID.randomUUID()}"),
+                          clientConnection,
+                          clientReader,
+                          clientWriter,
+                          graphConnection,
+                          graphReader,
+                          graphWriter)
                     }
                   }
                 } catch (thrown: Throwable) {
@@ -220,13 +215,14 @@ constructor(
 
   /** Proxy a [Bolt.Session] between the *client* and *graph*. */
   @Suppress("TooGenericExceptionCaught")
-  private suspend fun Bolt.Session.proxy(
+  private suspend fun proxy(
+      session: Bolt.Session,
       clientConnection: Connection,
       clientReader: ByteReadChannel,
       clientWriter: ByteWriteChannel,
       graphConnection: Connection,
       graphReader: ByteReadChannel,
-      graphWriter: ByteWriteChannel,
+      graphWriter: ByteWriteChannel
   ): Unit = coroutineScope {
     val handshake = clientReader.verifyHandshake()
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
@@ -240,11 +236,11 @@ constructor(
     val responseWriter = clientConnection to clientWriter
     try {
       val incoming =
-          proxy(clientConnection, clientReader) { message ->
+          proxy(session, clientConnection, clientReader) { message ->
             if (message is Bolt.Request) requestWriter else responseWriter
           }
       val outgoing =
-          proxy(graphConnection, graphReader) { message ->
+          proxy(session, graphConnection, graphReader) { message ->
             if (message is Bolt.Response) responseWriter else requestWriter
           }
       select {
@@ -265,12 +261,12 @@ constructor(
    * [source] to the *resolved destination*.
    * > Intercept [Bolt.Goodbye] and [cancel] the [CoroutineScope] to end the session.
    */
-  context(CoroutineScope)
   @Suppress("TooGenericExceptionCaught")
-  private fun Bolt.Session.proxy(
+  private fun CoroutineScope.proxy(
+      session: Bolt.Session,
       source: Connection,
       reader: ByteReadChannel,
-      resolver: (Bolt.Message) -> Pair<Connection, ByteWriteChannel>,
+      resolver: (Bolt.Message) -> Pair<Connection, ByteWriteChannel>
   ): Job = launch {
     while (isActive) {
       val message =
@@ -280,7 +276,7 @@ constructor(
             break
           }
       LOGGER.debug("Read '{}' from {}", message, source)
-      val intercepted = plugin.intercept(this@proxy, message)
+      val intercepted = plugin.intercept(session, message)
       val (destination, writer) = resolver(intercepted)
       try {
         writer.writeMessage(intercepted)
@@ -289,7 +285,7 @@ constructor(
         break
       }
       LOGGER.debug("Wrote '{}' to {}", intercepted, destination)
-      plugin.observe(Proxied(this@proxy, source, message, destination, intercepted))
+      plugin.observe(Proxied(session, source, message, destination, intercepted))
       if (intercepted == Bolt.Goodbye) cancel("${Bolt.Goodbye}")
     }
   }
@@ -358,7 +354,7 @@ constructor(
        */
       abstract fun interceptAsync(
           session: String,
-          message: Bolt.Message
+          message: Bolt.Message,
       ): CompletableFuture<Bolt.Message>
 
       /**
@@ -372,7 +368,7 @@ constructor(
       /** [interceptAsync] then [await] for the [CompletableFuture] to complete. */
       final override suspend fun intercept(
           session: Bolt.Session,
-          message: Bolt.Message
+          message: Bolt.Message,
       ): Bolt.Message {
         return interceptAsync(session.id, message).await()
       }
@@ -585,7 +581,7 @@ constructor(
 
     /** Read a [Bolt.Message] from the [ByteReadChannel]. */
     private suspend fun ByteReadChannel.readMessage(
-        timeout: Duration = Duration.INFINITE,
+        timeout: Duration = Duration.INFINITE
     ): Bolt.Message {
       val structure = readChunked(timeout).unpack { structure() }
       return structure.toMessage()

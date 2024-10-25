@@ -64,6 +64,7 @@ object Bolt {
 
   /** An ordered [List] of [messages]. */
   @JvmRecord
+  @ConsistentCopyVisibility
   data class Messages internal constructor(val messages: List<Message>) : Message {
 
     init {

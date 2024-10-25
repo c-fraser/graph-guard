@@ -17,12 +17,8 @@ import org.slf4j.LoggerFactory
  * @param rule the [Rule] to validate
  * @param cacheSize the maximum entries in the cache of validated queries
  */
-class Validator
-@JvmOverloads
-constructor(
-    private val rule: Rule,
-    cacheSize: Long? = null,
-) : Server.Plugin {
+class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Long? = null) :
+    Server.Plugin {
 
   /** A [Mutex] for writing [failures]. */
   private val lock = Mutex()
