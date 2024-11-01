@@ -118,6 +118,7 @@ class SchemaTest : FunSpec() {
           MoviesGraph.MERGE_KEANU with
               mapOf("properties" to mapOf("fullName" to "Keanu Charles Reeves")) expect
               Schema.Violation.UnknownProperty(PERSON, "fullName"),
+          MoviesGraph.MERGE_KEANU with mapOf("properties" to mapOf("fullName" to null)) expect null,
           "MATCH (theater:Theater)-[:SHOWING]->(movie:Movie) RETURN theater, movie" with
               emptyMap() expect
               null,

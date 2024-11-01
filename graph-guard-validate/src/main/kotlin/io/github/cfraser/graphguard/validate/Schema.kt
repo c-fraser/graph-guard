@@ -371,7 +371,9 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
    * @property name the name of the metadata
    * @property value the optional value of the metadata
    */
-  @JvmRecord @ConsistentCopyVisibility data class Metadata internal constructor(val name: KString, val value: KString?)
+  @JvmRecord
+  @ConsistentCopyVisibility
+  data class Metadata internal constructor(val name: KString, val value: KString?)
 
   /** An [Violation] describes a *Cypher* query with a [Schema] [violation]. */
   internal sealed class Violation(val violation: Rule.Violation) {
@@ -531,7 +533,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
           .flatMap { properties ->
             when (properties) {
               is Map<*, *> ->
-                  properties.map { (name, value) ->
+                  properties.mapNotNull properties@{ (name, value) ->
                     Query.Property(
                         label,
                         checkNotNull(name as? KString) { "Unexpected parameter name" },
@@ -545,9 +547,9 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
                               is Number,
                               is OffsetTime,
                               is KString,
-                              is JZonedDateTime,
-                              null -> Query.Property.Type.Value(value)
+                              is JZonedDateTime -> Query.Property.Type.Value(value)
                               is KList<*> -> Query.Property.Type.Container(value)
+                              null -> return@properties null // ignore `n += {unknown: null}`
                               else -> error("Unexpected parameter value")
                             }))
                   }
@@ -608,7 +610,8 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     fun KList<KAny?>.isValid(property: Property): KBoolean {
       fun KList<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
       val isAny = property.type is Property.Type.Any || property.type is Property.Type.Nullable.Any
-      val isList = property.type is Property.Type.List || property.type is Property.Type.Nullable.List
+      val isList =
+          property.type is Property.Type.List || property.type is Property.Type.Nullable.List
       val allowsNullable =
           isList &&
               when (property.type) {
@@ -628,7 +631,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
               is Property.Type.LiteralString -> property.type.value == value
               is Property.Type.Nullable.LiteralString -> property.type.value == value
               is Property.Type.Union ->
-                property.type.types.any { t ->
+                  property.type.types.any { t ->
                     if (t is Property.Type.LiteralString) t.value == value
                     else t.clazz.isInstance(value)
                   }
