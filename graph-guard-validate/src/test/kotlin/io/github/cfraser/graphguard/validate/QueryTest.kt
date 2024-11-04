@@ -290,40 +290,36 @@ class QueryTest : FunSpec() {
     private val WROTE = Query.Relationship("WROTE", PERSON, MOVIE)
     private val REVIEWED = Query.Relationship("REVIEWED", PERSON, MOVIE)
 
-    private infix fun String.of(owner: String?): Query.Property {
-      return Query.Property(owner, this, emptySet())
-    }
+    private infix fun String.of(owner: String?): Query.Property =
+        Query.Property(owner, this, emptySet())
 
-    private infix fun Query.Property.with(value: Any): Query.Property {
-      return when (value) {
-        is List<*> -> copy(values = setOf(Query.Property.Type.Container(value)))
-        is Set<*> ->
-            copy(
-                values =
-                    value
-                        .mapNotNull {
-                          when (it) {
-                            is String ->
-                                if (it.startsWith("$")) Query.Property.Type.Resolvable(it)
-                                else Query.Property.Type.Value(it)
-                            is Boolean,
-                            is Long,
-                            is Float -> Query.Property.Type.Value(it)
-                            else -> null
+    private infix fun Query.Property.with(value: Any): Query.Property =
+        when (value) {
+          is List<*> -> copy(values = setOf(Query.Property.Type.Container(value)))
+          is Set<*> ->
+              copy(
+                  values =
+                      value
+                          .mapNotNull {
+                            when (it) {
+                              is String ->
+                                  if (it.startsWith("$")) Query.Property.Type.Resolvable(it)
+                                  else Query.Property.Type.Value(it)
+                              is Boolean,
+                              is Long,
+                              is Float -> Query.Property.Type.Value(it)
+                              else -> null
+                            }
                           }
-                        }
-                        .toSet())
-        else -> copy(values = setOf(Query.Property.Type.Value(value)))
-      }
-    }
+                          .toSet())
+          else -> copy(values = setOf(Query.Property.Type.Value(value)))
+        }
 
-    private infix fun Query.Property.with(value: KClass<*>): Query.Property {
-      return copy(values = setOf(Query.Property.Type.Value(value)))
-    }
+    private infix fun Query.Property.with(value: KClass<*>): Query.Property =
+        copy(values = setOf(Query.Property.Type.Value(value)))
 
-    private infix fun Query.Property.with(values: List<KClass<*>>): Query.Property {
-      return copy(values = setOf(Query.Property.Type.Container(values)))
-    }
+    private infix fun Query.Property.with(values: List<KClass<*>>): Query.Property =
+        copy(values = setOf(Query.Property.Type.Container(values)))
 
     private fun Set<Query.Property>.types(): Set<Query.Property> {
       fun Query.Property.Type.type(): Query.Property.Type {
@@ -334,21 +330,19 @@ class QueryTest : FunSpec() {
           is Query.Property.Type.Resolvable -> fail("Unknown value type")
         }
       }
-      fun Query.Property.types(): Query.Property {
-        return copy(values = values.map(Query.Property.Type::type).toSet())
-      }
+      fun Query.Property.types(): Query.Property =
+          copy(values = values.map(Query.Property.Type::type).toSet())
       return map(Query.Property::types).toSet()
     }
 
-    private fun Set<Query.Property.Type>.values(): Set<Any?> {
-      return flatMap { type ->
-            when (type) {
-              is Query.Property.Type.Value -> setOf(type.value)
-              is Query.Property.Type.Container -> type.values
-              is Query.Property.Type.Resolvable -> setOf(type.name)
+    private fun Set<Query.Property.Type>.values(): Set<Any?> =
+        flatMap { type ->
+              when (type) {
+                is Query.Property.Type.Value -> setOf(type.value)
+                is Query.Property.Type.Container -> type.values
+                is Query.Property.Type.Resolvable -> setOf(type.name)
+              }
             }
-          }
-          .toSet()
-    }
+            .toSet()
   }
 }

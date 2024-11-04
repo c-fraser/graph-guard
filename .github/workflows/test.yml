@@ -20,6 +20,6 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: check code
-        run: ./gradlew spotlessCheck detektAll
-      - name: execute test
-        run: ./gradlew clean test -Dkotest.tags='!Local'
+        run: ./gradlew spotlessCheck
+      - name: execute build
+        run: ./gradlew clean build -Dkotest.tags='!Local'

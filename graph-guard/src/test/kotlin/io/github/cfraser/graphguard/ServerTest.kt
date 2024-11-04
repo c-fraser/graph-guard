@@ -53,75 +53,77 @@ class ServerTest : FunSpec() {
 
     test("dechunk message") {
       val message =
-        SelectorManager(coroutineContext)
-          .use { selector ->
-            val address = KInetSocketAddress("localhost", 8787)
-            aSocket(selector).tcp().bind(address).use { serverSocket ->
-              async {
-                  serverSocket.accept().use { socket -> socket.openReadChannel().readChunked(3.seconds) }
+          SelectorManager(coroutineContext)
+              .use { selector ->
+                val address = KInetSocketAddress("localhost", 8787)
+                aSocket(selector).tcp().bind(address).use { serverSocket ->
+                  async {
+                        serverSocket.accept().use { socket ->
+                          socket.openReadChannel().readChunked(3.seconds)
+                        }
+                      }
+                      .also { _ ->
+                        aSocket(selector).tcp().connect(address).use { socket ->
+                          val writer = socket.openWriteChannel(autoFlush = true)
+                          for (size in 1..3) {
+                            val data = PackStreamTest.byteArrayOfSize(size)
+                            writer.writeShort(size.toShort())
+                            writer.writeFully(data)
+                          }
+                          writer.writeFully(byteArrayOf(0x00, 0x00))
+                        }
+                      }
                 }
-                .also { _ ->
-                  aSocket(selector).tcp().connect(address).use { socket ->
-                    val writer = socket.openWriteChannel(autoFlush = true)
-                    for (size in 1..3) {
-                      val data = PackStreamTest.byteArrayOfSize(size)
-                      writer.writeShort(size.toShort())
-                      writer.writeFully(data)
-                    }
-                    writer.writeFully(byteArrayOf(0x00, 0x00))
-                  }
-                }
-            }
-          }
-          .await()
+              }
+              .await()
       message shouldBe
-        (PackStreamTest.byteArrayOfSize(1) +
-          PackStreamTest.byteArrayOfSize(2) +
-          PackStreamTest.byteArrayOfSize(3))
+          (PackStreamTest.byteArrayOfSize(1) +
+              PackStreamTest.byteArrayOfSize(2) +
+              PackStreamTest.byteArrayOfSize(3))
     }
 
     test("chunk message") {
       val chunked =
-        SelectorManager(coroutineContext)
-          .use { selector ->
-            val address = KInetSocketAddress("localhost", 8787)
-            aSocket(selector).tcp().bind(address).use { serverSocket ->
-              async {
-                  val buffer = ByteBuffer.allocate(13)
-                  serverSocket.accept().use { socket ->
-                    withTimeout(3.seconds) { socket.openReadChannel().readFully(buffer) }
-                  }
-                  buffer
+          SelectorManager(coroutineContext)
+              .use { selector ->
+                val address = KInetSocketAddress("localhost", 8787)
+                aSocket(selector).tcp().bind(address).use { serverSocket ->
+                  async {
+                        val buffer = ByteBuffer.allocate(13)
+                        serverSocket.accept().use { socket ->
+                          withTimeout(3.seconds) { socket.openReadChannel().readFully(buffer) }
+                        }
+                        buffer
+                      }
+                      .also { _ ->
+                        aSocket(selector).tcp().connect(address).use { socket ->
+                          socket
+                              .openWriteChannel(autoFlush = true)
+                              .writeChunked(PackStreamTest.byteArrayOfSize(5), 3)
+                        }
+                      }
                 }
-                .also { _ ->
-                  aSocket(selector).tcp().connect(address).use { socket ->
-                    socket
-                      .openWriteChannel(autoFlush = true)
-                      .writeChunked(PackStreamTest.byteArrayOfSize(5), 3)
-                  }
-                }
-            }
-          }
-          .await()
+              }
+              .await()
       chunked.array() shouldBe
-        (byteArrayOf(0x0, 0x3) +
-          PackStreamTest.byteArrayOfSize(3) +
-          byteArrayOf(0x00, 0x00) +
-          byteArrayOf(0x0, 0x2) +
-          PackStreamTest.byteArrayOfSize(2) +
-          byteArrayOf(0x00, 0x00))
+          (byteArrayOf(0x0, 0x3) +
+              PackStreamTest.byteArrayOfSize(3) +
+              byteArrayOf(0x00, 0x00) +
+              byteArrayOf(0x0, 0x2) +
+              PackStreamTest.byteArrayOfSize(2) +
+              byteArrayOf(0x00, 0x00))
     }
 
     test("encrypted connection to graph") {
       Neo4jBuilders.newInProcessBuilder()
-        .withConfig(BoltConnector.enabled, true)
-        .withConfig(BoltConnector.encryption_level, BoltConnector.EncryptionLevel.REQUIRED)
-        .build()
-        .use { neo4j ->
-          val boltURI = neo4j.boltURI().let { uri -> URI("bolt+ssc://${uri.host}:${uri.port}/") }
-          val server = Server(boltURI, trustManager = InsecureTrustManager)
-          server.use { server.driver.use { driver -> runMoviesQueries(driver) } }
-        }
+          .withConfig(BoltConnector.enabled, true)
+          .withConfig(BoltConnector.encryption_level, BoltConnector.EncryptionLevel.REQUIRED)
+          .build()
+          .use { neo4j ->
+            val boltURI = neo4j.boltURI().let { uri -> URI("bolt+ssc://${uri.host}:${uri.port}/") }
+            val server = Server(boltURI, trustManager = InsecureTrustManager)
+            server.use { server.driver.use { driver -> runMoviesQueries(driver) } }
+          }
     }
 
     xtest("measure proxy server latency").config(tags = setOf(LOCAL)) {
@@ -149,14 +151,13 @@ class ServerTest : FunSpec() {
    * [InsecureTrustManager] is a [X509TrustManager] with certificate validation disabled.
    * > [InsecureTrustManager] can be used, perhaps naively, to trust self-signed certificates.
    */
+  @Suppress("EmptyFunctionBlock")
   private object InsecureTrustManager : X509TrustManager {
 
     override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
     override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
-    override fun getAcceptedIssuers(): Array<X509Certificate> {
-      return emptyArray()
-    }
+    override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
   }
 }

@@ -35,9 +35,7 @@ object Bolt {
       return minor or major
     }
 
-    override fun toString(): String {
-      return "$major.$minor"
-    }
+    override fun toString(): String = "$major.$minor"
   }
 
   /**
@@ -57,9 +55,8 @@ object Bolt {
      * @param that the [Message] to combine with `this`
      * @return the [Messages]
      */
-    infix fun and(that: Message): Messages {
-      return Messages((if (this is Messages) messages else listOf(this)) + that)
-    }
+    infix fun and(that: Message): Messages =
+        Messages((if (this is Messages) messages else listOf(this)) + that)
   }
 
   /** An ordered [List] of [messages]. */

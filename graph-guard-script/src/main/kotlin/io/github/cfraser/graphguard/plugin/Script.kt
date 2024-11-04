@@ -1,9 +1,6 @@
 package io.github.cfraser.graphguard.plugin
 
 import io.github.cfraser.graphguard.Server
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import org.slf4j.LoggerFactory
 import kotlin.properties.Delegates.notNull
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -38,6 +35,9 @@ import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.jvmTarget
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.slf4j.LoggerFactory
 
 /**
  * [Script] is a [KotlinScript] definition for dynamically compiling and instantiating a
@@ -88,7 +88,7 @@ abstract class Script {
         }
       }) {
 
-    private fun readResolve(): Any = Config
+    fun readResolve(): Any = Config
   }
 
   companion object {
@@ -106,10 +106,7 @@ abstract class Script {
      * @return the initialized [Server.Plugin]
      * @throws IllegalArgumentException if the [source] is invalid
      */
-    @JvmStatic
-    fun evaluate(source: String): Server.Plugin {
-      return evaluate(source.toScriptSource())
-    }
+    @JvmStatic fun evaluate(source: String): Server.Plugin = evaluate(source.toScriptSource())
 
     /**
      * Evaluate the [Script] [sourceCode], using the [BasicJvmScriptingHost], to instantiate a

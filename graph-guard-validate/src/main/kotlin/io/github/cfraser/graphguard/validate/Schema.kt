@@ -137,9 +137,8 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     } else apply { require(this in nodes.value) { "Invalid node reference '$this'" } }
   }
 
-  override fun toString(): String {
-    return graphs.joinToString("${System.lineSeparator()}${System.lineSeparator()}")
-  }
+  override fun toString(): String =
+      graphs.joinToString("${System.lineSeparator()}${System.lineSeparator()}")
 
   /**
    * A [Graph] is a [KList] of [nodes] that specify the expected entities in a *Neo4j* database.
@@ -303,16 +302,12 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
       data class List(val type: Type) : Type(Unit::class) {
 
-        override fun toString(): KString {
-          return "List<$type>"
-        }
+        override fun toString(): KString = "List<$type>"
       }
 
       data class LiteralString(val value: KString) : Type(KString::class) {
 
-        override fun toString(): KString {
-          return "\"$value\""
-        }
+        override fun toString(): KString = "\"$value\""
       }
 
       /** A [Nullable] [Type]. */
@@ -342,25 +337,19 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
         data class List(val type: Type) : Nullable(Unit::class) {
 
-          override fun toString(): KString {
-            return "List<$type>"
-          }
+          override fun toString(): KString = "List<$type>"
         }
 
         data class LiteralString(val value: KString) : Nullable(KString::class) {
 
-          override fun toString(): KString {
-            return "\"$value\""
-          }
+          override fun toString(): KString = "\"$value\""
         }
       }
 
       /** A [Type.Union] of [types]. */
       data class Union(val types: KList<Type>) : Type(Unit::class) {
 
-        override fun toString(): KString {
-          return types.joinToString(" | ")
-        }
+        override fun toString(): KString = types.joinToString(" | ")
       }
     }
   }
@@ -400,6 +389,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
   private companion object {
 
+    @Suppress("MaxLineLength")
     /**
      * [Map] of the [Query.Property.Type.Resolvable.name] of an invoked function to a synthetic
      * value.
@@ -515,9 +505,8 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     }
 
     /** Filter the properties in the [Query] with the [label]. */
-    fun Query.properties(label: KString): Collection<Query.Property> {
-      return properties.filter { label == it.owner }
-    }
+    fun Query.properties(label: KString): Collection<Query.Property> =
+        properties.filter { label == it.owner }
 
     /**
      * Filter the mutated properties in the [Query] with the [label], and use the resolved
@@ -531,36 +520,35 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
           .filter { label == it.owner }
           .mapNotNull { (_, parameter) -> parameter.resolve(parameters).takeUnless { it is Unit } }
           .flatMap { properties ->
-            when (properties) {
-              is Map<*, *> ->
-                  properties.mapNotNull properties@{ (name, value) ->
-                    Query.Property(
-                        label,
-                        checkNotNull(name as? KString) { "Unexpected parameter name" },
-                        setOf(
-                            when (value) {
-                              is KBoolean,
-                              is JDuration,
-                              is JLocalDate,
-                              is JLocalDateTime,
-                              is JLocalTime,
-                              is Number,
-                              is OffsetTime,
-                              is KString,
-                              is JZonedDateTime -> Query.Property.Type.Value(value)
-                              is KList<*> -> Query.Property.Type.Container(value)
-                              null -> return@properties null // ignore `n += {unknown: null}`
-                              else -> error("Unexpected parameter value")
-                            }))
-                  }
-              else -> emptyList()
-            }
+            if (properties is Map<*, *>)
+                properties.mapNotNull properties@{ (name, value) ->
+                  Query.Property(
+                      label,
+                      checkNotNull(name as? KString) { "Unexpected parameter name" },
+                      setOf(
+                          when (value) {
+                            is KBoolean,
+                            is JDuration,
+                            is JLocalDate,
+                            is JLocalDateTime,
+                            is JLocalTime,
+                            is Number,
+                            is OffsetTime,
+                            is KString,
+                            is JZonedDateTime -> Query.Property.Type.Value(value)
+
+                            is KList<*> -> Query.Property.Type.Container(value)
+                            null -> return@properties null // ignore `n += {unknown: null}`
+                            else -> error("Unexpected parameter value")
+                          }))
+                }
+            else emptyList()
           }
     }
 
     /** Find the [Property] that matches the [Query.Property]. */
-    fun KList<Property>.matches(property: Query.Property): Property? {
-      return find { property.name == it.name }
+    fun KList<Property>.matches(property: Query.Property): Property? = find {
+      property.name == it.name
     }
 
     /** Validate the [property] of the [entity] per the schema [Property] and [parameters]. */
@@ -600,13 +588,13 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
      * [resolvable] map.
      * > [Unit] is returned if `this` property isn't [resolvable].
      */
-    fun KString.resolve(resolvable: Map<KString, KAny?>): KAny? {
-      return split(".").foldRight<KString, KAny?>(resolvable) { name, parameter ->
-        if (parameter is Map<*, *> && name in parameter) parameter[name] else Unit
-      }
-    }
+    fun KString.resolve(resolvable: Map<KString, KAny?>): KAny? =
+        split(".").foldRight<KString, KAny?>(resolvable) { name, parameter ->
+          if (parameter is Map<*, *> && name in parameter) parameter[name] else Unit
+        }
 
     /** Determine if `this` [KList] of [property] value(s) is valid. */
+    @Suppress("CyclomaticComplexMethod")
     fun KList<KAny?>.isValid(property: Property): KBoolean {
       fun KList<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
       val isAny = property.type is Property.Type.Any || property.type is Property.Type.Nullable.Any
@@ -686,9 +674,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     private companion object {
 
       /** Get the name from the [RuleNode]. */
-      fun RuleNode?.get(): KString {
-        return checkNotNull(this?.text?.takeUnless { it.isBlank() })
-      }
+      fun RuleNode?.get(): KString = checkNotNull(this?.text?.takeUnless { it.isBlank() })
 
       /** Get the [Metadata] from the [SchemaParser.MetadataContext]. */
       tailrec fun SchemaParser.MetadataContext?.get(

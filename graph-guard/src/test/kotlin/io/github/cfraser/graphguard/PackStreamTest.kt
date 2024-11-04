@@ -653,12 +653,12 @@ class PackStreamTest : FunSpec() {
       return bytes
     }
 
-    private fun stringOfSize(size: Int, char: Char = 'a'): String {
-      return buildString { repeat(size) { _ -> append(char) } }
+    private fun stringOfSize(size: Int, char: Char = 'a'): String = buildString {
+      repeat(size) { _ -> append(char) }
     }
 
-    private fun listOfSize(size: Int, value: Long = 1): List<Long> {
-      return buildList { repeat(size) { _ -> this += value } }
+    private fun listOfSize(size: Int, value: Long = 1): List<Long> = buildList {
+      repeat(size) { _ -> this += value }
     }
 
     private fun <T> verify(expected: T, packer: PackStream.Packer.(T) -> PackStream.Packer) {

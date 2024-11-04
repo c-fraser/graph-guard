@@ -48,5 +48,6 @@ style:
     active: true
   UseIfInsteadOfWhen:
     active: true
+    ignoreWhenContainingVariableDeclaration: true
   UseLet:
     active: true

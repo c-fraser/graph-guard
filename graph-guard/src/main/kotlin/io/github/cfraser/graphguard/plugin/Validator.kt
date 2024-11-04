@@ -57,6 +57,7 @@ class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Lon
     }
   }
 
+  @Suppress("EmptyFunctionBlock")
   override suspend fun observe(event: Server.Event) {}
 
   private companion object {

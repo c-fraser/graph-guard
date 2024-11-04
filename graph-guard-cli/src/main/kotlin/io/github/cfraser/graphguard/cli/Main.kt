@@ -188,9 +188,8 @@ internal class Command : CliktCommand(name = "graph-guard") {
     private val terminal by lazy { Terminal().apply(Terminal::updateSize) }
 
     /** Get the [Logger] with the [name] or throw an [IllegalStateException]. */
-    fun logger(name: String): Logger {
-      return checkNotNull(LoggerFactory.getLogger(name) as? Logger) { "Failed to get root logger" }
-    }
+    fun logger(name: String): Logger =
+        checkNotNull(LoggerFactory.getLogger(name) as? Logger) { "Failed to get root logger" }
 
     /** Print the styled ASCII text banner. */
     fun printBanner() {
@@ -210,8 +209,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
     }
 
     /** Style `this` [String]. */
-    private fun String.styled(style: TextStyle, vararg styles: TextStyle): String {
-      return styles.fold(style, TextStyle::plus)(this)
-    }
+    private fun String.styled(style: TextStyle, vararg styles: TextStyle): String =
+        styles.fold(style, TextStyle::plus)(this)
   }
 }

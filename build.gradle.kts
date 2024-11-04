@@ -42,7 +42,7 @@ plugins {
   alias(libs.plugins.kotlin.jvm) apply false
   alias(libs.plugins.dokka)
   alias(libs.plugins.spotless)
-  alias(libs.plugins.detekt)
+  alias(libs.plugins.detekt) apply false
   alias(libs.plugins.nexus.publish)
   alias(libs.plugins.jreleaser)
   alias(libs.plugins.dependency.versions)
@@ -62,16 +62,27 @@ allprojects {
 subprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
   apply(plugin = "org.jetbrains.dokka")
+  apply(plugin = "io.gitlab.arturbosch.detekt")
 
   configure<JavaPluginExtension> {
     toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
     withSourcesJar()
   }
 
-  tasks.withType<Jar> {
-    manifest {
-      val module = this@project.name.replaceFirst("-", "").replace("-", ".")
-      attributes("Automatic-Module-Name" to "io.github.cfraser.$module")
+  tasks {
+    withType<Jar> {
+      manifest {
+        val module = this@project.name.replaceFirst("-", "").replace("-", ".")
+        attributes("Automatic-Module-Name" to "io.github.cfraser.$module")
+      }
+
+      withType<Detekt> {
+        mustRunAfter(withType<AntlrTask>(), withType<SpotlessTask>())
+        parallel = true
+        buildUponDefaultConfig = true
+        allRules = true
+        config.setFrom(rootDir.resolve("detekt.yml"))
+      }
     }
   }
 
@@ -404,16 +415,6 @@ tasks {
   val spotlessJava by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessJava) }
   val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
-
-  val detektAll by creating(Detekt::class) { source = kotlinSourceFiles }
-
-  withType<Detekt> {
-    mustRunAfter(withType<SpotlessTask>())
-    parallel = true
-    buildUponDefaultConfig = true
-    allRules = true
-    config.setFrom(rootDir.resolve("detekt.yml"))
-  }
 
   val releaseCli by creating {
     dependsOn(":graph-guard-cli:shadowDistTar", ":graph-guard-cli:shadowDistZip")

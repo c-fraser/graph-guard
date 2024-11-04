@@ -132,11 +132,10 @@ constructor(
                           graphWriter)
                     }
                   }
+                } catch (cancellation: CancellationException) {
+                  LOGGER.debug("Proxy connection closed", cancellation)
                 } catch (thrown: Throwable) {
-                  when (thrown) {
-                    is CancellationException -> LOGGER.debug("Proxy connection closed", thrown)
-                    else -> LOGGER.error("Proxy connection failure", thrown)
-                  }
+                  LOGGER.error("Proxy connection failure", thrown)
                 }
               }
             }
@@ -214,7 +213,7 @@ constructor(
   }
 
   /** Proxy a [Bolt.Session] between the *client* and *graph*. */
-  @Suppress("TooGenericExceptionCaught")
+  @Suppress("LongParameterList", "TooGenericExceptionCaught")
   private suspend fun proxy(
       session: Bolt.Session,
       clientConnection: Connection,
@@ -223,7 +222,7 @@ constructor(
       graphConnection: Connection,
       graphReader: ByteReadChannel,
       graphWriter: ByteWriteChannel
-  ): Unit = coroutineScope {
+  ) = coroutineScope {
     val handshake = clientReader.verifyHandshake()
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
     graphWriter.writeFully(handshake)
@@ -247,11 +246,10 @@ constructor(
         incoming.onJoin { outgoing.cancel() }
         outgoing.onJoin { incoming.cancel() }
       }
+    } catch (cancellation: CancellationException) {
+      LOGGER.debug("Proxy session closed", cancellation)
     } catch (thrown: Throwable) {
-      when (thrown) {
-        is CancellationException -> LOGGER.debug("Proxy session closed", thrown)
-        else -> LOGGER.error("Proxy session failure", thrown)
-      }
+      LOGGER.error("Proxy session failure", thrown)
     }
   }
 
@@ -369,9 +367,7 @@ constructor(
       final override suspend fun intercept(
           session: Bolt.Session,
           message: Bolt.Message,
-      ): Bolt.Message {
-        return interceptAsync(session.id, message).await()
-      }
+      ): Bolt.Message = interceptAsync(session.id, message).await()
 
       /** [observeAsync] then [await] for the [CompletableFuture] to complete. */
       final override suspend fun observe(event: Event) {
@@ -395,9 +391,7 @@ constructor(
        * @param builder the function that builds the [Server.Plugin]
        * @return the built [Server.Plugin]
        */
-      fun plugin(builder: Builder.() -> Unit): Plugin {
-        return Builder().apply(builder).build()
-      }
+      fun plugin(builder: Builder.() -> Unit): Plugin = Builder().apply(builder).build()
     }
 
     /**
@@ -532,9 +526,8 @@ constructor(
     }
 
     /** Convert the [KSocketAddress] to an [InetSocketAddress]. */
-    private fun KSocketAddress.toInetSocketAddress(): InetSocketAddress {
-      return checkNotNull(toJavaAddress() as? InetSocketAddress) { "Unexpected address '$this'" }
-    }
+    private fun KSocketAddress.toInetSocketAddress(): InetSocketAddress =
+        checkNotNull(toJavaAddress() as? InetSocketAddress) { "Unexpected address '$this'" }
 
     /** Use the opened [ByteReadChannel] and [ByteWriteChannel] for the [Socket]. */
     private suspend fun Socket.withChannels(
@@ -575,9 +568,7 @@ constructor(
     /**
      * Read the [version](https://neo4j.com/docs/bolt/current/bolt/handshake/#_version_negotiation).
      */
-    private suspend fun ByteReadChannel.readVersion(): Bolt.Version {
-      return Bolt.Version(readInt())
-    }
+    private suspend fun ByteReadChannel.readVersion(): Bolt.Version = Bolt.Version(readInt())
 
     /** Read a [Bolt.Message] from the [ByteReadChannel]. */
     private suspend fun ByteReadChannel.readMessage(

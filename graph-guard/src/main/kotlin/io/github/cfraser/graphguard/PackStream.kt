@@ -236,9 +236,7 @@ internal object PackStream {
   /** A [Structure](https://neo4j.com/docs/bolt/current/packstream/#data-type-structure). */
   data class Structure(val id: Byte, val fields: List<Any?>) {
 
-    override fun toString(): String {
-      return "${id.toHex()}: [${fields.joinToString()}]"
-    }
+    override fun toString(): String = "${id.toHex()}: [${fields.joinToString()}]"
   }
 
   /**
@@ -512,21 +510,19 @@ internal object PackStream {
 
     /** Unpack [Null](https://neo4j.com/docs/bolt/current/packstream/#data-type-null). */
     @Suppress("FunctionNaming")
-    fun `null`(): Any? {
-      return when (val marker = buffer.get()) {
-        NULL -> null
-        else -> marker.unexpected()
-      }
-    }
+    fun `null`(): Any? =
+        when (val marker = buffer.get()) {
+          NULL -> null
+          else -> marker.unexpected()
+        }
 
     /** Unpack a [Boolean](https://neo4j.com/docs/bolt/current/packstream/#data-type-boolean). */
-    fun boolean(): Boolean {
-      return when (val marker = buffer.get()) {
-        TRUE -> true
-        FALSE -> false
-        else -> marker.unexpected()
-      }
-    }
+    fun boolean(): Boolean =
+        when (val marker = buffer.get()) {
+          TRUE -> true
+          FALSE -> false
+          else -> marker.unexpected()
+        }
 
     /** Unpack an [Integer](https://neo4j.com/docs/bolt/current/packstream/#data-type-integer). */
     fun integer(): Long {
@@ -542,12 +538,11 @@ internal object PackStream {
     }
 
     /** Unpack a [Float](https://neo4j.com/docs/bolt/current/packstream/#data-type-float). */
-    fun float(): Double {
-      return when (val marker = buffer.get()) {
-        FLOAT_64 -> buffer.getDouble()
-        else -> marker.unexpected()
-      }
-    }
+    fun float(): Double =
+        when (val marker = buffer.get()) {
+          FLOAT_64 -> buffer.getDouble()
+          else -> marker.unexpected()
+        }
 
     /** Unpack [Bytes](https://neo4j.com/docs/bolt/current/packstream/#data-type-bytes). */
     fun bytes(): ByteArray {
@@ -733,14 +728,10 @@ internal object PackStream {
     private companion object {
 
       /** Get an unsigned 8-bit [Int] from the [ByteBuffer]. */
-      fun ByteBuffer.getUInt8(): Int {
-        return get().toUByte().toInt()
-      }
+      fun ByteBuffer.getUInt8(): Int = get().toUByte().toInt()
 
       /** Get an unsigned 16-bit [Int] from the [ByteBuffer]. */
-      fun ByteBuffer.getUInt16(): Int {
-        return getShort().toUShort().toInt()
-      }
+      fun ByteBuffer.getUInt16(): Int = getShort().toUShort().toInt()
 
       /**
        * Get an unsigned 32-bit [Int] from the [ByteBuffer].
@@ -762,19 +753,13 @@ internal object PackStream {
       }
 
       /** Throw an [IllegalStateException] because the marker [Byte] is unexpected. */
-      fun Byte.unexpected(): Nothing {
-        error("Unexpected marker '${toHex()}'")
-      }
+      fun Byte.unexpected(): Nothing = error("Unexpected marker '${toHex()}'")
     }
   }
 
   /** Copy the *used* bytes from the [ByteBuffer] to a [ByteArray]. */
-  private fun ByteBuffer.copyBytes(): ByteArray {
-    return array().sliceArray(0 until position())
-  }
+  private fun ByteBuffer.copyBytes(): ByteArray = array().sliceArray(0 until position())
 
   /** Convert the [Byte] to an unsigned *base16* [String]. */
-  private fun Byte.toHex(): String {
-    return "0x${Integer.toHexString(toInt() and 0xff)}"
-  }
+  private fun Byte.toHex(): String = "0x${Integer.toHexString(toInt() and 0xff)}"
 }

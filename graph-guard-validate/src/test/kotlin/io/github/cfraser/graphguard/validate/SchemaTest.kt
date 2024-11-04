@@ -122,7 +122,7 @@ class SchemaTest : FunSpec() {
           "MATCH (theater:Theater)-[:SHOWING]->(movie:Movie) RETURN theater, movie" with
               emptyMap() expect
               null,
-          "MATCH (person:Person {name: 'Keanu Reeves'}) SET person.name = 'Keanu Charles Reeves', person.born = '09/02/1964' RETURN person" with
+          @Suppress("MaxLineLength") "MATCH (person:Person {name: 'Keanu Reeves'}) SET person.name = 'Keanu Charles Reeves', person.born = '09/02/1964' RETURN person" with
               emptyMap() expect
               Schema.Violation.InvalidProperty(PERSON, BORN, listOf("09/02/1964")),
           MoviesGraph.CREATE_MATRIX_SHOWING with emptyMap() expect null,

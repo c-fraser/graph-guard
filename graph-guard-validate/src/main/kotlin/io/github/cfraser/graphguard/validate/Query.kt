@@ -174,37 +174,32 @@ internal data class Query(
     private val RENDERED_DSL = Regex("\\w+\\{cypher=(.+)}")
 
     /** Extract the rendered *Cypher* from the [Visitable] to circumvent inaccessible data. */
-    private fun Visitable.cypher(): String? {
-      return RENDERED_DSL.find("$this")?.groups?.get(1)?.value
-    }
+    private fun Visitable.cypher(): String? = RENDERED_DSL.find("$this")?.groups?.get(1)?.value
 
     /** Get the labels of the nodes in the *Cypher* [Statement].. */
     private val Statement.nodes: Set<String>
-      get() {
-        return catalog.nodeLabels.map(StatementCatalog.Token::value).toSet()
-      }
+      get() = catalog.nodeLabels.map(StatementCatalog.Token::value).toSet()
 
     /** Get the [Relationship]s in the *Cypher* [Statement]. */
     private val Statement.relationships: Set<Relationship>
-      get() {
-        return catalog.relationshipTypes
-            .flatMap { type ->
-              fun Collection<StatementCatalog.Token>?.orEmptyToken():
-                  Collection<StatementCatalog.Token> =
-                  takeUnless { it.isNullOrEmpty() } ?: listOf(StatementCatalog.Token.label(""))
-              val sources = catalog.getSourceNodes(type).orEmptyToken()
-              val targets = catalog.getTargetNodes(type).orEmptyToken()
-              sources
-                  .flatMap { source -> targets.map { target -> source to target } }
-                  .map { (source, target) ->
-                    Relationship(
-                        type.value,
-                        source.value.takeIf { type in catalog.getOutgoingRelations(source) },
-                        target.value.takeIf { type in catalog.getIncomingRelations(target) })
-                  }
-            }
-            .toSet()
-      }
+      get() =
+          catalog.relationshipTypes
+              .flatMap { type ->
+                fun Collection<StatementCatalog.Token>?.orEmptyToken():
+                    Collection<StatementCatalog.Token> =
+                    takeUnless { it.isNullOrEmpty() } ?: listOf(StatementCatalog.Token.label(""))
+                val sources = catalog.getSourceNodes(type).orEmptyToken()
+                val targets = catalog.getTargetNodes(type).orEmptyToken()
+                sources
+                    .flatMap { source -> targets.map { target -> source to target } }
+                    .map { (source, target) ->
+                      Relationship(
+                          type.value,
+                          source.value.takeIf { type in catalog.getOutgoingRelations(source) },
+                          target.value.takeIf { type in catalog.getIncomingRelations(target) })
+                    }
+              }
+              .toSet()
 
     /** Get the node/relationship properties in the *Cypher* [Statement]. */
     private val Statement.properties: Set<Property>
@@ -308,9 +303,10 @@ internal data class Query(
     }
 
     /** Convert each [StatementCatalog.PropertyFilter] to a [Property.Type]. */
-    private fun Collection<StatementCatalog.PropertyFilter>.mapPropertyType(): List<Property.Type> {
-      return mapNotNull { filter -> filter.right?.toPropertyType() }
-    }
+    private fun Collection<StatementCatalog.PropertyFilter>.mapPropertyType(): List<Property.Type> =
+        mapNotNull { filter ->
+          filter.right?.toPropertyType()
+        }
 
     /** Convert the [Expression] to a [Property.Type]. */
     private fun Expression.toPropertyType(): Property.Type? {
