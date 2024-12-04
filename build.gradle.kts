@@ -20,6 +20,7 @@ import io.github.gradlenexus.publishplugin.NexusPublishExtension
 import io.gitlab.arturbosch.detekt.Detekt
 import kotlinx.knit.KnitPluginExtension
 import kotlinx.validation.KotlinApiBuildTask
+import org.gradle.internal.extensions.stdlib.capitalized
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
@@ -27,7 +28,6 @@ import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jreleaser.gradle.plugin.JReleaserExtension
 import org.jreleaser.gradle.plugin.tasks.JReleaserFullReleaseTask
 import org.jreleaser.model.Active
@@ -286,7 +286,7 @@ configure<JReleaserExtension> {
             title.set(status)
           }
           category {
-            title.set(status.capitalizeAsciiOnly())
+            title.set(status.capitalized())
             labels.set(listOf(status))
           }
         }
