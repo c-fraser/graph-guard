@@ -54,7 +54,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.22.2"
+  version = "0.22.3"
 
   repositories { mavenCentral() }
 }
@@ -334,7 +334,7 @@ tasks {
     onlyIf { !css.exists() && !js.exists() }
     doLast {
       arrayOf(css, js).forEach { file ->
-        exec {
+        providers.exec {
           commandLine(
               "curl",
               "-L",

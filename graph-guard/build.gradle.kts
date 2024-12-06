@@ -13,8 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
   `java-library`
   `java-test-fixtures`
@@ -41,8 +39,4 @@ dependencies {
   testFixturesApi(libs.neo4j.java.driver)
   testFixturesCompileOnly(libs.neo4j.test.harness)
   testFixturesImplementation(libs.kotest.runner)
-}
-
-tasks {
-  withType<KotlinCompile> { compilerOptions { freeCompilerArgs.add("-Xcontext-receivers") } }
 }

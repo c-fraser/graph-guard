@@ -58,10 +58,7 @@ tasks {
     outputDirectory = file("src/main/java/io/github/cfraser/graphguard/validate")
   }
 
-  withType<KotlinCompile> {
-    dependsOn(withType<AntlrTask>())
-    compilerOptions { freeCompilerArgs.addAll("-Xcontext-receivers") }
-  }
+  withType<KotlinCompile> { dependsOn(withType<AntlrTask>()) }
 
   withType<Jar> { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
   named("sourcesJar") { dependsOn(withType<AntlrTask>()) }

@@ -20,10 +20,8 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -33,15 +31,12 @@ import io.ktor.util.network.hostname
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.core.use
-import io.ktor.utils.io.writeFully
-import java.net.InetSocketAddress
-import java.net.URI
-import java.nio.ByteBuffer
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import javax.net.ssl.TrustManager
-import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration
+import io.ktor.utils.io.readByteArray
+import io.ktor.utils.io.readInt
+import io.ktor.utils.io.readShort
+import io.ktor.utils.io.writeByteArray
+import io.ktor.utils.io.writeInt
+import io.ktor.utils.io.writeShort
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +55,16 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.ByteBuffer
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import javax.net.ssl.TrustManager
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -225,7 +230,7 @@ constructor(
   ) = coroutineScope {
     val handshake = clientReader.verifyHandshake()
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
-    graphWriter.writeFully(handshake)
+    graphWriter.writeByteArray(handshake)
     LOGGER.debug("Wrote handshake to {}", graphConnection)
     val version = graphReader.readVersion()
     LOGGER.debug("Read version from {} '{}'", graphConnection, version)
@@ -560,8 +565,7 @@ constructor(
         }
         error("None of the versions '$versions' are supported")
       }
-      val bytes = ByteArray(Int.SIZE_BYTES * 5)
-      readFully(bytes, 0, bytes.size)
+      val bytes = readByteArray(Int.SIZE_BYTES * 5)
       return bytes.also(::verify)
     }
 
@@ -593,9 +597,7 @@ constructor(
             // Received all chunks, return the bytes
             break
           }
-          val offset = bytes.lastIndex + 1
-          bytes += ByteArray(size)
-          readFully(bytes, offset, size)
+          bytes += readByteArray(size)
         }
       }
       return bytes
@@ -623,8 +625,8 @@ constructor(
           .map { bytes -> bytes.toByteArray() }
           .forEach { chunk ->
             writeShort(chunk.size.toShort())
-            writeFully(chunk)
-            writeFully(byteArrayOf(0x0, 0x0))
+            writeByteArray(chunk)
+            writeByteArray(byteArrayOf(0x0, 0x0))
           }
     }
   }
