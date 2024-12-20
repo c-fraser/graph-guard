@@ -40,7 +40,7 @@ fun interface Rule {
   }
 
   /**
-   * An [Violation] describes why a *Cypher* query violates a [Rule].
+   * A [Violation] describes why a *Cypher* query violates a [Rule].
    *
    * @property message the description of the [Rule] violation
    */
