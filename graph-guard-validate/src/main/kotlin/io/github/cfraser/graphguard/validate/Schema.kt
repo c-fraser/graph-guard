@@ -101,11 +101,10 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       val schemaNode = nodes.value[queryNode] ?: return Violation.Unknown(entity).violation
       for (queryProperty in
           query.properties(queryNode) + query.mutatedProperties(queryNode, parameters)) {
-        val schemaProperty = schemaNode.properties.matches(queryProperty)
-        if (schemaProperty == null) {
-          if (queryProperty.isRemoved(query.removedProperties)) continue
-          return Violation.UnknownProperty(entity, queryProperty.name).violation
-        }
+        val schemaProperty =
+            schemaNode.properties.matches(queryProperty)
+                ?: if (queryProperty.isRemoved(query.removedProperties)) continue
+                else return Violation.UnknownProperty(entity, queryProperty.name).violation
         return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
       }
     }
@@ -117,11 +116,10 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
           relationships.value[Relationship.Id(label, source, target)]
               ?: return Violation.Unknown(entity).violation
       for (queryProperty in query.properties(label) + query.mutatedProperties(label, parameters)) {
-        val schemaProperty = schemaRelationship.properties.matches(queryProperty)
-        if (schemaProperty == null) {
-          if (queryProperty.isRemoved(query.removedProperties)) continue
-          return Violation.UnknownProperty(entity, queryProperty.name).violation
-        }
+        val schemaProperty =
+            schemaRelationship.properties.matches(queryProperty)
+                ?: if (queryProperty.isRemoved(query.removedProperties)) continue
+                else return Violation.UnknownProperty(entity, queryProperty.name).violation
         return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
       }
     }
