@@ -49,86 +49,86 @@ class QueryTest : FunSpec() {
                           ACTED_IN_ROLES with listOf(String::class),
                           REVIEWED_SUMMARY with String::class,
                           REVIEWED_RATING with Long::class),
-                      emptySet(),
+                      emptySet(), emptySet(),
                       emptyMap())),
           MoviesGraph.MATCH_TOM_HANKS expect
               Query(
                   setOf(PERSON),
                   emptySet(),
                   setOf(PERSON_NAME with "Tom Hanks"),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_CLOUD_ATLAS expect
               Query(
                   setOf(MOVIE),
                   emptySet(),
                   setOf(MOVIE_TITLE with "Cloud Atlas"),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_10_PEOPLE expect
-              Query(setOf(PERSON), emptySet(), setOf(PERSON_NAME), emptySet(), emptyMap()),
+              Query(setOf(PERSON), emptySet(), setOf(PERSON_NAME), emptySet(),  emptySet(),emptyMap()),
           MoviesGraph.MATCH_NINETIES_MOVIES expect
               Query(
                   setOf(MOVIE),
                   emptySet(),
                   setOf(MOVIE_TITLE, MOVIE_RELEASED with setOf(1990L, 2000L)),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_TOM_HANKS_MOVIES expect
               Query(
                   setOf(PERSON, MOVIE),
                   setOf(ACTED_IN),
                   setOf(PERSON_NAME with "Tom Hanks"),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_CLOUD_ATLAS_DIRECTOR expect
               Query(
                   setOf(MOVIE, PERSON),
                   setOf(DIRECTED),
                   setOf(MOVIE_TITLE with "Cloud Atlas", PERSON_NAME),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_TOM_HANKS_CO_ACTORS expect
               Query(
                   setOf(PERSON, MOVIE),
                   setOf(ACTED_IN),
                   setOf(PERSON_NAME with "Tom Hanks"),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE expect
               Query(
                   setOf(PERSON, MOVIE),
                   emptySet(),
                   setOf(PERSON_NAME, MOVIE_TITLE with "Cloud Atlas", ROLES),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON expect
               Query(
                   setOf(PERSON),
                   emptySet(),
                   setOf(PERSON_NAME with "Kevin Bacon"),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO expect
               Query(
                   setOf(PERSON),
                   emptySet(),
                   setOf(PERSON_NAME with setOf("Kevin Bacon", "name")),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS expect
               Query(
                   setOf(PERSON),
                   setOf(PERSON_ACTED_IN),
                   setOf(PERSON_NAME with "Tom Hanks", NAME),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND expect
               Query(
                   setOf(PERSON),
                   setOf(PERSON_ACTED_IN),
                   setOf(PERSON_NAME with setOf("Tom Hanks", "name")),
-                  emptySet(),
+                  emptySet(), emptySet(),
                   emptyMap()),
           MoviesGraph.MERGE_KEANU expect
               Query(
@@ -140,7 +140,7 @@ class QueryTest : FunSpec() {
                       MOVIE_TITLE with "The Matrix",
                       MOVIE_RELEASED with 1999L,
                       MOVIE_TAGLINE with "Welcome to the Real World"),
-                  setOf(Query.MutatedProperty("Person", "properties")),
+                  setOf(Query.MutatedProperty("Person", "properties")), emptySet(),
                   emptyMap())) { (cypher, query, expectTypes) ->
             val parsed = (Query.parse(cypher) shouldNotBe null)!!
             parsed.nodes shouldContainExactlyInAnyOrder query.nodes

@@ -32,6 +32,7 @@ import org.neo4j.cypherdsl.core.Operator
 import org.neo4j.cypherdsl.core.Parameter
 import org.neo4j.cypherdsl.core.PatternElement
 import org.neo4j.cypherdsl.core.Property as CypherProperty
+import org.neo4j.cypherdsl.core.PropertyLookup
 import org.neo4j.cypherdsl.core.RelationshipBase
 import org.neo4j.cypherdsl.core.Set as CypherSet
 import org.neo4j.cypherdsl.core.Statement
@@ -50,6 +51,7 @@ import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
  * @property relationships the relationships in the [Query]
  * @property properties the properties in the [Query]
  * @property mutatedProperties the mutated properties in the [Query]
+ * @property removedProperties the removed properties in the [Query]
  * @property entities a map of symbolic name to entity labels
  */
 internal data class Query(
@@ -57,6 +59,7 @@ internal data class Query(
     val relationships: Set<Relationship>,
     val properties: Set<Property>,
     val mutatedProperties: Set<MutatedProperty>,
+    val removedProperties: Set<RemovedProperty>,
     val entities: Map<String, Set<String>>
 ) {
 
@@ -80,8 +83,32 @@ internal data class Query(
     }
   }
 
+  /** An [Owned] entity/operation/expression has an [owner]. */
+  sealed interface Owned<T> {
+
+    /** The [owner] of the entity/operation/expression. */
+    val owner: String
+
+    /** Assign the [owner] to [T]. */
+    fun assign(owner: String): T
+  }
+
   /** A [MutatedProperty] of the [owner] with the [properties]. */
-  data class MutatedProperty(val owner: String, val properties: String)
+  data class MutatedProperty(override val owner: String, val properties: String) :
+      Owned<MutatedProperty> {
+
+    override fun assign(owner: String): MutatedProperty = copy(owner = owner)
+  }
+
+  /**
+   * A [property] [REMOVE](https://neo4j.com/docs/cypher-manual/5/clauses/remove/)d from the
+   * [owner].
+   */
+  data class RemovedProperty(override val owner: String, val property: String) :
+      Owned<RemovedProperty> {
+
+    override fun assign(owner: String): RemovedProperty = copy(owner = owner)
+  }
 
   companion object {
 
@@ -89,6 +116,7 @@ internal data class Query(
     fun parse(cypher: String): Query? {
       val entities = mutableMapOf<String, Set<String>>()
       val mutatedProperties = mutableSetOf<MutatedProperty>()
+      val removedProperties = mutableSetOf<RemovedProperty>()
       val options =
           Options.newOptions()
               .withCallback(PatternElementCreatedEventType.ON_MATCH) { entities.collect(it) }
@@ -98,6 +126,9 @@ internal data class Query(
                   ExpressionCreatedEventType.ON_ADD_AND_SET_VARIABLE, Operation::class.java) {
                     mutatedProperties.collect(it)
                   }
+              .withCallback(ExpressionCreatedEventType.ON_REMOVE_PROPERTY, Expression::class.java) {
+                removedProperties.collect(it)
+              }
               .build()
       return try {
         val statement = CypherParser.parse(cypher, options)
@@ -105,13 +136,8 @@ internal data class Query(
             statement.nodes,
             statement.relationships,
             statement.properties,
-            mutatedProperties
-                .mapNotNull { mutatedProperty ->
-                  entities[mutatedProperty.owner]?.firstOrNull()?.let { label ->
-                    mutatedProperty.copy(owner = label)
-                  }
-                }
-                .toSet(),
+            mutatedProperties.mapToLabel(entities),
+            removedProperties.mapToLabel(entities),
             entities)
       } catch (_: Throwable) {
         null
@@ -169,6 +195,31 @@ internal data class Query(
       } catch (_: IllegalStateException) {}
       return operation
     }
+
+    /** Collect the [RemovedProperty] from the [expression]. */
+    private fun MutableSet<RemovedProperty>.collect(expression: Expression): Expression {
+      var symbolicName: SymbolicName? = null
+      var propertyLookup: PropertyLookup? = null
+      expression.accept { visitable ->
+        when {
+          symbolicName == null && visitable is SymbolicName -> symbolicName = visitable
+          propertyLookup == null && visitable is PropertyLookup -> propertyLookup = visitable
+        }
+      }
+      try {
+        this +=
+            RemovedProperty(
+                checkNotNull(symbolicName?.cypher()),
+                checkNotNull(propertyLookup?.cypher()?.removePrefix(".")))
+      } catch (_: IllegalStateException) {}
+      return expression
+    }
+
+    /** Map the [Owned] symbolic name to a label from the collected [entities]. */
+    private fun <T, O : Owned<T>> MutableSet<O>.mapToLabel(
+        entities: Map<String, Set<String>>
+    ): Set<T> =
+        mapNotNull { owned -> entities[owned.owner]?.firstOrNull()?.let(owned::assign) }.toSet()
 
     /** A [Regex] to capture the *Cypher* of a rendered [org.neo4j.cypherdsl.core] type. */
     private val RENDERED_DSL = Regex("\\w+\\{cypher=(.+)}")

@@ -93,7 +93,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       }
     }
 
-  @Suppress("CyclomaticComplexMethod", "ReturnCount")
+  @Suppress("CyclomaticComplexMethod", "ReturnCount", "DuplicatedCode")
   override fun validate(cypher: KString, parameters: Map<KString, KAny?>): Rule.Violation? {
     val query = Query.parse(cypher) ?: return null
     for (queryNode in query.nodes) {
@@ -101,9 +101,11 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       val schemaNode = nodes.value[queryNode] ?: return Violation.Unknown(entity).violation
       for (queryProperty in
           query.properties(queryNode) + query.mutatedProperties(queryNode, parameters)) {
-        val schemaProperty =
-            schemaNode.properties.matches(queryProperty)
-                ?: return Violation.UnknownProperty(entity, queryProperty.name).violation
+        val schemaProperty = schemaNode.properties.matches(queryProperty)
+        if (schemaProperty == null) {
+          if (queryProperty.isRemoved(query.removedProperties)) continue
+          return Violation.UnknownProperty(entity, queryProperty.name).violation
+        }
         return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
       }
     }
@@ -115,9 +117,11 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
           relationships.value[Relationship.Id(label, source, target)]
               ?: return Violation.Unknown(entity).violation
       for (queryProperty in query.properties(label) + query.mutatedProperties(label, parameters)) {
-        val schemaProperty =
-            schemaRelationship.properties.matches(queryProperty)
-                ?: return Violation.UnknownProperty(entity, queryProperty.name).violation
+        val schemaProperty = schemaRelationship.properties.matches(queryProperty)
+        if (schemaProperty == null) {
+          if (queryProperty.isRemoved(query.removedProperties)) continue
+          return Violation.UnknownProperty(entity, queryProperty.name).violation
+        }
         return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
       }
     }
@@ -536,7 +540,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
                             is OffsetTime,
                             is KString,
                             is JZonedDateTime -> Query.Property.Type.Value(value)
-
                             is KList<*> -> Query.Property.Type.Container(value)
                             null -> return@properties null // ignore `n += {unknown: null}`
                             else -> error("Unexpected parameter value")
@@ -550,6 +553,12 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     fun KList<Property>.matches(property: Query.Property): Property? = find {
       property.name == it.name
     }
+
+    /** Check if the [Query.Property] is within the [removedProperties]. */
+    fun Query.Property.isRemoved(removedProperties: Set<Query.RemovedProperty>): KBoolean =
+        removedProperties.find { removedProperty ->
+          owner == removedProperty.owner && name == removedProperty.property
+        } != null
 
     /** Validate the [property] of the [entity] per the schema [Property] and [parameters]. */
     fun Property.validate(

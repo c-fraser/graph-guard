@@ -122,7 +122,8 @@ class SchemaTest : FunSpec() {
           "MATCH (theater:Theater)-[:SHOWING]->(movie:Movie) RETURN theater, movie" with
               emptyMap() expect
               null,
-          @Suppress("MaxLineLength") "MATCH (person:Person {name: 'Keanu Reeves'}) SET person.name = 'Keanu Charles Reeves', person.born = '09/02/1964' RETURN person" with
+          @Suppress("MaxLineLength")
+          "MATCH (person:Person {name: 'Keanu Reeves'}) SET person.name = 'Keanu Charles Reeves', person.born = '09/02/1964' RETURN person" with
               emptyMap() expect
               Schema.Violation.InvalidProperty(PERSON, BORN, listOf("09/02/1964")),
           MoviesGraph.CREATE_MATRIX_SHOWING with emptyMap() expect null,
@@ -138,6 +139,32 @@ class SchemaTest : FunSpec() {
             ->
             MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
           }
+    }
+
+    context("removal of unknown properties") {
+      withData(
+          "MATCH (person:Person) REMOVE person.ssn" with emptyMap() expect null,
+          "CREATE (person:Person) SET person += \$keanu" with
+              mapOf(
+                  "keanu" to
+                      mapOf(
+                          "name" to "Keanu Reeves", "born" to 1964L, "ssn" to "123-45-6789")) expect
+              Schema.Violation.UnknownProperty(PERSON, "ssn"),
+          "CREATE (person:Person) SET person += \$person REMOVE person.ssn" with
+              mapOf(
+                  "person" to
+                      mapOf(
+                          "name" to "Keanu Reeves", "born" to 1964L, "ssn" to "123-45-6789")) expect
+              null,
+          "MATCH (:Theater)-[showing:SHOWING]->(:Movie) REMOVE showing.price" with
+              emptyMap() expect
+              null,
+          "MATCH (:Theater)-[showing:SHOWING]->(:Movie) RETURN showing.price AS price" with
+              emptyMap() expect
+              Schema.Violation.UnknownProperty(SHOWING, "price"),
+      ) { (query, parameters, expected) ->
+        MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
+      }
     }
 
     context("validate union types") {
