@@ -328,7 +328,7 @@ tasks {
     }
   }
 
-  val setupAsciinemaPlayer by creating {
+  val setupAsciinemaPlayer by registering {
     val css = file("docs/cli/asciinema-player.css")
     val js = file("docs/cli/asciinema-player.min.js")
     onlyIf { !css.exists() && !js.exists() }
@@ -375,7 +375,7 @@ tasks {
 
   val dokkaHtmlMultiModule by getting(DokkaMultiModuleTask::class)
 
-  val setupDocs by creating {
+  val setupDocs by registering {
     dependsOn(setupAsciinemaPlayer, dokkaHtmlMultiModule)
     doLast {
       copy {
@@ -416,7 +416,7 @@ tasks {
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessJava) }
   val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
 
-  val releaseCli by creating {
+  val releaseCli by registering {
     dependsOn(":graph-guard-cli:shadowDistTar", ":graph-guard-cli:shadowDistZip")
     doLast {
       arrayOf(cliTar, cliZip).forEach { dist ->
