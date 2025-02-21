@@ -4,13 +4,13 @@ kotest = "5.9.1"
 kotlin = "2.0.21"
 kotlinx-coroutines = "1.10.1"
 ktfmt = "0.53"
-ktor = "3.0.3"
+ktor = "3.1.0"
 slf4j = "2.0.16"
 
 [libraries]
 antlr4 = { module = "org.antlr:antlr4", version = "4.13.2" }
-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.1.8" }
-clikt = { module = "com.github.ajalt.clikt:clikt-jvm", version = "5.0.2" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.0" }
+clikt = { module = "com.github.ajalt.clikt:clikt-jvm", version = "5.0.3" }
 jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "2.18.2" }
 knit = { module = "org.jetbrains.kotlinx:kotlinx-knit", version.ref = "knit" }
 knit-test = { module = "org.jetbrains.kotlinx:kotlinx-knit-test", version.ref = "knit" }
@@ -24,9 +24,9 @@ ktor-network-tls = { module = "io.ktor:ktor-network-tls", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.16" }
 logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "8.0" }
 mordant = { module = "com.github.ajalt.mordant:mordant-jvm", version = "2.2.0" }
-neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2024.4.0" }
-neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "5.27.0" }
-neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "5.25.1" }
+neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2024.4.1" }
+neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "5.28.1" }
+neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "5.26.2" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
@@ -34,12 +34,12 @@ slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.5.1" }
 compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.17.0" }
-dependency-versions = { id = "com.github.ben-manes.versions", version = "0.51.0" }
+dependency-versions = { id = "com.github.ben-manes.versions", version = "0.52.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.7" }
 dokka = { id = "org.jetbrains.dokka", version = "1.9.20" }
-jreleaser = { id = "org.jreleaser", version = "1.15.0" }
+jreleaser = { id = "org.jreleaser", version = "1.16.0" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version = "0.9.1" }
 nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
-spotless = { id = "com.diffplug.spotless", version = "7.0.1" }
+spotless = { id = "com.diffplug.spotless", version = "7.0.2" }

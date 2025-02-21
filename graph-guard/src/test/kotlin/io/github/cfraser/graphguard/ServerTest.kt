@@ -21,23 +21,23 @@ import io.github.cfraser.graphguard.knit.use
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.readFully
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeShort
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withTimeout
-import org.neo4j.configuration.connectors.BoltConnector
-import org.neo4j.harness.Neo4jBuilders
 import java.net.URI
 import java.nio.ByteBuffer
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeout
+import org.neo4j.configuration.connectors.BoltConnector
+import org.neo4j.harness.Neo4jBuilders
 
 class ServerTest : FunSpec() {
 

@@ -13,7 +13,8 @@ class ScriptTest : FunSpec() {
     test("single plugin in script") {
       val plugin = Script.evaluate(MESSAGE_PRINTER)
       val message = Bolt.Goodbye
-      captureStandardOut { plugin.intercept(Bolt.Session(""), message) } shouldBe "$message"
+      captureStandardOut { plugin.intercept(Bolt.Session("", BOLT_VERSION), message) } shouldBe
+          "$message"
     }
 
     test("multiple plugins in script") {
@@ -27,7 +28,7 @@ class ScriptTest : FunSpec() {
       val message = Bolt.Goodbye
       val event = Server.Stopped
       captureStandardOut {
-        plugin.intercept(Bolt.Session(""), message)
+        plugin.intercept(Bolt.Session("", BOLT_VERSION), message)
         plugin.observe(event)
       } shouldBe "$message$event"
     }
@@ -49,7 +50,8 @@ class ScriptTest : FunSpec() {
               """
                   .trimIndent())
       val message = Bolt.Hello(emptyMap())
-      captureStandardOut { plugin.intercept(Bolt.Session(""), message) } shouldBe "$message"
+      captureStandardOut { plugin.intercept(Bolt.Session("", BOLT_VERSION), message) } shouldBe
+          "$message"
     }
   }
 
@@ -57,5 +59,7 @@ class ScriptTest : FunSpec() {
 
     const val MESSAGE_PRINTER = "plugin { intercept { _, message -> message.also(::print) } }"
     const val EVENT_PRINTER = "plugin { observe { event -> print(event) } }"
+
+    val BOLT_VERSION = Bolt.Version(0, 0, 0)
   }
 }

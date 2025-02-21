@@ -32,6 +32,7 @@ class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Lon
 
   /** A [LoadingCache] of validated *Cypher* queries. */
   private val cache =
+      @Suppress("UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
       Caffeine.newBuilder().maximumSize(cacheSize ?: 1024).build<
           Pair<String, Map<String, Any?>>, Rule.Violation?> { (query, parameters) ->
         rule.validate(query, parameters)
@@ -44,7 +45,15 @@ class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Lon
         LOGGER.info("Cypher query '{}' is invalid: {}", message.query, violation.message)
         val failure =
             Bolt.Failure(
-                mapOf("code" to "GraphGuard.Invalid.Query", "message" to violation.message))
+                buildMap {
+                  this += "message" to violation.message
+                  if (session.version >= Bolt.Version(5, 7, 0)) {
+                    this += "gql_status" to "01000"
+                    this += "neo4j_code" to "GraphGuard.Invalid.Query"
+                    this += "description" to "graph-guard schema violation: $violation"
+                    this += mapOf("diagnostic_record" to mapOf("_classification" to "CLIENT_ERROR"))
+                  } else this += "code" to "GraphGuard.Invalid.Query"
+                })
         lock.withLock { failures[session] = failure }
         return Bolt.Messages(emptyList())
       }
@@ -57,8 +66,7 @@ class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Lon
     }
   }
 
-  @Suppress("EmptyFunctionBlock")
-  override suspend fun observe(event: Server.Event) {}
+  @Suppress("EmptyFunctionBlock") override suspend fun observe(event: Server.Event) {}
 
   private companion object {
 

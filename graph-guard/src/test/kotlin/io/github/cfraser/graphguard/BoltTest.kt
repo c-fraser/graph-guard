@@ -61,5 +61,28 @@ class BoltTest : FunSpec() {
         Bolt.Run("", emptyMap(), emptyMap()) and Bolt.Success(emptyMap())
       }
     }
+
+    context("bolt version equality") {
+      withData(
+          Bolt.Version.NEGOTIATION_V2 to Bolt.Version.NEGOTIATION_V2,
+          Bolt.Version(5, 8, 0).let { v -> v to v },
+          *(3..5)
+              .flatMap { major ->
+                (0..8).flatMap { minor ->
+                  (0..2).map { range -> Bolt.Version(major, minor, range) }
+                }
+              }
+              .map { version ->
+                version to Bolt.Version(version.major, version.minor, version.range)
+              }
+              .toTypedArray()) { (u, v) ->
+            (u == v) shouldBe true
+          }
+      withData(
+          Bolt.Version.NEGOTIATION_V2 to Bolt.Version(5, 8, 0),
+          Bolt.Version(5, 4, 3) to Bolt.Version(4, 4, 3)) { (u, v) ->
+            (u == v) shouldBe false
+          }
+    }
   }
 }

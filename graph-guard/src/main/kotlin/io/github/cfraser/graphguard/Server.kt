@@ -20,8 +20,10 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
+import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -30,13 +32,22 @@ import io.ktor.network.tls.tls
 import io.ktor.util.network.hostname
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.core.use
+import io.ktor.utils.io.readByte
 import io.ktor.utils.io.readByteArray
 import io.ktor.utils.io.readInt
 import io.ktor.utils.io.readShort
+import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
 import io.ktor.utils.io.writeShort
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.ByteBuffer
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import javax.net.ssl.TrustManager
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,16 +66,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
-import java.net.InetSocketAddress
-import java.net.URI
-import java.nio.ByteBuffer
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import javax.net.ssl.TrustManager
-import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -128,7 +129,6 @@ constructor(
                   accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
                     connect(selector) { graphConnection, graphReader, graphWriter ->
                       proxy(
-                          Bolt.Session("${UUID.randomUUID()}"),
                           clientConnection,
                           clientReader,
                           clientWriter,
@@ -220,7 +220,6 @@ constructor(
   /** Proxy a [Bolt.Session] between the *client* and *graph*. */
   @Suppress("LongParameterList", "TooGenericExceptionCaught")
   private suspend fun proxy(
-      session: Bolt.Session,
       clientConnection: Connection,
       clientReader: ByteReadChannel,
       clientWriter: ByteWriteChannel,
@@ -232,10 +231,37 @@ constructor(
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
     graphWriter.writeByteArray(handshake)
     LOGGER.debug("Wrote handshake to {}", graphConnection)
-    val version = graphReader.readVersion()
+    var version = graphReader.readVersion()
     LOGGER.debug("Read version from {} '{}'", graphConnection, version)
-    clientWriter.writeInt(version.bytes())
-    LOGGER.debug("Wrote version to {}", clientConnection)
+    when (version) {
+      // modern protocol negotiation
+      Bolt.Version.NEGOTIATION_V2 -> {
+        val versions = graphReader.readVersions()
+        LOGGER.debug("Read versions from {} '{}'", graphConnection, versions)
+        var capabilities = graphReader.readByte()
+        LOGGER.debug("Read capabilities from {} '{}'", graphConnection, capabilities)
+        clientWriter.writeVersion(Bolt.Version.NEGOTIATION_V2)
+        clientWriter.writeByte(versions.size.toByte())
+        versions.forEach { v -> clientWriter.writeVersion(v) }
+        LOGGER.debug("Wrote versions to {}", clientConnection)
+        clientWriter.writeByte(capabilities)
+        LOGGER.debug("Wrote capabilities to {}", clientConnection)
+        version = clientReader.readVersion()
+        LOGGER.debug("Read negotiated version from {} '{}'", clientConnection, version)
+        capabilities = clientReader.readByte()
+        LOGGER.debug("Read negotiated capabilities from {} '{}'", clientConnection, capabilities)
+        graphWriter.writeVersion(version)
+        LOGGER.debug("Wrote negotiated version to {}", graphConnection)
+        graphWriter.writeByte(capabilities)
+        LOGGER.debug("Wrote negotiated capabilities to {}", graphConnection)
+      }
+      // complete legacy handshake
+      else -> {
+        clientWriter.writeVersion(version)
+        LOGGER.debug("Wrote version to {}", clientConnection)
+      }
+    }
+    val session = Bolt.Session("${UUID.randomUUID()}", version)
     val requestWriter = graphConnection to graphWriter
     val responseWriter = clientConnection to clientWriter
     try {
@@ -557,22 +583,35 @@ constructor(
         val buffer = ByteBuffer.wrap(bytes.copyOf())
         val id = buffer.getInt()
         check(id == ID) { "Unexpected identifier '0x${Integer.toHexString(id)}'" }
-        val versions = buildList {
-          repeat(4) { _ ->
-            val version = Bolt.Version(buffer.getInt())
-            if (version.major >= 5) return else this += "$version"
-          }
+        val versions = Array(4) { _ -> Bolt.Version.decode(buffer.getInt()) }
+        check(versions.any { version -> version.major >= 5 }) {
+          "None of the versions '$versions' are supported"
         }
-        error("None of the versions '$versions' are supported")
       }
       val bytes = readByteArray(Int.SIZE_BYTES * 5)
       return bytes.also(::verify)
     }
 
-    /**
-     * Read the [version](https://neo4j.com/docs/bolt/current/bolt/handshake/#_version_negotiation).
-     */
-    private suspend fun ByteReadChannel.readVersion(): Bolt.Version = Bolt.Version(readInt())
+    /** Read the [Bolt.Version]. */
+    private suspend fun ByteReadChannel.readVersion(): Bolt.Version = Bolt.Version.decode(readInt())
+
+    /** Read the [Bolt.Version]s supported by the graph. */
+    private suspend fun ByteReadChannel.readVersions(): Array<Bolt.Version> {
+      var size = 0L
+      var position = 0.toByte()
+      while (true) {
+        val segment = readByte()
+        size = size or ((127 and segment.toInt()).toByte().toLong()) shl (position * 7)
+        position++
+        if ((segment.toInt() shr 7) == 0) break
+      }
+      return Array(size.toInt()) { readVersion() }
+    }
+
+    /** Write the [version]. */
+    private suspend fun ByteWriteChannel.writeVersion(version: Bolt.Version) {
+      writeInt(version.encode())
+    }
 
     /** Read a [Bolt.Message] from the [ByteReadChannel]. */
     private suspend fun ByteReadChannel.readMessage(

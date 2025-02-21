@@ -25,26 +25,65 @@ object Bolt {
    */
   internal const val ID = 0x6060b017
 
-  /** A [Bolt version](https://neo4j.com/docs/bolt/current/bolt-compatibility/). */
-  internal data class Version(val major: Int, val minor: Int) {
+  /**
+   * A [Bolt version](https://neo4j.com/docs/bolt/current/bolt-compatibility/).
+   * > Refer to [handshake specification](https://neo4j.com/docs/bolt/current/bolt/handshake/#_version_negotiation).
+   */
+  class Version(val major: Int, val minor: Int, val range: Int) : Comparable<Version> {
 
-    constructor(bytes: Int) : this(bytes and 0x000000ff, (bytes shr 8) and 0x000000ff)
+    /** Encode the [Bolt.Version] as an [Int]. */
+    internal fun encode(): Int =
+        (major and 0xff) xor ((minor and 0xff) shl 8) xor ((this.range and 0xff) shl 16)
 
-    fun bytes(): Int {
-      val minor = minor shl 8
-      return minor or major
+    /** Compare the [major] and [minor] of `this` [Bolt.Version] with [other]. */
+    override fun compareTo(other: Version): Int =
+        major.compareTo(other.major).takeIf { i -> i != 0 } ?: minor.compareTo(other.minor)
+
+    override fun toString(): String =
+        when {
+          range != 0 -> "%1\$d.%2\$d..%1\$d.%3\$d".format(major, minor - range, minor)
+          else -> "$major.$minor"
+        }
+
+    override fun equals(other: Any?): Boolean =
+        when {
+          this === other -> true
+          other !is Version -> false
+          major != other.major -> false
+          minor != other.minor -> false
+          range != other.range -> false
+          else -> true
+        }
+
+    override fun hashCode(): Int {
+      var hashCode = major
+      hashCode = 31 * hashCode + minor
+      hashCode = 31 * hashCode + range
+      return hashCode
     }
 
-    override fun toString(): String = "$major.$minor"
+    internal companion object {
+
+      /** A marker protocol [Bolt.Version] which is used to initiate a *v2* protocol handshake. */
+      val NEGOTIATION_V2 = Version(0xff, 0x01, 0)
+
+      /** Decode the [Bolt.Version]. */
+      fun decode(encoded: Int): Version {
+        val major = (encoded and 0xff).toShort().toInt()
+        val minor = ((encoded ushr 8) and 0xff).toShort().toInt()
+        val range = ((encoded ushr 16) and 0xff).toShort().toInt()
+        return Version(major, minor, range)
+      }
+    }
   }
 
   /**
-   * A unique identifier for a
-   * [Bolt session](https://neo4j.com/docs/bolt/current/bolt/message/#session).
+   * A [Bolt session](https://neo4j.com/docs/bolt/current/bolt/message/#session).
    *
-   * @property id the unique [Bolt.Session] identifier
+   * @property id the unique identifier for the [Bolt.Session]
+   * @property version the [Bolt.Version] used by the client and graph
    */
-  @JvmInline value class Session(val id: String)
+  @JvmRecord data class Session(val id: String, val version: Version)
 
   /** A [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages). */
   sealed interface Message {
@@ -143,28 +182,27 @@ object Bolt {
    * [Bolt.Message].
    */
   @Suppress("UNCHECKED_CAST", "CyclomaticComplexMethod")
-  internal fun PackStream.Structure.toMessage(): Message {
-    return when (id) {
-      0x11.toByte() -> Begin(fields[0] as Map<String, Any?>)
-      0x12.toByte() -> Commit
-      0x2f.toByte() -> Discard(fields[0] as Map<String, Any?>)
-      0x7f.toByte() -> Failure(fields[0] as Map<String, Any?>)
-      0x02.toByte() -> Goodbye
-      0x01.toByte() -> Hello(fields[0] as Map<String, Any?>)
-      0x7e.toByte() -> Ignored
-      0x6b.toByte() -> Logoff
-      0x6a.toByte() -> Logon(fields[0] as Map<String, Any?>)
-      0x3f.toByte() -> Pull(fields[0] as Map<String, Any?>)
-      0x71.toByte() -> Record(fields[0] as List<Any?>)
-      0x0f.toByte() -> Reset
-      0x13.toByte() -> Rollback
-      0x10.toByte() ->
-          Run(fields[0] as String, fields[1] as Map<String, Any?>, fields[2] as Map<String, Any?>)
-      0x70.toByte() -> Success(fields[0] as Map<String, Any?>)
-      0x54.toByte() -> Telemetry(fields[0] as Long)
-      else -> error("Unknown message '$this'")
-    }
-  }
+  internal fun PackStream.Structure.toMessage(): Message =
+      when (id) {
+        0x11.toByte() -> Begin(fields[0] as Map<String, Any?>)
+        0x12.toByte() -> Commit
+        0x2f.toByte() -> Discard(fields[0] as Map<String, Any?>)
+        0x7f.toByte() -> Failure(fields[0] as Map<String, Any?>)
+        0x02.toByte() -> Goodbye
+        0x01.toByte() -> Hello(fields[0] as Map<String, Any?>)
+        0x7e.toByte() -> Ignored
+        0x6b.toByte() -> Logoff
+        0x6a.toByte() -> Logon(fields[0] as Map<String, Any?>)
+        0x3f.toByte() -> Pull(fields[0] as Map<String, Any?>)
+        0x71.toByte() -> Record(fields[0] as List<Any?>)
+        0x0f.toByte() -> Reset
+        0x13.toByte() -> Rollback
+        0x10.toByte() ->
+            Run(fields[0] as String, fields[1] as Map<String, Any?>, fields[2] as Map<String, Any?>)
+        0x70.toByte() -> Success(fields[0] as Map<String, Any?>)
+        0x54.toByte() -> Telemetry(fields[0] as Long)
+        else -> error("Unknown message '$this'")
+      }
 
   /** Convert the [Message] to a [PackStream.Structure]. */
   @Suppress("CyclomaticComplexMethod")
