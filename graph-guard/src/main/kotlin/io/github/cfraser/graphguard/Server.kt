@@ -227,39 +227,37 @@ constructor(
       graphReader: ByteReadChannel,
       graphWriter: ByteWriteChannel
   ) = coroutineScope {
-    val handshake = clientReader.verifyHandshake()
+    val handshake = clientReader.readHandshake()
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
     graphWriter.writeByteArray(handshake)
     LOGGER.debug("Wrote handshake to {}", graphConnection)
     var version = graphReader.readVersion()
     LOGGER.debug("Read version from {} '{}'", graphConnection, version)
-    when (version) {
-      // modern protocol negotiation
-      Bolt.Version.NEGOTIATION_V2 -> {
-        val versions = graphReader.readVersions()
-        LOGGER.debug("Read versions from {} '{}'", graphConnection, versions)
-        var capabilities = graphReader.readByte()
-        LOGGER.debug("Read capabilities from {} '{}'", graphConnection, capabilities)
-        clientWriter.writeVersion(Bolt.Version.NEGOTIATION_V2)
-        clientWriter.writeByte(versions.size.toByte())
-        versions.forEach { v -> clientWriter.writeVersion(v) }
-        LOGGER.debug("Wrote versions to {}", clientConnection)
-        clientWriter.writeByte(capabilities)
-        LOGGER.debug("Wrote capabilities to {}", clientConnection)
-        version = clientReader.readVersion()
-        LOGGER.debug("Read negotiated version from {} '{}'", clientConnection, version)
-        capabilities = clientReader.readByte()
-        LOGGER.debug("Read negotiated capabilities from {} '{}'", clientConnection, capabilities)
-        graphWriter.writeVersion(version)
-        LOGGER.debug("Wrote negotiated version to {}", graphConnection)
-        graphWriter.writeByte(capabilities)
-        LOGGER.debug("Wrote negotiated capabilities to {}", graphConnection)
-      }
-      // complete legacy handshake
-      else -> {
-        clientWriter.writeVersion(version)
-        LOGGER.debug("Wrote version to {}", clientConnection)
-      }
+    // modern protocol negotiation
+    if (version == Bolt.Version.NEGOTIATION_V2) {
+      val versions = graphReader.readVersions()
+      LOGGER.debug("Read versions from {} '{}'", graphConnection, versions)
+      var capabilities = graphReader.readByte()
+      LOGGER.debug("Read capabilities from {} '{}'", graphConnection, capabilities)
+      clientWriter.writeVersion(Bolt.Version.NEGOTIATION_V2)
+      clientWriter.writeByte(versions.size.toByte())
+      versions.forEach { v -> clientWriter.writeVersion(v) }
+      LOGGER.debug("Wrote versions to {}", clientConnection)
+      clientWriter.writeByte(capabilities)
+      LOGGER.debug("Wrote capabilities to {}", clientConnection)
+      version = clientReader.readVersion()
+      LOGGER.debug("Read negotiated version from {} '{}'", clientConnection, version)
+      capabilities = clientReader.readByte()
+      LOGGER.debug("Read negotiated capabilities from {} '{}'", clientConnection, capabilities)
+      graphWriter.writeVersion(version)
+      LOGGER.debug("Wrote negotiated version to {}", graphConnection)
+      graphWriter.writeByte(capabilities)
+      LOGGER.debug("Wrote negotiated capabilities to {}", graphConnection)
+    }
+    // complete legacy handshake
+    else {
+      clientWriter.writeVersion(version)
+      LOGGER.debug("Wrote version to {}", clientConnection)
     }
     val session = Bolt.Session("${UUID.randomUUID()}", version)
     val requestWriter = graphConnection to graphWriter
@@ -541,6 +539,7 @@ constructor(
   data object Stopped : Event
 
   @VisibleForTesting
+  @Suppress("TooManyFunctions")
   internal companion object {
 
     private val LOGGER = LoggerFactory.getLogger(Server::class.java)!!
@@ -572,7 +571,7 @@ constructor(
     }
 
     /** Read and verify the [handshake](https://neo4j.com/docs/bolt/current/bolt/handshake/). */
-    private suspend fun ByteReadChannel.verifyHandshake(): ByteArray {
+    private suspend fun ByteReadChannel.readHandshake(): ByteArray {
 
       /**
        * Verify the handshake [bytes] contains the [ID] and supports Bolt 5+.
@@ -593,7 +592,8 @@ constructor(
     }
 
     /** Read the [Bolt.Version]. */
-    private suspend fun ByteReadChannel.readVersion(): Bolt.Version = Bolt.Version.decode(readInt())
+    private suspend inline fun ByteReadChannel.readVersion(): Bolt.Version =
+        Bolt.Version.decode(readInt())
 
     /** Read the [Bolt.Version]s supported by the graph. */
     private suspend fun ByteReadChannel.readVersions(): Array<Bolt.Version> {
@@ -609,7 +609,7 @@ constructor(
     }
 
     /** Write the [version]. */
-    private suspend fun ByteWriteChannel.writeVersion(version: Bolt.Version) {
+    private suspend inline fun ByteWriteChannel.writeVersion(version: Bolt.Version) {
       writeInt(version.encode())
     }
 

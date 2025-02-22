@@ -35,15 +35,13 @@ object Bolt {
     internal fun encode(): Int =
         (major and 0xff) xor ((minor and 0xff) shl 8) xor ((this.range and 0xff) shl 16)
 
-    /** Compare the [major] and [minor] of `this` [Bolt.Version] with [other]. */
+    /** Compare the [major] and [minor] of `this` [Bolt.Version] with the [other] [Bolt.Version]. */
     override fun compareTo(other: Version): Int =
         major.compareTo(other.major).takeIf { i -> i != 0 } ?: minor.compareTo(other.minor)
 
     override fun toString(): String =
-        when {
-          range != 0 -> "%1\$d.%2\$d..%1\$d.%3\$d".format(major, minor - range, minor)
-          else -> "$major.$minor"
-        }
+        if (range != 0) "%1\$d.%2\$d..%1\$d.%3\$d".format(major, minor - range, minor)
+        else "$major.$minor"
 
     override fun equals(other: Any?): Boolean =
         when {
