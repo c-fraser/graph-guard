@@ -71,8 +71,14 @@ import org.neo4j.driver.exceptions.DatabaseException
 /** Use the [driver] to run queries that violate the *movies* schema. */
 fun runInvalidMoviesQueries(driver: Driver) {
   driver.session().use { session ->
-    /** Run the invalid [query] and print the schema violation message. */
-    fun run(query: String) {
+    for (query in
+      listOf(
+        "CREATE (:TVShow {title: 'The Office', released: 2005})",
+        "MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000",
+        "MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})",
+        "MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'",
+        "CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")) {
+      // run the invalid query and print the schema violation message
       try {
         session.run(query)
         error("Expected schema violation for query '$query'")
@@ -80,11 +86,6 @@ fun runInvalidMoviesQueries(driver: Driver) {
         println(exception.message)
       }
     }
-    run("CREATE (:TVShow {title: 'The Office', released: 2005})")
-    run("MATCH (theMatrix:Movie {title: 'The Matrix'}) SET theMatrix.budget = 63000000")
-    run("MERGE (:Person {name: 'Chris Fraser'})-[:WATCHED]->(:Movie {title: 'The Matrix'})")
-    run("MATCH (:Person)-[produced:PRODUCED]->(:Movie {title: 'The Matrix'}) SET produced.studio = 'Warner Bros.'")
-    run("CREATE (Keanu:Person {name: 'Keanu Reeves', born: '09/02/1964'})")
   }
 }
 ```
@@ -319,6 +320,7 @@ import io.github.cfraser.graphguard.Server
 import kotlin.concurrent.thread
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 -->
 
 [//]: # (@formatter:off)
@@ -326,7 +328,7 @@ import kotlin.time.Duration.Companion.seconds
 /** [Server.run] `this` [Server] in a [thread] then execute the [block]. */
 fun Server.use(wait: Duration = 1.seconds, block: () -> Unit) {
   val server = thread(block = ::run) // run the server until the thread is interrupted
-  Thread.sleep(wait.inWholeMilliseconds) // wait for the server to start in separate thread
+  Thread.sleep(wait.toLong(DurationUnit.MILLISECONDS)) // wait for the server to start in separate thread
   try {
     block() // execute a function interacting with the server
   } finally {

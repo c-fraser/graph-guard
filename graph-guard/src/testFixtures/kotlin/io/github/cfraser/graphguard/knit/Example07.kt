@@ -21,11 +21,12 @@ import io.github.cfraser.graphguard.Server
 import kotlin.concurrent.thread
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 /** [Server.run] `this` [Server] in a [thread] then execute the [block]. */
 fun Server.use(wait: Duration = 1.seconds, block: () -> Unit) {
   val server = thread(block = ::run) // run the server until the thread is interrupted
-  Thread.sleep(wait.inWholeMilliseconds) // wait for the server to start in separate thread
+  Thread.sleep(wait.toLong(DurationUnit.MILLISECONDS)) // wait for the server to start in separate thread
   try {
     block() // execute a function interacting with the server
   } finally {

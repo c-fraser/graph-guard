@@ -139,6 +139,13 @@ object Bolt {
    */
   data object Rollback : Request
 
+  /** The [ROUTE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-route) message. */
+  data class Route(
+      val routing: Map<String, Any?>,
+      val bookmarks: List<String>,
+      val extra: Map<String, Any?>
+  ) : Request
+
   /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
   data object Reset : Request
 
@@ -195,6 +202,11 @@ object Bolt {
         0x71.toByte() -> Record(fields[0] as List<Any?>)
         0x0f.toByte() -> Reset
         0x13.toByte() -> Rollback
+        0x66.toByte() ->
+            Route(
+                fields[0] as Map<String, Any?>,
+                fields[1] as List<String>,
+                fields[2] as Map<String, Any?>)
         0x10.toByte() ->
             Run(fields[0] as String, fields[1] as Map<String, Any?>, fields[2] as Map<String, Any?>)
         0x70.toByte() -> Success(fields[0] as Map<String, Any?>)
@@ -220,6 +232,7 @@ object Bolt {
           is Record -> 0x71.toByte() to listOf(data)
           Reset -> 0x0f.toByte() to emptyList()
           Rollback -> 0x13.toByte() to emptyList()
+          is Route -> 0x66.toByte() to listOf(routing, bookmarks, extra)
           is Run -> 0x10.toByte() to listOf(query, parameters, extra)
           is Success -> 0x70.toByte() to listOf(metadata)
           is Telemetry -> 0x54.toByte() to listOf(api)

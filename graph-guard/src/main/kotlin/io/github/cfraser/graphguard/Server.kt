@@ -20,10 +20,8 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -40,14 +38,6 @@ import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
 import io.ktor.utils.io.writeShort
-import java.net.InetSocketAddress
-import java.net.URI
-import java.nio.ByteBuffer
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import javax.net.ssl.TrustManager
-import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +56,17 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.ByteBuffer
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.net.ssl.TrustManager
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -87,6 +88,8 @@ constructor(
     private val parallelism: Int? = null,
     private val trustManager: TrustManager? = null
 ) : Runnable {
+
+  private val running = AtomicBoolean()
 
   /**
    * The [Server.Plugin] used by the [Server].
@@ -117,6 +120,9 @@ constructor(
    */
   @Suppress("TooGenericExceptionCaught")
   override fun run() {
+    check(running.compareAndSet(false, true)) {
+      "The ${Server::class.simpleName} is already started"
+    }
     try {
       runBlocking(
           when (val parallelism = parallelism) {
@@ -145,7 +151,9 @@ constructor(
               }
             }
           }
-    } catch (_: InterruptedException) {}
+    } catch (_: InterruptedException) {} finally {
+      running.set(false)
+    }
   }
 
   /** Bind the proxy [ServerSocket] to the [address] then run the [block]. */
