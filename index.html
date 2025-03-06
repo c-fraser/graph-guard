@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.7">
     
     
       
@@ -603,9 +603,9 @@ fun runExample02() {
 }
 -->
 
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">plugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Validator</span><span class="p">(</span><span class="n">Schema</span><span class="p">(</span><span class="n">MOVIES_SCHEMA</span><span class="p">))</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Server</span><span class="p">(</span><span class="n">boltURI</span><span class="p">(),</span><span class="w"> </span><span class="n">plugin</span><span class="p">,</span><span class="w"> </span><span class="n">InetSocketAddress</span><span class="p">(</span><span class="s">&quot;localhost&quot;</span><span class="p">,</span><span class="w"> </span><span class="m">8787</span><span class="p">))</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">server</span><span class="p">.</span><span class="na">use</span><span class="w"> </span><span class="p">{</span>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">Server</span><span class="p">(</span><span class="n">boltURI</span><span class="p">(),</span><span class="w"> </span><span class="n">Validator</span><span class="p">(</span><span class="n">Schema</span><span class="p">(</span><span class="n">MOVIES_SCHEMA</span><span class="p">)),</span><span class="w"> </span><span class="n">InetSocketAddress</span><span class="p">(</span><span class="s">&quot;localhost&quot;</span><span class="p">,</span><span class="w"> </span><span class="m">8787</span><span class="p">)).</span><span class="na">use</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">server</span><span class="w"> </span><span class="o">-&gt;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="n">server</span><span class="p">.</span><span class="na">start</span><span class="p">()</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="n">GraphDatabase</span><span class="p">.</span><span class="na">driver</span><span class="p">(</span><span class="s">&quot;bolt://localhost:8787&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">withoutEncryption</span><span class="p">().</span><span class="na">build</span><span class="p">())</span>
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="p">.</span><span class="na">use</span><span class="p">(</span><span class="o">::</span><span class="n">runInvalidMoviesQueries</span><span class="p">)</span>
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
@@ -774,22 +774,15 @@ library.</p>
 <h4 id="kotlin">Kotlin</h4>
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
-import kotlin.concurrent.thread
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
 -->
 
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cm">/** [Server.run] `this` [Server] in a [thread] then execute the [block]. */</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kd">fun</span><span class="w"> </span><span class="n">Server</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="n">wait</span><span class="p">:</span><span class="w"> </span><span class="n">Duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1.</span><span class="n">seconds</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">Unit</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thread</span><span class="p">(</span><span class="n">block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">run</span><span class="p">)</span><span class="w"> </span><span class="c1">// run the server until the thread is interrupted</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="n">wait</span><span class="p">.</span><span class="na">toLong</span><span class="p">(</span><span class="n">DurationUnit</span><span class="p">.</span><span class="na">MILLISECONDS</span><span class="p">))</span><span class="w"> </span><span class="c1">// wait for the server to start in separate thread</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="n">block</span><span class="p">()</span><span class="w"> </span><span class="c1">// execute a function interacting with the server</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="n">server</span><span class="p">.</span><span class="na">interrupt</span><span class="p">()</span><span class="w"> </span><span class="c1">// interrupt the thread running the server to initiate a graceful shutdown</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cm">/** Run the [test] [block] after `this` [Server] has started. */</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kd">fun</span><span class="w"> </span><span class="n">Server</span><span class="p">.</span><span class="nf">test</span><span class="p">(</span><span class="n">block</span><span class="p">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">Unit</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="n">use</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">server</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="c1">// use the server to automate cleanup</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="n">server</span><span class="p">.</span><span class="na">start</span><span class="p">()</span><span class="w"> </span><span class="c1">// start the server</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="n">block</span><span class="p">()</span><span class="w"> </span><span class="c1">// execute a function interacting with the server</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="c1">// stop the server</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="p">}</span>
 </span></code></pre></div>
 <!--- KNIT Example07.kt -->
 
@@ -840,11 +833,10 @@ fun runExample08() {
 </span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">                </span><span class="p">});</span>
 </span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">      </span><span class="p">}</span>
 </span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="w">    </span><span class="p">};</span>
-</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="n">Thread</span><span class="w"> </span><span class="n">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Thread</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">Server</span><span class="p">(</span><span class="n">boltURI</span><span class="p">(),</span><span class="w"> </span><span class="n">plugin</span><span class="p">));</span>
-</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="n">server</span><span class="p">.</span><span class="na">start</span><span class="p">();</span><span class="w"> </span><span class="c1">// run the server until the thread is interrupted</span>
-</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1_000</span><span class="p">);</span><span class="w"> </span><span class="c1">// wait for the server to start in separate thread</span>
-</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="cm">/* TODO: interact with the running server */</span>
-</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="n">server</span><span class="p">.</span><span class="na">interrupt</span><span class="p">();</span><span class="w"> </span><span class="c1">// interrupt the thread running the server to initiate a graceful shutdown</span>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">Server</span><span class="w"> </span><span class="n">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Server</span><span class="p">(</span><span class="n">boltUri</span><span class="p">,</span><span class="w"> </span><span class="n">plugin</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// use server in try-with-resources to automate cleanup</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="w">    </span><span class="n">server</span><span class="p">.</span><span class="na">start</span><span class="p">();</span><span class="w"> </span><span class="c1">// start the server</span>
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="cm">/* TODO: interact with the running server */</span>
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="p">}</span><span class="w"> </span><span class="c1">// stop the running server</span>
 </span></code></pre></div>
 <h3 id="documentation">Documentation</h3>
 <p>Refer to the <a href="https://c-fraser.github.io/graph-guard/api/">graph-guard website</a>.</p>
@@ -894,7 +886,6 @@ import io.github.cfraser.graphguard.driver
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
-import kotlin.time.Duration.Companion.seconds
 
 fun runExample09() {
   withNeo4j {
@@ -928,7 +919,7 @@ fun runExample09() {
 </span><span id="__span-11-23"><a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="s">&quot;&quot;&quot;</span>
 </span><span id="__span-11-24"><a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="kd">val</span><span class="w"> </span><span class="nv">plugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Script</span><span class="p">.</span><span class="na">evaluate</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
 </span><span id="__span-11-25"><a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="kd">val</span><span class="w"> </span><span class="nv">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Server</span><span class="p">(</span><span class="n">boltURI</span><span class="p">(),</span><span class="w"> </span><span class="n">plugin</span><span class="p">)</span>
-</span><span id="__span-11-26"><a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="n">server</span><span class="p">.</span><span class="na">use</span><span class="p">(</span><span class="n">wait</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10.</span><span class="n">seconds</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">server</span><span class="p">.</span><span class="na">driver</span><span class="p">.</span><span class="na">use</span><span class="p">(</span><span class="n">block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">runMoviesQueries</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-11-26"><a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="n">server</span><span class="p">.</span><span class="na">test</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">server</span><span class="p">.</span><span class="na">driver</span><span class="p">.</span><span class="na">use</span><span class="p">(</span><span class="n">block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">runMoviesQueries</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <blockquote>
 <p>Script compilation and evaluation takes longer, thus the 10 second <code>wait</code>.</p>
@@ -1008,7 +999,7 @@ limitations under the License.
     <script id="__config" type="application/json">{"base": ".", "features": ["toc.integrate", "content.code.copy", "content.code.select"], "search": "assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="assets/javascripts/bundle.c8b220af.min.js"></script>
       
     
   </body>
