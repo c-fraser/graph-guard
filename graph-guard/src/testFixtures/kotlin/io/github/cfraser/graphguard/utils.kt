@@ -16,7 +16,7 @@ limitations under the License.
 package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
-import io.github.cfraser.graphguard.knit.use
+import io.github.cfraser.graphguard.knit.test
 import io.kotest.assertions.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
@@ -44,7 +44,7 @@ fun <T> withNeo4j(block: Neo4j.() -> T): T {
 fun <T> Neo4j.withServer(plugin: Server.Plugin = plugin {}, block: (Driver) -> T): T {
   var t: T? = null
   val server = Server(boltURI(), plugin)
-  server.use { server.driver.use { driver -> t = block(driver) } }
+  server.test { server.driver.use { driver -> t = block(driver) } }
   return checkNotNull(t)
 }
 

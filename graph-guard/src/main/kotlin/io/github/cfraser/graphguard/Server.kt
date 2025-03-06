@@ -61,8 +61,9 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.CountDownLatch
 import javax.net.ssl.TrustManager
+import kotlin.concurrent.thread
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
@@ -87,9 +88,9 @@ constructor(
     val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
     private val parallelism: Int? = null,
     private val trustManager: TrustManager? = null
-) : Runnable {
+) : AutoCloseable {
 
-  private val running = AtomicBoolean()
+  private var running: Thread? = null
 
   /**
    * The [Server.Plugin] used by the [Server].
@@ -113,16 +114,39 @@ constructor(
       }
 
   /**
-   * Start the proxy server on the [address], connecting to the [graph].
+   * Start the proxy [Server] in a [Thread].
+   *
+   * The [Server] is ready to accept client connections after [Server.start] returns.
+   */
+  @Synchronized
+  fun start() {
+    val latch = CountDownLatch(1)
+    check(running?.isAlive?.not() ?: true) { "The proxy server is already running" }
+    running =
+        thread(start = false) { run(latch) }
+            .apply {
+              setUncaughtExceptionHandler { _, thrown ->
+                LOGGER.error("Proxy server failed to run", thrown)
+              }
+              start()
+            }
+    latch.await()
+  }
+
+  /** Stop the [Server]. */
+  override fun close() {
+    running?.interrupt()
+    running = null
+  }
+
+  /**
+   * Run the [Server] on the [address], connecting to the [graph].
    *
    * [Server.run] blocks indefinitely. To stop the server, [java.lang.Thread.interrupt] the blocked
    * thread. [InterruptedException] is **not** thrown after the server is stopped.
+   * > [CountDownLatch.countDown] when the [Server] is ready to accept client connections.
    */
-  @Suppress("TooGenericExceptionCaught")
-  override fun run() {
-    check(running.compareAndSet(false, true)) {
-      "The ${Server::class.simpleName} is already started"
-    }
+  private fun run(latch: CountDownLatch) {
     try {
       runBlocking(
           when (val parallelism = parallelism) {
@@ -130,6 +154,7 @@ constructor(
             else -> Dispatchers.IO.limitedParallelism(parallelism)
           }) {
             bind { selector, serverSocket ->
+              latch.countDown()
               while (isActive) {
                 try {
                   accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
@@ -152,7 +177,7 @@ constructor(
             }
           }
     } catch (_: InterruptedException) {} finally {
-      running.set(false)
+      latch.countDown()
     }
   }
 

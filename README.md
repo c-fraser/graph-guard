@@ -111,9 +111,9 @@ fun runExample02() {
 
 [//]: # (@formatter:off)
 ```kotlin
-val plugin = Validator(Schema(MOVIES_SCHEMA))
-val server = Server(boltURI(), plugin, InetSocketAddress("localhost", 8787))
-server.use {
+Server(boltURI(), Validator(Schema(MOVIES_SCHEMA)), InetSocketAddress("localhost", 8787)).use {
+    server ->
+  server.start()
   GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())
     .use(::runInvalidMoviesQueries)
 }
@@ -317,23 +317,16 @@ library.
 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
-import kotlin.concurrent.thread
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
 -->
 
 [//]: # (@formatter:off)
 ```kotlin
-/** [Server.run] `this` [Server] in a [thread] then execute the [block]. */
-fun Server.use(wait: Duration = 1.seconds, block: () -> Unit) {
-  val server = thread(block = ::run) // run the server until the thread is interrupted
-  Thread.sleep(wait.toLong(DurationUnit.MILLISECONDS)) // wait for the server to start in separate thread
-  try {
+/** Run the [test] [block] after `this` [Server] has started. */
+fun Server.test(block: () -> Unit) {
+  use { server -> // use the server to automate cleanup
+    server.start() // start the server
     block() // execute a function interacting with the server
-  } finally {
-    server.interrupt() // interrupt the thread running the server to initiate a graceful shutdown
-  }
+  } // stop the server
 }
 ```
 [//]: # (@formatter:on)
@@ -392,11 +385,10 @@ Server.Plugin plugin = // implement async plugin; can't utilize Kotlin coroutine
                 });
       }
     };
-Thread server = new Thread(new Server(boltURI(), plugin));
-server.start(); // run the server until the thread is interrupted
-Thread.sleep(1_000); // wait for the server to start in separate thread
-/* TODO: interact with the running server */
-server.interrupt(); // interrupt the thread running the server to initiate a graceful shutdown
+try (Server server = new Server(boltUri, plugin)) { // use server in try-with-resources to automate cleanup
+    server.start(); // start the server
+    /* TODO: interact with the running server */
+} // stop the running server
 ```
 [//]: # (@formatter:on)
 
@@ -460,7 +452,6 @@ import io.github.cfraser.graphguard.driver
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
-import kotlin.time.Duration.Companion.seconds
 
 fun runExample09() {
   withNeo4j {
@@ -496,7 +487,7 @@ plugin {
 """
 val plugin = Script.evaluate(script)
 val server = Server(boltURI(), plugin)
-server.use(wait = 10.seconds) { server.driver.use(block = ::runMoviesQueries) }
+server.test { server.driver.use(block = ::runMoviesQueries) }
 ```
 [//]: # (@formatter:on)
 

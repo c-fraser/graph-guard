@@ -125,7 +125,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
             plugin = plugin,
             address = InetSocketAddress(hostname, port),
             parallelism = parallelism)
-        .run()
+        .start()
   }
 
   override fun help(context: Context) = "Graph query validation proxy server"

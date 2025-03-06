@@ -16,7 +16,7 @@ import org.neo4j.driver.AuthTokens
  * ```shell
  *  ./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist
  *  echo ''
- *  cat <<'EOF' | ./cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --inspect -s -
+ *  cat <<'EOF' | ./graph-guard-cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --inspect -s -
  *  graph Movies {
  *    node Person(name: String, born: Integer):
  *      ACTED_IN(roles: List<String>) -> Movie,

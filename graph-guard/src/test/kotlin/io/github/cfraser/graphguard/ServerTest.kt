@@ -17,7 +17,7 @@ package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
-import io.github.cfraser.graphguard.knit.use
+import io.github.cfraser.graphguard.knit.test
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.network.selector.SelectorManager
@@ -47,7 +47,7 @@ class ServerTest : FunSpec() {
     test("proxy bolt messages with async plugin") {
       withNeo4j {
         val server = JServer.initialize(boltURI())
-        server.use { server.driver.use(::runMoviesQueries) }
+        server.test { server.driver.use(::runMoviesQueries) }
       }
     }
 
@@ -122,7 +122,7 @@ class ServerTest : FunSpec() {
           .use { neo4j ->
             val boltURI = neo4j.boltURI().let { uri -> URI("bolt+ssc://${uri.host}:${uri.port}/") }
             val server = Server(boltURI, trustManager = InsecureTrustManager)
-            server.use { server.driver.use { driver -> runMoviesQueries(driver) } }
+            server.test { server.driver.use { driver -> runMoviesQueries(driver) } }
           }
     }
 

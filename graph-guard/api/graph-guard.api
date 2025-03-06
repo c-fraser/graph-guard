@@ -246,16 +246,17 @@ public final class io/github/cfraser/graphguard/Bolt$Version : java/lang/Compara
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/cfraser/graphguard/Server : java/lang/Runnable {
+public final class io/github/cfraser/graphguard/Server : java/lang/AutoCloseable {
 	public fun <init> (Ljava/net/URI;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;Ljava/lang/Integer;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;Ljava/lang/Integer;Ljavax/net/ssl/TrustManager;)V
 	public synthetic fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Ljava/net/InetSocketAddress;Ljava/lang/Integer;Ljavax/net/ssl/TrustManager;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
 	public final fun getAddress ()Ljava/net/InetSocketAddress;
 	public final fun getGraph ()Ljava/net/URI;
-	public fun run ()V
+	public final fun start ()V
 }
 
 public final class io/github/cfraser/graphguard/Server$Connected : java/lang/Record, io/github/cfraser/graphguard/Server$Event {

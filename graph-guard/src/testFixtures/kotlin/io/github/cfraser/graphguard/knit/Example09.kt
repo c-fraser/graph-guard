@@ -22,7 +22,6 @@ import io.github.cfraser.graphguard.driver
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.runMoviesQueries
 import io.github.cfraser.graphguard.withNeo4j
-import kotlin.time.Duration.Companion.seconds
 
 fun runExample09() {
   withNeo4j {
@@ -52,6 +51,6 @@ plugin {
 """
 val plugin = Script.evaluate(script)
 val server = Server(boltURI(), plugin)
-server.use(wait = 10.seconds) { server.driver.use(block = ::runMoviesQueries) }
+server.test { server.driver.use(block = ::runMoviesQueries) }
   }
 }

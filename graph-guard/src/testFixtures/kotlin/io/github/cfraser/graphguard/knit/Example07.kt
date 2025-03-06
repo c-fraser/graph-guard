@@ -18,18 +18,11 @@ limitations under the License.
 package io.github.cfraser.graphguard.knit
 
 import io.github.cfraser.graphguard.Server
-import kotlin.concurrent.thread
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
 
-/** [Server.run] `this` [Server] in a [thread] then execute the [block]. */
-fun Server.use(wait: Duration = 1.seconds, block: () -> Unit) {
-  val server = thread(block = ::run) // run the server until the thread is interrupted
-  Thread.sleep(wait.toLong(DurationUnit.MILLISECONDS)) // wait for the server to start in separate thread
-  try {
+/** Run the [test] [block] after `this` [Server] has started. */
+fun Server.test(block: () -> Unit) {
+  use { server -> // use the server to automate cleanup
+    server.start() // start the server
     block() // execute a function interacting with the server
-  } finally {
-    server.interrupt() // interrupt the thread running the server to initiate a graceful shutdown
-  }
+  } // stop the server
 }
