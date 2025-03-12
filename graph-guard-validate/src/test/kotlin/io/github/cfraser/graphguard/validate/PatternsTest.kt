@@ -33,9 +33,17 @@ class PatternsTest : FunSpec() {
           Patterns.UnparameterizedQuery with
               "MATCH (n) WHERE id(n) = \"n\" RETURN n" expect
               Rule.Violation("Query has literals ['n']"),
-      ) { (rule, query, expected) ->
-        rule.validate(query, emptyMap()) shouldBe expected
-      }
+          Patterns.UnlabeledEntity with
+              """
+              MATCH (a:A)-[:R]->(b:B {b: 'b'}) 
+              OPTIONAL MATCH (c:C)-->(b)
+              SET c.c = 'c'
+              RETURN b
+              """
+                  .trimIndent() expect
+              null) { (rule, query, expected) ->
+            rule.validate(query, emptyMap()) shouldBe expected
+          }
     }
   }
 
