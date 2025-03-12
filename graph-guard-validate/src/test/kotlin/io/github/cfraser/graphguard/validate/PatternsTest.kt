@@ -41,6 +41,9 @@ class PatternsTest : FunSpec() {
               RETURN b
               """
                   .trimIndent() expect
+              null,
+          Patterns.UnlabeledEntity with
+              "MATCH (a:A)-[:B]->(c:C)-[:D]->(e:E) UNWIND \$z AS y MATCH (x:X) MERGE (e)-[:R]->(x)" expect
               null) { (rule, query, expected) ->
             rule.validate(query, emptyMap()) shouldBe expected
           }

@@ -29,6 +29,7 @@ import org.neo4j.cypherdsl.core.Parameter
 import org.neo4j.cypherdsl.core.PatternElement
 import org.neo4j.cypherdsl.core.PropertyLookup
 import org.neo4j.cypherdsl.core.RelationshipBase
+import org.neo4j.cypherdsl.core.RelationshipChain
 import org.neo4j.cypherdsl.core.Statement
 import org.neo4j.cypherdsl.core.StatementCatalog
 import org.neo4j.cypherdsl.core.SymbolicName
@@ -170,6 +171,19 @@ internal data class Query(
               .filterIsInstance<NodeBase<*>>()
               .forEach(::collect)
           collect(patternElement)
+        }
+        is RelationshipChain -> {
+          patternElement.accept { visitable ->
+            when (visitable) {
+              is NodeBase<*> -> collect(visitable)
+              is RelationshipBase<*, *, *> -> {
+                listOf(visitable.left, visitable.right)
+                    .filterIsInstance<NodeBase<*>>()
+                    .forEach(::collect)
+                collect(visitable)
+              }
+            }
+          }
         }
       }
       return patternElement
