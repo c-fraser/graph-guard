@@ -35,6 +35,9 @@ import javax.net.ssl.X509TrustManager
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.neo4j.configuration.connectors.BoltConnector
 import org.neo4j.harness.Neo4jBuilders
@@ -43,6 +46,22 @@ class ServerTest : FunSpec() {
 
   init {
     test("proxy bolt messages") { withNeo4j { withServer(block = ::runMoviesQueries) } }
+
+    test("concurrent connections") {
+      val neo4j = Neo4jBuilders.newInProcessBuilder().build()
+      val server = Server(neo4j.boltURI())
+      try {
+        server.start()
+        coroutineScope {
+          Array(17) { _ -> launch { server.driver.use { driver -> runMoviesQueries(driver) } } }
+              .toList()
+              .joinAll()
+        }
+      } finally {
+        server.close()
+        neo4j.close()
+      }
+    }
 
     test("proxy bolt messages with async plugin") {
       withNeo4j {
