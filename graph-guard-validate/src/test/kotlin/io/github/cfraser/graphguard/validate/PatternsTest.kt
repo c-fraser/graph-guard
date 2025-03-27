@@ -44,9 +44,13 @@ class PatternsTest : FunSpec() {
               null,
           Patterns.UnlabeledEntity with
               "MATCH (a:A)-[:B]->(c:C)-[:D]->(e:E) UNWIND \$z AS y MATCH (x:X) MERGE (e)-[:R]->(x)" expect
-              null) { (rule, query, expected) ->
-            rule.validate(query, emptyMap()) shouldBe expected
-          }
+              null,
+          Patterns.UnlabeledEntity with
+              "MATCH (a:A)-[:B]->(c:D|E) RETURN a.z AS Z, collect(c.y) AS Y ORDER BY c.x" expect
+              null,
+      ) { (rule, query, expected) ->
+        rule.validate(query, emptyMap()) shouldBe expected
+      }
     }
   }
 

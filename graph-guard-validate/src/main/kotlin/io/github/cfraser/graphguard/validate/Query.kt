@@ -15,9 +15,14 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.validate
 
+import kotlin.collections.Set
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
 import org.neo4j.cypherdsl.core.KeyValueMapEntry
+import org.neo4j.cypherdsl.core.LabelExpression
 import org.neo4j.cypherdsl.core.ListExpression
 import org.neo4j.cypherdsl.core.Literal
 import org.neo4j.cypherdsl.core.NodeBase
@@ -27,9 +32,11 @@ import org.neo4j.cypherdsl.core.Operation
 import org.neo4j.cypherdsl.core.Operator
 import org.neo4j.cypherdsl.core.Parameter
 import org.neo4j.cypherdsl.core.PatternElement
+import org.neo4j.cypherdsl.core.Property as CypherProperty
 import org.neo4j.cypherdsl.core.PropertyLookup
 import org.neo4j.cypherdsl.core.RelationshipBase
 import org.neo4j.cypherdsl.core.RelationshipChain
+import org.neo4j.cypherdsl.core.Set as CypherSet
 import org.neo4j.cypherdsl.core.Statement
 import org.neo4j.cypherdsl.core.StatementCatalog
 import org.neo4j.cypherdsl.core.SymbolicName
@@ -38,12 +45,6 @@ import org.neo4j.cypherdsl.parser.CypherParser
 import org.neo4j.cypherdsl.parser.ExpressionCreatedEventType
 import org.neo4j.cypherdsl.parser.Options
 import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
-import kotlin.collections.Set
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.jvm.optionals.getOrNull
-import org.neo4j.cypherdsl.core.Property as CypherProperty
-import org.neo4j.cypherdsl.core.Set as CypherSet
 
 /**
  * A *Cypher* [Query].
@@ -111,6 +112,7 @@ internal data class Query(
     override fun assign(owner: String): RemovedProperty = copy(owner = owner)
   }
 
+  @Suppress("TooManyFunctions")
   companion object {
 
     /** Parse the [cypher] as a [Query]. */
@@ -149,44 +151,65 @@ internal data class Query(
     private fun MutableMap<String, Set<String>>.collect(
         patternElement: PatternElement
     ): PatternElement {
-      fun collect(node: NodeBase<*>) {
-        val symbolicName = node.symbolicName.getOrNull()?.value ?: return
-        val labels =
-            node.labels.takeUnless(List<*>::isEmpty)?.map(NodeLabel::getValue)?.toSet().orEmpty()
-        compute(symbolicName) { _, previousLabels -> previousLabels.orEmpty() + labels }
-      }
-      fun collect(relationship: RelationshipBase<*, *, *>) {
-        var value: String? = null
-        relationship.details.accept { visitable ->
-          if (visitable is SymbolicName) value = visitable.value
-        }
-        val symbolicName = value ?: return
-        val labels = relationship.details.types.takeUnless(List<*>::isEmpty)?.toSet().orEmpty()
-        compute(symbolicName) { _, previousLabels -> previousLabels.orEmpty() + labels }
-      }
       when (patternElement) {
-        is NodeBase<*> -> collect(patternElement)
+        is NodeBase<*> -> collectNode(patternElement)
         is RelationshipBase<*, *, *> -> {
           listOf(patternElement.left, patternElement.right)
               .filterIsInstance<NodeBase<*>>()
-              .forEach(::collect)
-          collect(patternElement)
+              .forEach { node -> collectNode(node) }
+          collectRelationship(patternElement)
         }
         is RelationshipChain -> {
           patternElement.accept { visitable ->
             when (visitable) {
               is NodeBase<*> -> collect(visitable)
               is RelationshipBase<*, *, *> -> {
-                listOf(visitable.left, visitable.right)
-                    .filterIsInstance<NodeBase<*>>()
-                    .forEach(::collect)
-                collect(visitable)
+                listOf(visitable.left, visitable.right).filterIsInstance<NodeBase<*>>().forEach {
+                    node ->
+                  collectNode(node)
+                }
+                collectRelationship(visitable)
               }
             }
           }
         }
       }
       return patternElement
+    }
+
+    /** Collect the symbolic name to entity label(s) mapping from the [node]. */
+    private fun MutableMap<String, Set<String>>.collectNode(node: NodeBase<*>) {
+      val symbolicName = node.symbolicName.getOrNull()?.value ?: return
+      val labels =
+          node.labels
+              .takeUnless(List<*>::isEmpty)
+              ?.map(NodeLabel::getValue)
+              ?.toSet()
+              .orEmpty()
+              .toMutableSet()
+      fun add(vararg labelExpressions: LabelExpression) =
+          labelExpressions.forEach { labelExpression ->
+            if (labelExpression.type == LabelExpression.Type.LEAF)
+                labels += labelExpression.value.orEmpty()
+          }
+      node.accept { visitable ->
+        if (visitable is LabelExpression && visitable.type == LabelExpression.Type.DISJUNCTION)
+            add(visitable.lhs, visitable.rhs)
+      }
+      compute(symbolicName) { _, previousLabels -> previousLabels.orEmpty() + labels }
+    }
+
+    /** Collect the symbolic name to entity label(s) mapping from the [relationship]. */
+    private fun MutableMap<String, Set<String>>.collectRelationship(
+        relationship: RelationshipBase<*, *, *>
+    ) {
+      var value: String? = null
+      relationship.details.accept { visitable ->
+        if (visitable is SymbolicName) value = visitable.value
+      }
+      val symbolicName = value ?: return
+      val labels = relationship.details.types.takeUnless(List<*>::isEmpty)?.toSet().orEmpty()
+      compute(symbolicName) { _, previousLabels -> previousLabels.orEmpty() + labels }
     }
 
     /** Collect the [MutatedProperty] from the [expression]. */
