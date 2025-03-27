@@ -38,7 +38,7 @@ dependencies {
 }
 
 tasks {
-  val modifyGrammarSource by creating {
+  val modifyGrammarSource by registering {
     mustRunAfter(withType<AntlrTask>())
     doLast {
       fileTree(generateGrammarSource.get().outputDirectory) { include("*.java") }
