@@ -720,7 +720,7 @@ internal object PackStream {
           }
           else -> this
         }
-      } catch (_: Throwable) {
+      } catch (_: Exception) {
         error("Structure (${Char(id.toInt())}) '$this' is invalid")
       }
     }

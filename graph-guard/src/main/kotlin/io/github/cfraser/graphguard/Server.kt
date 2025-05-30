@@ -120,11 +120,12 @@ constructor(
    * The [Server] is ready to accept client connections after [Server.start] returns.
    */
   @Synchronized
-  @OptIn(DelicateCoroutinesApi::class)
+  @Suppress("TooGenericExceptionCaught")
   fun start() {
     val latch = CountDownLatch(1)
     check(running?.isActive?.not() ?: true) { "The proxy server is already running" }
     running =
+        @OptIn(DelicateCoroutinesApi::class)
         GlobalScope.launch(
             MDCContext() +
                 when (val parallelism = parallelism) {
@@ -133,8 +134,8 @@ constructor(
                 }) {
               try {
                 run(latch)
-              } catch (exception: Exception) {
-                LOGGER.error("Proxy server failed to run", exception)
+              } catch (thrown: Exception) {
+                LOGGER.error("Proxy server failed to run", thrown)
               }
             }
     latch.await()
@@ -173,8 +174,8 @@ constructor(
             }
           } catch (cancellation: CancellationException) {
             LOGGER.debug("Proxy connection closed", cancellation)
-          } catch (thrown: Throwable) {
-            LOGGER.error("Proxy connection failure", thrown)
+          } catch (exception: Exception) {
+            LOGGER.error("Proxy connection failure", exception)
           }
         }
       }
@@ -311,7 +312,7 @@ constructor(
       }
     } catch (cancellation: CancellationException) {
       LOGGER.debug("Proxy session closed", cancellation)
-    } catch (thrown: Throwable) {
+    } catch (thrown: Exception) {
       LOGGER.error("Proxy session failure", thrown)
     }
   }
@@ -333,7 +334,7 @@ constructor(
       val message =
           try {
             reader.readMessage()
-          } catch (_: Throwable) {
+          } catch (_: Exception) {
             break
           }
       LOGGER.debug("Read '{}' from {}", message, source)
@@ -341,7 +342,7 @@ constructor(
       val (destination, writer) = resolver(intercepted)
       try {
         writer.writeMessage(intercepted)
-      } catch (thrown: Throwable) {
+      } catch (thrown: Exception) {
         LOGGER.error("Failed to write '{}' to {}", intercepted, destination, thrown)
         break
       }

@@ -139,7 +139,7 @@ internal data class Query(
             mutatedProperties.mapToLabel(entities),
             removedProperties.mapToLabel(entities),
             entities)
-      } catch (_: Throwable) {
+      } catch (_: Exception) {
         null
       }
     }

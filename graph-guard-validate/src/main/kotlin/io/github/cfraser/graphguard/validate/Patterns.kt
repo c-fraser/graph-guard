@@ -33,7 +33,7 @@ object Patterns {
               .takeUnless(Collection<*>::isNullOrEmpty)
               ?.map(Literal<*>::asString)
               ?.let { literals -> Rule.Violation("Query has literals $literals") }
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
           null
         }
       })
