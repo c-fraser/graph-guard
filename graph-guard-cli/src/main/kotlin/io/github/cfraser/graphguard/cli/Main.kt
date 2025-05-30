@@ -43,11 +43,11 @@ import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.validate.Schema
-import java.net.InetSocketAddress
-import java.net.URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
+import java.net.InetSocketAddress
+import java.net.URI
 
 /** [main] is the entry point for the [Server] application, run by the [Command]. */
 fun main(args: Array<String>) {

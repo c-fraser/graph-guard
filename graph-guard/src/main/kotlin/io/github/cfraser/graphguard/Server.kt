@@ -20,10 +20,8 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -40,22 +38,14 @@ import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
 import io.ktor.utils.io.writeShort
-import java.net.InetSocketAddress
-import java.net.URI
-import java.nio.ByteBuffer
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CountDownLatch
-import javax.net.ssl.TrustManager
-import kotlin.concurrent.thread
-import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -68,6 +58,16 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.ByteBuffer
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import javax.net.ssl.TrustManager
+import kotlin.time.Duration
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -90,7 +90,8 @@ constructor(
     private val trustManager: TrustManager? = null
 ) : AutoCloseable {
 
-  private var running: Thread? = null
+  /** The [Job] with the [running] [Server]. */
+  private var running: Job? = null
 
   /**
    * The [Server.Plugin] used by the [Server].
@@ -114,70 +115,70 @@ constructor(
       }
 
   /**
-   * Start the proxy [Server] in a [Thread].
+   * Start the [Server].
    *
    * The [Server] is ready to accept client connections after [Server.start] returns.
    */
   @Synchronized
+  @OptIn(DelicateCoroutinesApi::class)
   fun start() {
     val latch = CountDownLatch(1)
-    check(running?.isAlive?.not() ?: true) { "The proxy server is already running" }
+    check(running?.isActive?.not() ?: true) { "The proxy server is already running" }
     running =
-        thread(start = false) { run(latch) }
-            .apply {
-              setUncaughtExceptionHandler { _, thrown ->
-                LOGGER.error("Proxy server failed to run", thrown)
+        GlobalScope.launch(
+            MDCContext() +
+                when (val parallelism = parallelism) {
+                  null -> Dispatchers.IO
+                  else -> Dispatchers.IO.limitedParallelism(parallelism)
+                }) {
+              try {
+                run(latch)
+              } catch (exception: Exception) {
+                LOGGER.error("Proxy server failed to run", exception)
               }
-              start()
             }
     latch.await()
   }
 
   /** Stop the [Server]. */
   override fun close() {
-    running?.interrupt()
+    runBlocking(MDCContext() + Dispatchers.IO) { running?.runCatching { cancelAndJoin() } }
     running = null
   }
 
   /**
    * Run the [Server] on the [address], connecting to the [graph].
    *
-   * [Server.run] blocks indefinitely. To stop the server, [java.lang.Thread.interrupt] the blocked
-   * thread. [InterruptedException] is **not** thrown after the server is stopped.
+   * [Server.run] loops indefinitely. To stop the server, [Job.cancel] the [running] [Job].
+   * [CancellationException] is **not** thrown after the server is stopped.
    * > [CountDownLatch.countDown] when the [Server] is ready to accept client connections.
    */
   @Suppress("TooGenericExceptionCaught")
-  private fun run(latch: CountDownLatch) {
+  private suspend fun run(latch: CountDownLatch) {
     try {
-      runBlocking(
-          when (val parallelism = parallelism) {
-            null -> Dispatchers.IO
-            else -> Dispatchers.IO.limitedParallelism(parallelism)
-          }) {
-            bind { selector, serverSocket ->
-              latch.countDown()
-              while (isActive) {
-                try {
-                  accept(this, serverSocket) { clientConnection, clientReader, clientWriter ->
-                    connect(selector) { graphConnection, graphReader, graphWriter ->
-                      proxy(
-                          clientConnection,
-                          clientReader,
-                          clientWriter,
-                          graphConnection,
-                          graphReader,
-                          graphWriter)
-                    }
-                  }
-                } catch (cancellation: CancellationException) {
-                  LOGGER.debug("Proxy connection closed", cancellation)
-                } catch (thrown: Throwable) {
-                  LOGGER.error("Proxy connection failure", thrown)
-                }
+      bind { selector, serverSocket ->
+        latch.countDown()
+        while (isActive) {
+          try {
+            accept(serverSocket) { clientConnection, clientReader, clientWriter ->
+              connect(selector) { graphConnection, graphReader, graphWriter ->
+                proxy(
+                    clientConnection,
+                    clientReader,
+                    clientWriter,
+                    graphConnection,
+                    graphReader,
+                    graphWriter)
               }
             }
+          } catch (cancellation: CancellationException) {
+            LOGGER.debug("Proxy connection closed", cancellation)
+          } catch (thrown: Throwable) {
+            LOGGER.error("Proxy connection failure", thrown)
           }
-    } catch (_: InterruptedException) {} finally {
+        }
+      }
+    } catch (_: CancellationException) {} finally {
       latch.countDown()
     }
   }
@@ -191,7 +192,7 @@ constructor(
               aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
           LOGGER.info("Started proxy server on '{}'", socket.localAddress)
           plugin.observe(Started)
-          socket.use { server -> coroutineScope { block(selector, server) } }
+          socket.use { server -> block(selector, server) }
         }
       } finally {
         LOGGER.info("Stopped proxy server")
@@ -204,14 +205,13 @@ constructor(
    * Accept a client connection from the [serverSocket] then [launch] a coroutine to run the [block]
    * with the [Socket] channels.
    */
-  private suspend fun accept(
-      coroutineScope: CoroutineScope,
+  private suspend fun CoroutineScope.accept(
       serverSocket: ServerSocket,
-      block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
+      block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
     val socket = serverSocket.accept()
     val clientConnection = Connection.Client(socket.remoteAddress.toInetSocketAddress())
-    coroutineScope.launch {
+    launch {
       try {
         socket.withChannels { reader, writer ->
           LOGGER.debug("Accepted connection from '{}'", clientConnection)
@@ -228,9 +228,9 @@ constructor(
   }
 
   /** Connect to the [graph] then run the [block] with the [Socket] channels. */
-  private suspend fun connect(
+  private suspend fun CoroutineScope.connect(
       selector: SelectorManager,
-      block: suspend (Connection, ByteReadChannel, ByteWriteChannel) -> Unit
+      block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
     var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
     if ("+s" in graph.scheme)
@@ -253,14 +253,14 @@ constructor(
 
   /** Proxy a [Bolt.Session] between the *client* and *graph*. */
   @Suppress("LongParameterList", "TooGenericExceptionCaught")
-  private suspend fun proxy(
+  private suspend fun CoroutineScope.proxy(
       clientConnection: Connection,
       clientReader: ByteReadChannel,
       clientWriter: ByteWriteChannel,
       graphConnection: Connection,
       graphReader: ByteReadChannel,
       graphWriter: ByteWriteChannel
-  ) = coroutineScope {
+  ) {
     val handshake = clientReader.readHandshake()
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
     graphWriter.writeByteArray(handshake)
@@ -581,7 +581,7 @@ constructor(
     /** Run the [block] with the [context] in the [MDC]. */
     private suspend fun withLoggingContext(
         vararg context: Pair<String, String>,
-        block: suspend () -> Unit
+        block: suspend CoroutineScope.() -> Unit
     ) {
       val reset = context.map { (key, value) -> MDC.putCloseable(key, value) }
       val result = withContext(MDCContext()) { runCatching { block() } }
@@ -595,7 +595,7 @@ constructor(
 
     /** Use the opened [ByteReadChannel] and [ByteWriteChannel] for the [Socket]. */
     private suspend fun Socket.withChannels(
-        block: suspend (ByteReadChannel, ByteWriteChannel) -> Unit
+        block: suspend CoroutineScope.(ByteReadChannel, ByteWriteChannel) -> Unit
     ) {
       use { socket ->
         val reader = socket.openReadChannel()

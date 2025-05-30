@@ -20,7 +20,6 @@ import io.github.cfraser.graphguard.knit.test
 import io.kotest.assertions.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
-import java.net.URI
 import org.neo4j.driver.AuthToken
 import org.neo4j.driver.Config
 import org.neo4j.driver.Driver
@@ -28,6 +27,7 @@ import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
 import org.neo4j.harness.Neo4j
 import org.neo4j.harness.Neo4jBuilders
+import java.net.URI
 
 val LOCAL = NamedTag("Local")
 
