@@ -230,7 +230,19 @@ internal object PackStream {
   @OptIn(ExperimentalContracts::class)
   fun <T> ByteArray.unpack(block: Unpacker.() -> T): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    return Unpacker(this).run(block)
+    return try {
+      Unpacker(this).run(block)
+    } catch (bufferException: java.nio.BufferUnderflowException) {
+      throw ServerError.ProtocolError.PackStreamParseError(
+          "ByteBuffer underflow",
+          bufferException
+      )
+    } catch (indexException: IndexOutOfBoundsException) {
+      throw ServerError.ProtocolError.PackStreamParseError(
+          "Array index out of bounds",
+          indexException
+      )
+    }
   }
 
   /** A [Structure](https://neo4j.com/docs/bolt/current/packstream/#data-type-structure). */
@@ -385,7 +397,10 @@ internal object PackStream {
           buffer.put(STRUCT_16)
           buffer.putShort(value.fields.size.toShort())
         }
-        else -> error("Structure size '${value.fields.size}' is invalid")
+        else -> throw ServerError.ProtocolError.SerializationError(
+            "Structure", 
+            IllegalArgumentException("Structure size '${value.fields.size}' exceeds maximum supported size")
+        )
       }
       buffer.put(value.id)
       value.fields.forEach(::any)
@@ -429,7 +444,10 @@ internal object PackStream {
                           zonedDateTime.toInstant().epochSecond,
                           zonedDateTime.nano,
                           zone.totalSeconds)))
-          else -> error("ZonedDateTime '$zonedDateTime' is invalid")
+          else -> throw ServerError.ProtocolError.SerializationError(
+              "ZonedDateTime",
+              IllegalArgumentException("ZonedDateTime '$zonedDateTime' has unsupported zone type")
+          )
         }
 
     /**
@@ -493,7 +511,10 @@ internal object PackStream {
         is LocalDateTime -> localDateTime(value)
         is Duration -> duration(value)
         is Structure -> structure(value)
-        else -> error("Value '$value' isn't packable")
+        else -> throw ServerError.ProtocolError.SerializationError(
+            value::class.simpleName ?: "Unknown",
+            IllegalArgumentException("Value of type '${value::class.simpleName}' is not supported for PackStream serialization")
+        )
       }
     }
   }
@@ -720,8 +741,11 @@ internal object PackStream {
           }
           else -> this
         }
-      } catch (_: Exception) {
-        error("Structure (${Char(id.toInt())}) '$this' is invalid")
+      } catch (conversionException: Exception) {
+        throw ServerError.ProtocolError.PackStreamParseError(
+            "Structure (${Char(id.toInt())}) conversion",
+            conversionException
+        )
       }
     }
 
@@ -740,7 +764,12 @@ internal object PackStream {
        */
       fun ByteBuffer.getUInt32(): Int {
         val uint32 = getInt().toUInt().toLong()
-        check(uint32 <= Int.MAX_VALUE) { "Size '$uint32' is too big" }
+        if (uint32 > Int.MAX_VALUE) {
+          throw ServerError.ProtocolError.PackStreamParseError(
+              "uint32 size",
+              IllegalArgumentException("Size '$uint32' exceeds maximum supported value")
+          )
+        }
         return uint32.toInt()
       }
 
@@ -752,8 +781,11 @@ internal object PackStream {
         return bytes
       }
 
-      /** Throw an [IllegalStateException] because the marker [Byte] is unexpected. */
-      fun Byte.unexpected(): Nothing = error("Unexpected marker '${toHex()}'")
+      /** Throw a [ServerError.ProtocolError] because the marker [Byte] is unexpected. */
+      fun Byte.unexpected(): Nothing = throw ServerError.ProtocolError.PackStreamParseError(
+          "marker byte",
+          IllegalArgumentException("Unexpected PackStream marker '${toHex()}'")
+      )
     }
   }
 
