@@ -104,13 +104,27 @@ constructor(
         intercept { session, message ->
           plugin
               .runCatching { intercept(session, message) }
-              .onFailure { LOGGER.error("Failed to intercept '{}'", message, it) }
+              .onFailure { throwable ->
+                val pluginError = ServerError.PluginError.InterceptorFailure(
+                    plugin::class.simpleName ?: "Unknown",
+                    message::class.simpleName ?: "Unknown",
+                    throwable
+                )
+                LOGGER.error("Plugin interceptor failed: {}", pluginError.message, pluginError)
+              }
               .getOrDefault(message)
         }
         observe { event ->
           plugin
               .runCatching { observe(event) }
-              .onFailure { LOGGER.error("Failed to observe '{}'", event, it) }
+              .onFailure { throwable ->
+                val pluginError = ServerError.PluginError.ObserverFailure(
+                    plugin::class.simpleName ?: "Unknown",
+                    event::class.simpleName ?: "Unknown",
+                    throwable
+                )
+                LOGGER.error("Plugin observer failed: {}", pluginError.message, pluginError)
+              }
         }
       }
 
@@ -120,7 +134,6 @@ constructor(
    * The [Server] is ready to accept client connections after [Server.start] returns.
    */
   @Synchronized
-  @Suppress("TooGenericExceptionCaught")
   fun start() {
     val latch = CountDownLatch(1)
     check(running?.isActive?.not() ?: true) { "The proxy server is already running" }
@@ -135,7 +148,14 @@ constructor(
               try {
                 run(latch)
               } catch (thrown: Exception) {
-                LOGGER.error("Proxy server failed to run", thrown)
+                val serverError = when (thrown) {
+                  is ServerError -> thrown
+                  is java.net.BindException -> ServerError.ConnectionError.BindFailure(address.toString(), thrown)
+                  is java.net.ConnectException -> ServerError.ConnectionError.GraphConnectionFailure(graph.toString(), thrown)
+                  is java.net.SocketTimeoutException -> ServerError.ConnectionError.ConnectionTimeout(30000L)
+                  else -> ServerError.ConnectionError.AcceptFailure(thrown)
+                }
+                LOGGER.error("Proxy server failed to start: {}", serverError.message, serverError)
               }
             }
     latch.await()
@@ -154,7 +174,6 @@ constructor(
    * [CancellationException] is **not** thrown after the server is stopped.
    * > [CountDownLatch.countDown] when the [Server] is ready to accept client connections.
    */
-  @Suppress("TooGenericExceptionCaught")
   private suspend fun run(latch: CountDownLatch) {
     try {
       bind { selector, serverSocket ->
@@ -175,7 +194,14 @@ constructor(
           } catch (cancellation: CancellationException) {
             LOGGER.debug("Proxy connection closed", cancellation)
           } catch (exception: Exception) {
-            LOGGER.error("Proxy connection failure", exception)
+            val connectionError = when (exception) {
+              is ServerError -> exception
+              is java.net.ConnectException -> ServerError.ConnectionError.GraphConnectionFailure(graph.toString(), exception)
+              is java.net.SocketTimeoutException -> ServerError.ConnectionError.ConnectionTimeout(30000L)
+              is java.io.IOException -> ServerError.ConnectionError.ConnectionClosed(exception.message)
+              else -> ServerError.ConnectionError.AcceptFailure(exception)
+            }
+            LOGGER.error("Proxy connection failure: {}", connectionError.message, connectionError)
           }
         }
       }
@@ -189,8 +215,11 @@ constructor(
     withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graph") {
       try {
         SelectorManager(coroutineContext).use { selector ->
-          val socket =
-              aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
+          val socket = try {
+            aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
+          } catch (bindException: Exception) {
+            throw ServerError.ConnectionError.BindFailure(address.toString(), bindException)
+          }
           LOGGER.info("Started proxy server on '{}'", socket.localAddress)
           plugin.observe(Started)
           socket.use { server -> block(selector, server) }
@@ -233,12 +262,24 @@ constructor(
       selector: SelectorManager,
       block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit
   ) {
-    var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
-    if ("+s" in graph.scheme)
-        socket =
-            socket.tls(coroutineContext = coroutineContext) {
-              trustManager = this@Server.trustManager
-            }
+    var socket = try {
+      aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
+    } catch (connectException: Exception) {
+      throw ServerError.ConnectionError.GraphConnectionFailure(graph.toString(), connectException)
+    }
+    
+    if ("+s" in graph.scheme) {
+      socket = try {
+        socket.tls(coroutineContext = coroutineContext) {
+          trustManager = this@Server.trustManager
+        }
+      } catch (tlsException: Exception) {
+        throw ServerError.ConfigurationError.TlsConfigurationError(
+            "Failed to establish TLS connection to graph", tlsException
+        )
+      }
+    }
+    
     val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
     try {
       socket.withChannels { reader, writer ->
@@ -253,7 +294,7 @@ constructor(
   }
 
   /** Proxy a [Bolt.Session] between the *client* and *graph*. */
-  @Suppress("LongParameterList", "TooGenericExceptionCaught")
+  @Suppress("LongParameterList")
   private suspend fun CoroutineScope.proxy(
       clientConnection: Connection,
       clientReader: ByteReadChannel,
@@ -313,7 +354,13 @@ constructor(
     } catch (cancellation: CancellationException) {
       LOGGER.debug("Proxy session closed", cancellation)
     } catch (thrown: Exception) {
-      LOGGER.error("Proxy session failure", thrown)
+      val sessionError = when (thrown) {
+        is ServerError -> thrown
+        is java.io.IOException -> ServerError.ConnectionError.ConnectionClosed(thrown.message)
+        is java.nio.channels.ClosedChannelException -> ServerError.ConnectionError.ConnectionClosed("Channel closed")
+        else -> ServerError.ProtocolError.MalformedMessage("Session", thrown.message ?: "Unknown error")
+      }
+      LOGGER.error("Proxy session failure: {}", sessionError.message, sessionError)
     }
   }
 
@@ -323,7 +370,6 @@ constructor(
    * [source] to the *resolved destination*.
    * > Intercept [Bolt.Goodbye] and [cancel] the [CoroutineScope] to end the session.
    */
-  @Suppress("TooGenericExceptionCaught")
   private fun CoroutineScope.proxy(
       session: Bolt.Session,
       source: Connection,
@@ -334,7 +380,15 @@ constructor(
       val message =
           try {
             reader.readMessage()
-          } catch (_: Exception) {
+          } catch (readException: Exception) {
+            val protocolError = when (readException) {
+              is ServerError.ProtocolError -> readException
+              is java.io.EOFException -> ServerError.ConnectionError.ConnectionClosed("End of stream")
+              is java.nio.channels.ClosedChannelException -> ServerError.ConnectionError.ConnectionClosed("Channel closed")
+              is kotlinx.coroutines.TimeoutCancellationException -> ServerError.ConnectionError.ConnectionTimeout(30000L)
+              else -> ServerError.ProtocolError.PackStreamParseError("message read", readException)
+            }
+            LOGGER.debug("Failed to read message from {}: {}", source, protocolError.message)
             break
           }
       LOGGER.debug("Read '{}' from {}", message, source)
@@ -342,8 +396,14 @@ constructor(
       val (destination, writer) = resolver(intercepted)
       try {
         writer.writeMessage(intercepted)
-      } catch (thrown: Exception) {
-        LOGGER.error("Failed to write '{}' to {}", intercepted, destination, thrown)
+      } catch (writeException: Exception) {
+        val writeError = when (writeException) {
+          is ServerError -> writeException
+          is java.io.IOException -> ServerError.ConnectionError.ConnectionClosed(writeException.message)
+          is java.nio.channels.ClosedChannelException -> ServerError.ConnectionError.ConnectionClosed("Channel closed")
+          else -> ServerError.ProtocolError.SerializationError(intercepted::class.simpleName ?: "Unknown", writeException)
+        }
+        LOGGER.error("Failed to write '{}' to {}: {}", intercepted, destination, writeError.message, writeError)
         break
       }
       LOGGER.debug("Wrote '{}' to {}", intercepted, destination)
