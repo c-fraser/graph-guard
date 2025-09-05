@@ -17,8 +17,8 @@ public final class io/github/cfraser/graphguard/validate/Patterns$Unparameterize
 }
 
 public abstract interface class io/github/cfraser/graphguard/validate/Rule {
-	public abstract fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
-	public abstract fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;
+	public fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
+	public fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;
 	public abstract fun validate-uxJLViw (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 }
 

@@ -95,7 +95,7 @@ public final class io/github/cfraser/graphguard/Bolt$Logon : java/lang/Record, i
 }
 
 public abstract interface class io/github/cfraser/graphguard/Bolt$Message {
-	public abstract fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
+	public fun and (Lio/github/cfraser/graphguard/Bolt$Message;)Lio/github/cfraser/graphguard/Bolt$Messages;
 }
 
 public final class io/github/cfraser/graphguard/Bolt$Message$DefaultImpls {
@@ -315,7 +315,7 @@ public abstract interface class io/github/cfraser/graphguard/Server$Event {
 public abstract interface class io/github/cfraser/graphguard/Server$Plugin {
 	public abstract fun intercept (Lio/github/cfraser/graphguard/Bolt$Session;Lio/github/cfraser/graphguard/Bolt$Message;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun observe (Lio/github/cfraser/graphguard/Server$Event;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun then (Lio/github/cfraser/graphguard/Server$Plugin;)Lio/github/cfraser/graphguard/Server$Plugin;
+	public fun then (Lio/github/cfraser/graphguard/Server$Plugin;)Lio/github/cfraser/graphguard/Server$Plugin;
 }
 
 public abstract class io/github/cfraser/graphguard/Server$Plugin$Async : io/github/cfraser/graphguard/Server$Plugin {
