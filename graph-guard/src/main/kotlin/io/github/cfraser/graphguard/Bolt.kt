@@ -33,25 +33,25 @@ object Bolt {
 
     /** Encode the [Bolt.Version] as an [Int]. */
     internal fun encode(): Int =
-        (major and 0xff) xor ((minor and 0xff) shl 8) xor ((this.range and 0xff) shl 16)
+      (major and 0xff) xor ((minor and 0xff) shl 8) xor ((this.range and 0xff) shl 16)
 
     /** Compare the [major] and [minor] of `this` [Bolt.Version] with the [other] [Bolt.Version]. */
     override fun compareTo(other: Version): Int =
-        major.compareTo(other.major).takeIf { i -> i != 0 } ?: minor.compareTo(other.minor)
+      major.compareTo(other.major).takeIf { i -> i != 0 } ?: minor.compareTo(other.minor)
 
     override fun toString(): String =
-        if (range != 0) "%1\$d.%2\$d..%1\$d.%3\$d".format(major, minor - range, minor)
-        else "$major.$minor"
+      if (range != 0) "%1\$d.%2\$d..%1\$d.%3\$d".format(major, minor - range, minor)
+      else "$major.$minor"
 
     override fun equals(other: Any?): Boolean =
-        when {
-          this === other -> true
-          other !is Version -> false
-          major != other.major -> false
-          minor != other.minor -> false
-          range != other.range -> false
-          else -> true
-        }
+      when {
+        this === other -> true
+        other !is Version -> false
+        major != other.major -> false
+        minor != other.minor -> false
+        range != other.range -> false
+        else -> true
+      }
 
     override fun hashCode(): Int {
       var hashCode = major
@@ -93,7 +93,7 @@ object Bolt {
      * @return the [Messages]
      */
     infix fun and(that: Message): Messages =
-        Messages((if (this is Messages) messages else listOf(this)) + that)
+      Messages((if (this is Messages) messages else listOf(this)) + that)
   }
 
   /** An ordered [List] of [messages]. */
@@ -103,10 +103,11 @@ object Bolt {
 
     init {
       require(
-          messages.all { message -> message is Request } ||
-              messages.all { message -> message is Response }) {
-            "${Messages::class.simpleName} must have a single destination"
-          }
+        messages.all { message -> message is Request } ||
+          messages.all { message -> message is Response }
+      ) {
+        "${Messages::class.simpleName} must have a single destination"
+      }
     }
   }
 
@@ -141,9 +142,9 @@ object Bolt {
 
   /** The [ROUTE](https://neo4j.com/docs/bolt/current/bolt/message/#messages-route) message. */
   data class Route(
-      val routing: Map<String, Any?>,
-      val bookmarks: List<String>,
-      val extra: Map<String, Any?>
+    val routing: Map<String, Any?>,
+    val bookmarks: List<String>,
+    val extra: Map<String, Any?>,
   ) : Request
 
   /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
@@ -152,9 +153,9 @@ object Bolt {
   /** The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message. */
   @JvmRecord
   data class Run(
-      val query: String,
-      val parameters: Map<String, Any?>,
-      val extra: Map<String, Any?>
+    val query: String,
+    val parameters: Map<String, Any?>,
+    val extra: Map<String, Any?>,
   ) : Request
 
   /** The [DISCARD](https://neo4j.com/docs/bolt/current/bolt/message/#messages-discard) message. */
@@ -188,56 +189,57 @@ object Bolt {
    */
   @Suppress("UNCHECKED_CAST", "CyclomaticComplexMethod")
   internal fun PackStream.Structure.toMessage(): Message =
-      when (id) {
-        0x11.toByte() -> Begin(fields[0] as Map<String, Any?>)
-        0x12.toByte() -> Commit
-        0x2f.toByte() -> Discard(fields[0] as Map<String, Any?>)
-        0x7f.toByte() -> Failure(fields[0] as Map<String, Any?>)
-        0x02.toByte() -> Goodbye
-        0x01.toByte() -> Hello(fields[0] as Map<String, Any?>)
-        0x7e.toByte() -> Ignored
-        0x6b.toByte() -> Logoff
-        0x6a.toByte() -> Logon(fields[0] as Map<String, Any?>)
-        0x3f.toByte() -> Pull(fields[0] as Map<String, Any?>)
-        0x71.toByte() -> Record(fields[0] as List<Any?>)
-        0x0f.toByte() -> Reset
-        0x13.toByte() -> Rollback
-        0x66.toByte() ->
-            Route(
-                fields[0] as Map<String, Any?>,
-                fields[1] as List<String>,
-                fields[2] as Map<String, Any?>)
-        0x10.toByte() ->
-            Run(fields[0] as String, fields[1] as Map<String, Any?>, fields[2] as Map<String, Any?>)
-        0x70.toByte() -> Success(fields[0] as Map<String, Any?>)
-        0x54.toByte() -> Telemetry(fields[0] as Long)
-        else -> error("Unknown message '$this'")
-      }
+    when (id) {
+      0x11.toByte() -> Begin(fields[0] as Map<String, Any?>)
+      0x12.toByte() -> Commit
+      0x2f.toByte() -> Discard(fields[0] as Map<String, Any?>)
+      0x7f.toByte() -> Failure(fields[0] as Map<String, Any?>)
+      0x02.toByte() -> Goodbye
+      0x01.toByte() -> Hello(fields[0] as Map<String, Any?>)
+      0x7e.toByte() -> Ignored
+      0x6b.toByte() -> Logoff
+      0x6a.toByte() -> Logon(fields[0] as Map<String, Any?>)
+      0x3f.toByte() -> Pull(fields[0] as Map<String, Any?>)
+      0x71.toByte() -> Record(fields[0] as List<Any?>)
+      0x0f.toByte() -> Reset
+      0x13.toByte() -> Rollback
+      0x66.toByte() ->
+        Route(
+          fields[0] as Map<String, Any?>,
+          fields[1] as List<String>,
+          fields[2] as Map<String, Any?>,
+        )
+      0x10.toByte() ->
+        Run(fields[0] as String, fields[1] as Map<String, Any?>, fields[2] as Map<String, Any?>)
+      0x70.toByte() -> Success(fields[0] as Map<String, Any?>)
+      0x54.toByte() -> Telemetry(fields[0] as Long)
+      else -> error("Unknown message '$this'")
+    }
 
   /** Convert the [Message] to a [PackStream.Structure]. */
   @Suppress("CyclomaticComplexMethod")
   internal fun Message.toStructure(): PackStream.Structure {
     val (id, fields) =
-        when (this) {
-          is Begin -> 0x11.toByte() to listOf(extra)
-          Commit -> 0x12.toByte() to emptyList()
-          is Discard -> 0x2f.toByte() to listOf(extra)
-          is Failure -> 0x7f.toByte() to listOf(metadata)
-          Goodbye -> 0x02.toByte() to emptyList()
-          is Hello -> 0x01.toByte() to listOf(extra)
-          Ignored -> 0x7e.toByte() to emptyList()
-          Logoff -> 0x6b.toByte() to emptyList()
-          is Logon -> 0x6a.toByte() to listOf(auth)
-          is Pull -> 0x3f.toByte() to listOf(extra)
-          is Record -> 0x71.toByte() to listOf(data)
-          Reset -> 0x0f.toByte() to emptyList()
-          Rollback -> 0x13.toByte() to emptyList()
-          is Route -> 0x66.toByte() to listOf(routing, bookmarks, extra)
-          is Run -> 0x10.toByte() to listOf(query, parameters, extra)
-          is Success -> 0x70.toByte() to listOf(metadata)
-          is Telemetry -> 0x54.toByte() to listOf(api)
-          else -> error("Invalid message '$this'")
-        }
+      when (this) {
+        is Begin -> 0x11.toByte() to listOf(extra)
+        Commit -> 0x12.toByte() to emptyList()
+        is Discard -> 0x2f.toByte() to listOf(extra)
+        is Failure -> 0x7f.toByte() to listOf(metadata)
+        Goodbye -> 0x02.toByte() to emptyList()
+        is Hello -> 0x01.toByte() to listOf(extra)
+        Ignored -> 0x7e.toByte() to emptyList()
+        Logoff -> 0x6b.toByte() to emptyList()
+        is Logon -> 0x6a.toByte() to listOf(auth)
+        is Pull -> 0x3f.toByte() to listOf(extra)
+        is Record -> 0x71.toByte() to listOf(data)
+        Reset -> 0x0f.toByte() to emptyList()
+        Rollback -> 0x13.toByte() to emptyList()
+        is Route -> 0x66.toByte() to listOf(routing, bookmarks, extra)
+        is Run -> 0x10.toByte() to listOf(query, parameters, extra)
+        is Success -> 0x70.toByte() to listOf(metadata)
+        is Telemetry -> 0x54.toByte() to listOf(api)
+        else -> error("Invalid message '$this'")
+      }
     return PackStream.Structure(id, fields)
   }
 }

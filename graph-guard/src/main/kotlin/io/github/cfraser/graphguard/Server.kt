@@ -20,8 +20,10 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
+import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -38,6 +40,14 @@ import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
 import io.ktor.utils.io.writeShort
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.ByteBuffer
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import javax.net.ssl.TrustManager
+import kotlin.time.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -58,16 +68,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
-import java.net.InetSocketAddress
-import java.net.URI
-import java.nio.ByteBuffer
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CountDownLatch
-import javax.net.ssl.TrustManager
-import kotlin.time.Duration
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -83,11 +83,11 @@ import io.ktor.network.sockets.SocketAddress as KSocketAddress
 class Server
 @JvmOverloads
 constructor(
-    val graph: URI,
-    plugin: Plugin = Plugin.DSL.plugin {},
-    val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
-    private val parallelism: Int? = null,
-    private val trustManager: TrustManager? = null
+  val graph: URI,
+  plugin: Plugin = Plugin.DSL.plugin {},
+  val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
+  private val parallelism: Int? = null,
+  private val trustManager: TrustManager? = null,
 ) : AutoCloseable {
 
   /** The [Job] with the [running] [Server]. */
@@ -100,19 +100,19 @@ constructor(
    * being propagated, to avoid proxy [Server] instability.
    */
   private val plugin =
-      Plugin.DSL.plugin {
-        intercept { session, message ->
-          plugin
-              .runCatching { intercept(session, message) }
-              .onFailure { LOGGER.error("Failed to intercept '{}'", message, it) }
-              .getOrDefault(message)
-        }
-        observe { event ->
-          plugin
-              .runCatching { observe(event) }
-              .onFailure { LOGGER.error("Failed to observe '{}'", event, it) }
-        }
+    Plugin.DSL.plugin {
+      intercept { session, message ->
+        plugin
+          .runCatching { intercept(session, message) }
+          .onFailure { LOGGER.error("Failed to intercept '{}'", message, it) }
+          .getOrDefault(message)
       }
+      observe { event ->
+        plugin
+          .runCatching { observe(event) }
+          .onFailure { LOGGER.error("Failed to observe '{}'", event, it) }
+      }
+    }
 
   /**
    * Start the [Server].
@@ -125,19 +125,20 @@ constructor(
     val latch = CountDownLatch(1)
     check(running?.isActive?.not() ?: true) { "The proxy server is already running" }
     running =
-        @OptIn(DelicateCoroutinesApi::class)
-        GlobalScope.launch(
-            MDCContext() +
-                when (val parallelism = parallelism) {
-                  null -> Dispatchers.IO
-                  else -> Dispatchers.IO.limitedParallelism(parallelism)
-                }) {
-              try {
-                run(latch)
-              } catch (thrown: Exception) {
-                LOGGER.error("Proxy server failed to run", thrown)
-              }
-            }
+      @OptIn(DelicateCoroutinesApi::class)
+      GlobalScope.launch(
+        MDCContext() +
+          when (val parallelism = parallelism) {
+            null -> Dispatchers.IO
+            else -> Dispatchers.IO.limitedParallelism(parallelism)
+          }
+      ) {
+        try {
+          run(latch)
+        } catch (thrown: Exception) {
+          LOGGER.error("Proxy server failed to run", thrown)
+        }
+      }
     latch.await()
   }
 
@@ -164,12 +165,13 @@ constructor(
             accept(serverSocket) { clientConnection, clientReader, clientWriter ->
               connect(selector) { graphConnection, graphReader, graphWriter ->
                 proxy(
-                    clientConnection,
-                    clientReader,
-                    clientWriter,
-                    graphConnection,
-                    graphReader,
-                    graphWriter)
+                  clientConnection,
+                  clientReader,
+                  clientWriter,
+                  graphConnection,
+                  graphReader,
+                  graphWriter,
+                )
               }
             }
           } catch (cancellation: CancellationException) {
@@ -190,7 +192,7 @@ constructor(
       try {
         SelectorManager(coroutineContext).use { selector ->
           val socket =
-              aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
+            aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
           LOGGER.info("Started proxy server on '{}'", socket.localAddress)
           plugin.observe(Started)
           socket.use { server -> block(selector, server) }
@@ -207,8 +209,8 @@ constructor(
    * with the [Socket] channels.
    */
   private suspend fun CoroutineScope.accept(
-      serverSocket: ServerSocket,
-      block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit
+    serverSocket: ServerSocket,
+    block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
   ) {
     val socket = serverSocket.accept()
     val clientConnection = Connection.Client(socket.remoteAddress.toInetSocketAddress())
@@ -230,15 +232,13 @@ constructor(
 
   /** Connect to the [graph] then run the [block] with the [Socket] channels. */
   private suspend fun CoroutineScope.connect(
-      selector: SelectorManager,
-      block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit
+    selector: SelectorManager,
+    block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
   ) {
     var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
     if ("+s" in graph.scheme)
-        socket =
-            socket.tls(coroutineContext = coroutineContext) {
-              trustManager = this@Server.trustManager
-            }
+      socket =
+        socket.tls(coroutineContext = coroutineContext) { trustManager = this@Server.trustManager }
     val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
     try {
       socket.withChannels { reader, writer ->
@@ -255,12 +255,12 @@ constructor(
   /** Proxy a [Bolt.Session] between the *client* and *graph*. */
   @Suppress("LongParameterList", "TooGenericExceptionCaught")
   private suspend fun CoroutineScope.proxy(
-      clientConnection: Connection,
-      clientReader: ByteReadChannel,
-      clientWriter: ByteWriteChannel,
-      graphConnection: Connection,
-      graphReader: ByteReadChannel,
-      graphWriter: ByteWriteChannel
+    clientConnection: Connection,
+    clientReader: ByteReadChannel,
+    clientWriter: ByteWriteChannel,
+    graphConnection: Connection,
+    graphReader: ByteReadChannel,
+    graphWriter: ByteWriteChannel,
   ) {
     val handshake = clientReader.readHandshake()
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
@@ -299,13 +299,13 @@ constructor(
     val responseWriter = clientConnection to clientWriter
     try {
       val incoming =
-          proxy(session, clientConnection, clientReader) { message ->
-            if (message is Bolt.Request) requestWriter else responseWriter
-          }
+        proxy(session, clientConnection, clientReader) { message ->
+          if (message is Bolt.Request) requestWriter else responseWriter
+        }
       val outgoing =
-          proxy(session, graphConnection, graphReader) { message ->
-            if (message is Bolt.Response) responseWriter else requestWriter
-          }
+        proxy(session, graphConnection, graphReader) { message ->
+          if (message is Bolt.Response) responseWriter else requestWriter
+        }
       select {
         incoming.onJoin { outgoing.cancel() }
         outgoing.onJoin { incoming.cancel() }
@@ -325,18 +325,18 @@ constructor(
    */
   @Suppress("TooGenericExceptionCaught")
   private fun CoroutineScope.proxy(
-      session: Bolt.Session,
-      source: Connection,
-      reader: ByteReadChannel,
-      resolver: (Bolt.Message) -> Pair<Connection, ByteWriteChannel>
+    session: Bolt.Session,
+    source: Connection,
+    reader: ByteReadChannel,
+    resolver: (Bolt.Message) -> Pair<Connection, ByteWriteChannel>,
   ): Job = launch {
     while (isActive) {
       val message =
-          try {
-            reader.readMessage()
-          } catch (_: Exception) {
-            break
-          }
+        try {
+          reader.readMessage()
+        } catch (_: Exception) {
+          break
+        }
       LOGGER.debug("Read '{}' from {}", message, source)
       val intercepted = plugin.intercept(session, message)
       val (destination, writer) = resolver(intercepted)
@@ -415,8 +415,8 @@ constructor(
        * @return a [CompletableFuture] with the [Bolt.Message] to send
        */
       abstract fun interceptAsync(
-          session: String,
-          message: Bolt.Message,
+        session: String,
+        message: Bolt.Message,
       ): CompletableFuture<Bolt.Message>
 
       /**
@@ -429,8 +429,8 @@ constructor(
 
       /** [interceptAsync] then [await] for the [CompletableFuture] to complete. */
       final override suspend fun intercept(
-          session: Bolt.Session,
-          message: Bolt.Message,
+        session: Bolt.Session,
+        message: Bolt.Message,
       ): Bolt.Message = interceptAsync(session.id, message).await()
 
       /** [observeAsync] then [await] for the [CompletableFuture] to complete. */
@@ -499,7 +499,7 @@ constructor(
 
           /** Intercept the [message] with the [interceptor]. */
           override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) =
-              interceptor(session, message)
+            interceptor(session, message)
 
           /** Observe the [event] with the [observer]. */
           override suspend fun observe(event: Event) = observer(event)
@@ -563,11 +563,11 @@ constructor(
    */
   @JvmRecord
   data class Proxied(
-      val session: Bolt.Session,
-      val source: Connection,
-      val received: Bolt.Message,
-      val destination: Connection,
-      val sent: Bolt.Message
+    val session: Bolt.Session,
+    val source: Connection,
+    val received: Bolt.Message,
+    val destination: Connection,
+    val sent: Bolt.Message,
   ) : Event
 
   /** The [Server] has stopped. */
@@ -581,8 +581,8 @@ constructor(
 
     /** Run the [block] with the [context] in the [MDC]. */
     private suspend fun withLoggingContext(
-        vararg context: Pair<String, String>,
-        block: suspend CoroutineScope.() -> Unit
+      vararg context: Pair<String, String>,
+      block: suspend CoroutineScope.() -> Unit,
     ) {
       val reset = context.map { (key, value) -> MDC.putCloseable(key, value) }
       val result = withContext(MDCContext()) { runCatching { block() } }
@@ -592,11 +592,11 @@ constructor(
 
     /** Convert the [KSocketAddress] to an [InetSocketAddress]. */
     private fun KSocketAddress.toInetSocketAddress(): InetSocketAddress =
-        checkNotNull(toJavaAddress() as? InetSocketAddress) { "Unexpected address '$this'" }
+      checkNotNull(toJavaAddress() as? InetSocketAddress) { "Unexpected address '$this'" }
 
     /** Use the opened [ByteReadChannel] and [ByteWriteChannel] for the [Socket]. */
     private suspend fun Socket.withChannels(
-        block: suspend CoroutineScope.(ByteReadChannel, ByteWriteChannel) -> Unit
+      block: suspend CoroutineScope.(ByteReadChannel, ByteWriteChannel) -> Unit
     ) {
       use { socket ->
         val reader = socket.openReadChannel()
@@ -628,7 +628,7 @@ constructor(
 
     /** Read the [Bolt.Version]. */
     private suspend inline fun ByteReadChannel.readVersion(): Bolt.Version =
-        Bolt.Version.decode(readInt())
+      Bolt.Version.decode(readInt())
 
     /** Read the [Bolt.Version]s supported by the graph. */
     private suspend fun ByteReadChannel.readVersions(): Array<Bolt.Version> {
@@ -650,7 +650,7 @@ constructor(
 
     /** Read a [Bolt.Message] from the [ByteReadChannel]. */
     private suspend fun ByteReadChannel.readMessage(
-        timeout: Duration = Duration.INFINITE
+      timeout: Duration = Duration.INFINITE
     ): Bolt.Message {
       val structure = readChunked(timeout).unpack { structure() }
       return structure.toMessage()
@@ -679,13 +679,13 @@ constructor(
 
     /** Write a [Bolt.Message] to the [ByteWriteChannel]. */
     private suspend fun ByteWriteChannel.writeMessage(
-        message: Bolt.Message,
-        maxChunkSize: Int = UShort.MAX_VALUE.toInt(),
+      message: Bolt.Message,
+      maxChunkSize: Int = UShort.MAX_VALUE.toInt(),
     ) {
       (if (message is Bolt.Messages) message.messages else listOf(message))
-          .map { msg -> msg.toStructure() }
-          .map { structure -> PackStream.pack { structure(structure) } }
-          .forEach { bytes -> writeChunked(bytes, maxChunkSize) }
+        .map { msg -> msg.toStructure() }
+        .map { structure -> PackStream.pack { structure(structure) } }
+        .forEach { bytes -> writeChunked(bytes, maxChunkSize) }
     }
 
     /**
@@ -694,14 +694,14 @@ constructor(
      */
     suspend fun ByteWriteChannel.writeChunked(message: ByteArray, maxChunkSize: Int) {
       message
-          .asSequence()
-          .chunked(maxChunkSize)
-          .map { bytes -> bytes.toByteArray() }
-          .forEach { chunk ->
-            writeShort(chunk.size.toShort())
-            writeByteArray(chunk)
-            writeByteArray(byteArrayOf(0x0, 0x0))
-          }
+        .asSequence()
+        .chunked(maxChunkSize)
+        .map { bytes -> bytes.toByteArray() }
+        .forEach { chunk ->
+          writeShort(chunk.size.toShort())
+          writeByteArray(chunk)
+          writeByteArray(byteArrayOf(0x0, 0x0))
+        }
     }
   }
 }

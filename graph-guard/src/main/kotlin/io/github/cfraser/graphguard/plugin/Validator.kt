@@ -1,3 +1,18 @@
+/*
+Copyright 2023 c-fraser
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package io.github.cfraser.graphguard.plugin
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -18,7 +33,7 @@ import org.slf4j.LoggerFactory
  * @param cacheSize the maximum entries in the cache of validated queries
  */
 class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Long? = null) :
-    Server.Plugin {
+  Server.Plugin {
 
   /** A [Mutex] for writing [failures]. */
   private val lock = Mutex()
@@ -32,11 +47,13 @@ class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Lon
 
   /** A [LoadingCache] of validated *Cypher* queries. */
   private val cache =
-      @Suppress("UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
-      Caffeine.newBuilder().maximumSize(cacheSize ?: 1024).build<
-          Pair<String, Map<String, Any?>>, Rule.Violation?> { (query, parameters) ->
-        rule.validate(query, parameters)
-      }
+    @Suppress("UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
+    Caffeine.newBuilder().maximumSize(cacheSize ?: 1024).build<
+      Pair<String, Map<String, Any?>>,
+      Rule.Violation?,
+    > { (query, parameters) ->
+      rule.validate(query, parameters)
+    }
 
   override suspend fun intercept(session: Bolt.Session, message: Bolt.Message): Bolt.Message {
     when (message) {
@@ -44,16 +61,17 @@ class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Lon
         val violation = cache[message.query to message.parameters] ?: return message
         LOGGER.info("Cypher query '{}' is invalid: {}", message.query, violation.message)
         val failure =
-            Bolt.Failure(
-                buildMap {
-                  this += "message" to violation.message
-                  if (session.version >= Bolt.Version(5, 7, 0)) {
-                    this += "gql_status" to "01000"
-                    this += "neo4j_code" to "GraphGuard.Invalid.Query"
-                    this += "description" to "graph-guard schema violation: $violation"
-                    this += mapOf("diagnostic_record" to mapOf("_classification" to "CLIENT_ERROR"))
-                  } else this += "code" to "GraphGuard.Invalid.Query"
-                })
+          Bolt.Failure(
+            buildMap {
+              this += "message" to violation.message
+              if (session.version >= Bolt.Version(5, 7, 0)) {
+                this += "gql_status" to "01000"
+                this += "neo4j_code" to "GraphGuard.Invalid.Query"
+                this += "description" to "graph-guard schema violation: $violation"
+                this += mapOf("diagnostic_record" to mapOf("_classification" to "CLIENT_ERROR"))
+              } else this += "code" to "GraphGuard.Invalid.Query"
+            }
+          )
         lock.withLock { failures[session] = failure }
         return Bolt.Messages(emptyList())
       }

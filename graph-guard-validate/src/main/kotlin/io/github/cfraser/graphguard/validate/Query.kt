@@ -15,6 +15,7 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.validate
 
+import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
 import org.neo4j.cypherdsl.core.KeyValueMapEntry
@@ -28,9 +29,11 @@ import org.neo4j.cypherdsl.core.Operation
 import org.neo4j.cypherdsl.core.Operator
 import org.neo4j.cypherdsl.core.Parameter
 import org.neo4j.cypherdsl.core.PatternElement
+import org.neo4j.cypherdsl.core.Property as CypherProperty
 import org.neo4j.cypherdsl.core.PropertyLookup
 import org.neo4j.cypherdsl.core.RelationshipBase
 import org.neo4j.cypherdsl.core.RelationshipChain
+import org.neo4j.cypherdsl.core.Set as CypherSet
 import org.neo4j.cypherdsl.core.Statement
 import org.neo4j.cypherdsl.core.StatementCatalog
 import org.neo4j.cypherdsl.core.SymbolicName
@@ -39,9 +42,6 @@ import org.neo4j.cypherdsl.parser.CypherParser
 import org.neo4j.cypherdsl.parser.ExpressionCreatedEventType
 import org.neo4j.cypherdsl.parser.Options
 import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
-import kotlin.jvm.optionals.getOrNull
-import org.neo4j.cypherdsl.core.Property as CypherProperty
-import org.neo4j.cypherdsl.core.Set as CypherSet
 
 /**
  * A *Cypher* [Query].
@@ -54,16 +54,20 @@ import org.neo4j.cypherdsl.core.Set as CypherSet
  * @property entities a map of symbolic name to entity labels
  */
 internal data class Query(
-    val nodes: Set<String>,
-    val relationships: Set<Relationship>,
-    val properties: Set<Property>,
-    val mutatedProperties: Set<MutatedProperty>,
-    val removedProperties: Set<RemovedProperty>,
-    val entities: Map<String, Set<String>>
+  val nodes: Set<String>,
+  val relationships: Set<Relationship>,
+  val properties: Set<Property>,
+  val mutatedProperties: Set<MutatedProperty>,
+  val removedProperties: Set<RemovedProperty>,
+  val entities: Map<String, Set<String>>,
 ) {
 
   /** A [Relationship] with the [label] from the [sources] to the [targets]. */
-  data class Relationship(val label: String, val sources: Collection<String>?, val targets: Collection<String>?)
+  data class Relationship(
+    val label: String,
+    val sources: Collection<String>?,
+    val targets: Collection<String>?,
+  )
 
   /** A [Property] of the [owner] with the [name] and [values]. */
   data class Property(val owner: String?, val name: String, val values: Set<Type>) {
@@ -94,7 +98,7 @@ internal data class Query(
 
   /** A [MutatedProperty] of the [owner] with the [properties]. */
   data class MutatedProperty(override val owner: String, val properties: String) :
-      Owned<MutatedProperty> {
+    Owned<MutatedProperty> {
 
     override fun assign(owner: String): MutatedProperty = copy(owner = owner)
   }
@@ -104,7 +108,7 @@ internal data class Query(
    * [owner].
    */
   data class RemovedProperty(override val owner: String, val property: String) :
-      Owned<RemovedProperty> {
+    Owned<RemovedProperty> {
 
     override fun assign(owner: String): RemovedProperty = copy(owner = owner)
   }
@@ -118,27 +122,27 @@ internal data class Query(
       val mutatedProperties = mutableSetOf<MutatedProperty>()
       val removedProperties = mutableSetOf<RemovedProperty>()
       val options =
-          Options.newOptions()
-              .withCallback(PatternElementCreatedEventType.ON_MATCH) { entities.collect(it) }
-              .withCallback(PatternElementCreatedEventType.ON_CREATE) { entities.collect(it) }
-              .withCallback(PatternElementCreatedEventType.ON_MERGE) { entities.collect(it) }
-              .withCallback(
-                  ExpressionCreatedEventType.ON_ADD_AND_SET_VARIABLE, Operation::class.java) {
-                    mutatedProperties.collect(it)
-                  }
-              .withCallback(ExpressionCreatedEventType.ON_REMOVE_PROPERTY, Expression::class.java) {
-                removedProperties.collect(it)
-              }
-              .build()
+        Options.newOptions()
+          .withCallback(PatternElementCreatedEventType.ON_MATCH) { entities.collect(it) }
+          .withCallback(PatternElementCreatedEventType.ON_CREATE) { entities.collect(it) }
+          .withCallback(PatternElementCreatedEventType.ON_MERGE) { entities.collect(it) }
+          .withCallback(ExpressionCreatedEventType.ON_ADD_AND_SET_VARIABLE, Operation::class.java) {
+            mutatedProperties.collect(it)
+          }
+          .withCallback(ExpressionCreatedEventType.ON_REMOVE_PROPERTY, Expression::class.java) {
+            removedProperties.collect(it)
+          }
+          .build()
       return try {
         val statement = CypherParser.parse(cypher, options)
         Query(
-            statement.nodes,
-            statement.relationships,
-            statement.properties,
-            mutatedProperties.mapToLabel(entities),
-            removedProperties.mapToLabel(entities),
-            entities)
+          statement.nodes,
+          statement.relationships,
+          statement.properties,
+          mutatedProperties.mapToLabel(entities),
+          removedProperties.mapToLabel(entities),
+          entities,
+        )
       } catch (_: Exception) {
         null
       }
@@ -146,14 +150,14 @@ internal data class Query(
 
     /** Collect the symbolic name to entity label(s) mapping from the [patternElement]. */
     private fun MutableMap<String, Set<String>>.collect(
-        patternElement: PatternElement
+      patternElement: PatternElement
     ): PatternElement {
       when (patternElement) {
         is NodeBase<*> -> collectNode(patternElement)
         is RelationshipBase<*, *, *> -> {
           listOf(patternElement.left, patternElement.right)
-              .filterIsInstance<NodeBase<*>>()
-              .forEach { node -> collectNode(node) }
+            .filterIsInstance<NodeBase<*>>()
+            .forEach { node -> collectNode(node) }
           collectRelationship(patternElement)
         }
         is RelationshipChain -> {
@@ -162,7 +166,7 @@ internal data class Query(
               is NodeBase<*> -> collect(visitable)
               is RelationshipBase<*, *, *> -> {
                 listOf(visitable.left, visitable.right).filterIsInstance<NodeBase<*>>().forEach {
-                    node ->
+                  node ->
                   collectNode(node)
                 }
                 collectRelationship(visitable)
@@ -178,33 +182,34 @@ internal data class Query(
     private fun MutableMap<String, Set<String>>.collectNode(node: NodeBase<*>) {
       val symbolicName = node.symbolicName.getOrNull()?.value ?: return
       val labels =
-          node.labels
-              .takeUnless(List<*>::isEmpty)
-              ?.map(NodeLabel::getValue)
-              ?.toSet()
-              .orEmpty()
-              .toMutableSet()
+        node.labels
+          .takeUnless(List<*>::isEmpty)
+          ?.map(NodeLabel::getValue)
+          ?.toSet()
+          .orEmpty()
+          .toMutableSet()
       fun add(vararg labelExpressions: LabelExpression) =
-          labelExpressions.forEach { labelExpression ->
-            if (labelExpression.type == LabelExpression.Type.LEAF)
-                labels += labelExpression.value.orEmpty()
-          }
+        labelExpressions.forEach { labelExpression ->
+          if (labelExpression.type == LabelExpression.Type.LEAF)
+            labels += labelExpression.value.orEmpty()
+        }
       val labelTypes =
-          setOf(
-              LabelExpression.Type.CONJUNCTION,
-              LabelExpression.Type.COLON_CONJUNCTION,
-              LabelExpression.Type.COLON_DISJUNCTION,
-              LabelExpression.Type.DISJUNCTION)
+        setOf(
+          LabelExpression.Type.CONJUNCTION,
+          LabelExpression.Type.COLON_CONJUNCTION,
+          LabelExpression.Type.COLON_DISJUNCTION,
+          LabelExpression.Type.DISJUNCTION,
+        )
       node.accept { visitable ->
         if (visitable is LabelExpression && visitable.type in labelTypes)
-            add(visitable.lhs, visitable.rhs)
+          add(visitable.lhs, visitable.rhs)
       }
       compute(symbolicName) { _, previousLabels -> previousLabels.orEmpty() + labels }
     }
 
     /** Collect the symbolic name to entity label(s) mapping from the [relationship]. */
     private fun MutableMap<String, Set<String>>.collectRelationship(
-        relationship: RelationshipBase<*, *, *>
+      relationship: RelationshipBase<*, *, *>
     ) {
       var value: String? = null
       relationship.details.accept { visitable ->
@@ -248,18 +253,19 @@ internal data class Query(
       }
       try {
         this +=
-            RemovedProperty(
-                checkNotNull(symbolicName?.cypher()),
-                checkNotNull(propertyLookup?.cypher()?.removePrefix(".")))
+          RemovedProperty(
+            checkNotNull(symbolicName?.cypher()),
+            checkNotNull(propertyLookup?.cypher()?.removePrefix(".")),
+          )
       } catch (_: IllegalStateException) {}
       return expression
     }
 
     /** Map the [Owned] symbolic name to a label from the collected [entities]. */
     private fun <T, O : Owned<T>> MutableSet<O>.mapToLabel(
-        entities: Map<String, Set<String>>
+      entities: Map<String, Set<String>>
     ): Set<T> =
-        mapNotNull { owned -> entities[owned.owner]?.firstOrNull()?.let(owned::assign) }.toSet()
+      mapNotNull { owned -> entities[owned.owner]?.firstOrNull()?.let(owned::assign) }.toSet()
 
     /** A [Regex] to capture the *Cypher* of a rendered [org.neo4j.cypherdsl.core] type. */
     private val RENDERED_DSL = Regex("\\w+\\{cypher=(.+)}")
@@ -274,21 +280,28 @@ internal data class Query(
     /** Get the [Relationship]s in the *Cypher* [Statement]. */
     private val Statement.relationships: Set<Relationship>
       get() =
-          catalog.relationshipTypes
-              .map { type ->
-                fun Collection<StatementCatalog.Token>?.orEmptyToken():
-                    Collection<StatementCatalog.Token> =
-                    takeUnless { it.isNullOrEmpty() } ?: listOf(StatementCatalog.Token.label(""))
-                val sources = catalog.getSourceNodes(type).orEmptyToken()
-                val targets = catalog.getTargetNodes(type).orEmptyToken()
-                Relationship(
-                  type.value,
-                  sources.filter { source -> type in catalog.getOutgoingRelations(source) }
-                    .takeUnless(Collection<StatementCatalog.Token>::isEmpty)
-                    ?.map(                    StatementCatalog.Token::value)?.toSet(),
-                  targets.filter { target -> type in catalog.getIncomingRelations(target) }.takeUnless(Collection<StatementCatalog.Token>::isEmpty)?.map(                    StatementCatalog.Token::value)?.toSet())
-              }
-              .toSet()
+        catalog.relationshipTypes
+          .map { type ->
+            fun Collection<StatementCatalog.Token>?.orEmptyToken():
+              Collection<StatementCatalog.Token> =
+              takeUnless { it.isNullOrEmpty() } ?: listOf(StatementCatalog.Token.label(""))
+            val sources = catalog.getSourceNodes(type).orEmptyToken()
+            val targets = catalog.getTargetNodes(type).orEmptyToken()
+            Relationship(
+              type.value,
+              sources
+                .filter { source -> type in catalog.getOutgoingRelations(source) }
+                .takeUnless(Collection<StatementCatalog.Token>::isEmpty)
+                ?.map(StatementCatalog.Token::value)
+                ?.toSet(),
+              targets
+                .filter { target -> type in catalog.getIncomingRelations(target) }
+                .takeUnless(Collection<StatementCatalog.Token>::isEmpty)
+                ?.map(StatementCatalog.Token::value)
+                ?.toSet(),
+            )
+          }
+          .toSet()
 
     /** Get the node/relationship properties in the *Cypher* [Statement]. */
     private val Statement.properties: Set<Property>
@@ -297,17 +310,15 @@ internal data class Query(
         val propertyTypes = buildMap {
           catalog.allPropertyFilters.forEach { (property, filters) ->
             this +=
-                "${property.owningToken.firstOrNull()?.value.orEmpty()}.${property.name}" to
-                    filters.collectOptions(options).mapPropertyType().toSet()
+              "${property.owningToken.firstOrNull()?.value.orEmpty()}.${property.name}" to
+                filters.collectOptions(options).mapPropertyType().toSet()
           }
           val properties =
-              catalog.properties
-                  .mapNotNull { property ->
-                    property.owningToken.firstOrNull()?.value?.let { owner ->
-                      property.name to owner
-                    }
-                  }
-                  .toMap()
+            catalog.properties
+              .mapNotNull { property ->
+                property.owningToken.firstOrNull()?.value?.let { owner -> property.name to owner }
+              }
+              .toMap()
           val entities = mutableMapOf<String, Collection<String>>()
           accept { visitable ->
             when (visitable) {
@@ -316,31 +327,33 @@ internal data class Query(
                 entities += name to visitable.labels.map(NodeLabel::getValue)
               }
               is CypherSet ->
-                  for ((left, operator, right) in visitable.getOperations()) {
-                    if (operator != Operator.SET) continue
-                    val reference = left.containerReference.cypher() ?: continue
-                    val label =
-                        entities[reference]?.firstOrNull { label -> label == properties[left.name] }
-                            ?: continue
-                    this += "$label.${left.name}" to setOf(right)
-                  }
+                for ((left, operator, right) in visitable.getOperations()) {
+                  if (operator != Operator.SET) continue
+                  val reference = left.containerReference.cypher() ?: continue
+                  val label =
+                    entities[reference]?.firstOrNull { label -> label == properties[left.name] }
+                      ?: continue
+                  this += "$label.${left.name}" to setOf(right)
+                }
             }
           }
         }
         return catalog.properties
-            .mapNotNull { property ->
-              val owner = property.owningToken.firstOrNull()?.value
-              val name = property.name
-              val types = propertyTypes.getOrDefault("$owner.$name", emptySet())
-              val values = options.getOrDefault(name, emptySet())
-              if (types
-                  .filterIsInstance<Property.Type.Value>()
-                  .mapNotNull(Property.Type.Value::cypher)
-                  .any { value -> value in values })
-                  null
-              else Property(owner, name, types)
-            }
-            .toSet()
+          .mapNotNull { property ->
+            val owner = property.owningToken.firstOrNull()?.value
+            val name = property.name
+            val types = propertyTypes.getOrDefault("$owner.$name", emptySet())
+            val values = options.getOrDefault(name, emptySet())
+            if (
+              types
+                .filterIsInstance<Property.Type.Value>()
+                .mapNotNull(Property.Type.Value::cypher)
+                .any { value -> value in values }
+            )
+              null
+            else Property(owner, name, types)
+          }
+          .toSet()
       }
 
     /**
@@ -348,7 +361,7 @@ internal data class Query(
      * [StatementCatalog.PropertyFilter]s.
      */
     private fun Collection<StatementCatalog.PropertyFilter>.collectOptions(
-        options: MutableMap<String, Set<String?>>
+      options: MutableMap<String, Set<String?>>
     ): Collection<StatementCatalog.PropertyFilter> {
       return onEach { filter ->
         when (val expression = filter.right) {
@@ -393,9 +406,9 @@ internal data class Query(
 
     /** Convert each [StatementCatalog.PropertyFilter] to a [Property.Type]. */
     private fun Collection<StatementCatalog.PropertyFilter>.mapPropertyType(): List<Property.Type> =
-        mapNotNull { filter ->
-          filter.right?.toPropertyType()
-        }
+      mapNotNull { filter ->
+        filter.right?.toPropertyType()
+      }
 
     /** Convert the [Expression] to a [Property.Type]. */
     private fun Expression.toPropertyType(): Property.Type? {
@@ -403,18 +416,18 @@ internal data class Query(
         is NullLiteral -> Property.Type.Value(null, expression.cypher())
         is Literal<*> -> Property.Type.Value(expression.content, expression.cypher())
         is ListExpression ->
-            buildList {
-                  expression.accept { visitable ->
-                    when (visitable) {
-                      is NullLiteral -> this += null
-                      is Literal<*> -> this += visitable.content
-                    }
-                  }
+          buildList {
+              expression.accept { visitable ->
+                when (visitable) {
+                  is NullLiteral -> this += null
+                  is Literal<*> -> this += visitable.content
                 }
-                .let { Property.Type.Container(it) }
+              }
+            }
+            .let { Property.Type.Container(it) }
         is Parameter<*> -> Property.Type.Resolvable(expression.name)
         is FunctionInvocation ->
-            Property.Type.Resolvable(expression.cypher() ?: "${expression.functionName}()")
+          Property.Type.Resolvable(expression.cypher() ?: "${expression.functionName}()")
         else -> null
       }
     }

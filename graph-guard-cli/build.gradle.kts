@@ -39,27 +39,24 @@ dependencies {
 
 buildConfig {
   packageName(
-      "${project.group}.${project.name}"
-          .reversed()
-          .replaceFirst("-", ".")
-          .reversed()
-          .replace("-", ""))
+    "${project.group}.${project.name}".reversed().replaceFirst("-", ".").reversed().replace("-", "")
+  )
   buildConfigField(String::class.simpleName!!, "VERSION", "\"${project.version}\"")
 }
 
 tasks {
   withType<Test> {
     systemProperties =
-        System.getProperties().asIterable().associate { it.key.toString() to it.value }
+      System.getProperties().asIterable().associate { it.key.toString() to it.value }
     testLogging { showStandardStreams = true }
   }
 
   val shadowJar =
-      withType<ShadowJar> {
-        archiveBaseName.set(null as String?)
-        archiveClassifier.set(null as String?)
-        archiveVersion.set(null as String?)
-      }
+    withType<ShadowJar> {
+      archiveBaseName.set(null as String?)
+      archiveClassifier.set(null as String?)
+      archiveVersion.set(null as String?)
+    }
   distZip { mustRunAfter(shadowJar) }
   distTar { mustRunAfter(shadowJar) }
   startScripts { mustRunAfter(shadowJar, ":spotlessKotlin") }

@@ -1,3 +1,18 @@
+/*
+Copyright 2023 c-fraser
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package io.github.cfraser.graphguard.plugin
 
 import io.github.cfraser.graphguard.Server
@@ -44,9 +59,10 @@ import org.slf4j.LoggerFactory
  * [Server.Plugin].
  */
 @KotlinScript(
-    displayName = "graph-guard plugin script",
-    fileExtension = "gg.kts",
-    compilationConfiguration = Script.Config::class)
+  displayName = "graph-guard plugin script",
+  fileExtension = "gg.kts",
+  compilationConfiguration = Script.Config::class,
+)
 abstract class Script {
 
   /** The [Script.Context] exposes the [plugin] to the [evaluate]d [Script]. */
@@ -73,20 +89,20 @@ abstract class Script {
 
   /** The [ScriptCompilationConfiguration] for a plugin [Script]. */
   internal object Config :
-      ScriptCompilationConfiguration({
-        defaultImports("io.github.cfraser.graphguard.*")
-        defaultImports(DependsOn::class, Repository::class)
-        implicitReceivers(Context::class)
-        jvm {
-          dependenciesFromCurrentContext(wholeClasspath = true)
-          jvmTarget("17")
-        }
-        compilerOptions.append("-Xadd-modules=ALL-MODULE-PATH")
-        ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
-        refineConfiguration {
-          onAnnotations(DependsOn::class, Repository::class, handler = ::resolveDependencies)
-        }
-      }) {
+    ScriptCompilationConfiguration({
+      defaultImports("io.github.cfraser.graphguard.*")
+      defaultImports(DependsOn::class, Repository::class)
+      implicitReceivers(Context::class)
+      jvm {
+        dependenciesFromCurrentContext(wholeClasspath = true)
+        jvmTarget("17")
+      }
+      compilerOptions.append("-Xadd-modules=ALL-MODULE-PATH")
+      ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
+      refineConfiguration {
+        onAnnotations(DependsOn::class, Repository::class, handler = ::resolveDependencies)
+      }
+    }) {
 
     fun readResolve(): Any = Config
   }
@@ -97,7 +113,7 @@ abstract class Script {
 
     /** An [ExternalDependenciesResolver] for [Script] dependencies. */
     private val dependencyResolver =
-        CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
+      CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
 
     /**
      * Evaluate the [Script] [source] text to instantiate a [Server.Plugin].
@@ -116,15 +132,16 @@ abstract class Script {
       val host = BasicJvmScriptingHost()
       val context = Context()
       val result =
-          host
-              .evalWithTemplate<Script>(
-                  sourceCode,
-                  compilation = { jvm { dependenciesFromCurrentContext(wholeClasspath = true) } },
-                  evaluation = { implicitReceivers(context) })
-              .runCatching { valueOrThrow() }
-              .getOrElse { ex ->
-                throw IllegalArgumentException("Failed to evaluate plugin script", ex)
-              }
+        host
+          .evalWithTemplate<Script>(
+            sourceCode,
+            compilation = { jvm { dependenciesFromCurrentContext(wholeClasspath = true) } },
+            evaluation = { implicitReceivers(context) },
+          )
+          .runCatching { valueOrThrow() }
+          .getOrElse { ex ->
+            throw IllegalArgumentException("Failed to evaluate plugin script", ex)
+          }
       LOGGER.debug("Evaluated plugin script: {}", result)
       return try {
         context.plugin
@@ -135,25 +152,25 @@ abstract class Script {
 
     /** Resolve the dependencies, via the [Repository], that the [Script] [DependsOn]. */
     private fun resolveDependencies(
-        context: ScriptConfigurationRefinementContext
+      context: ScriptConfigurationRefinementContext
     ): ResultWithDiagnostics<ScriptCompilationConfiguration> {
       val annotations =
-          context.collectedData?.get(ScriptCollectedData.collectedAnnotations)?.takeIf {
-            it.isNotEmpty()
-          } ?: return context.compilationConfiguration.asSuccess()
+        context.collectedData?.get(ScriptCollectedData.collectedAnnotations)?.takeIf {
+          it.isNotEmpty()
+        } ?: return context.compilationConfiguration.asSuccess()
       return runBlocking(Dispatchers.IO) {
-            dependencyResolver.resolveFromScriptSourceAnnotations(annotations)
-          }
-          .onFailure { result ->
-            result
-                .runCatching { valueOrThrow() }
-                .getOrElse { ex -> LOGGER.error("Failed to resolve dependencies", ex) }
-          }
-          .onSuccess { files ->
-            context.compilationConfiguration
-                .with { dependencies.append(JvmDependency(files)) }
-                .asSuccess()
-          }
+          dependencyResolver.resolveFromScriptSourceAnnotations(annotations)
+        }
+        .onFailure { result ->
+          result
+            .runCatching { valueOrThrow() }
+            .getOrElse { ex -> LOGGER.error("Failed to resolve dependencies", ex) }
+        }
+        .onSuccess { files ->
+          context.compilationConfiguration
+            .with { dependencies.append(JvmDependency(files)) }
+            .asSuccess()
+        }
     }
   }
 }

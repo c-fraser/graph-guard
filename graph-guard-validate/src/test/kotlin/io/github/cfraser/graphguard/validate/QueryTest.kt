@@ -35,138 +35,168 @@ class QueryTest : FunSpec() {
       fun String.expectTypes(expected: Query) = Data(this, expected, expectTypes = true)
       infix fun String.expect(expected: Query) = Data(this, expected)
       withData(
-          MoviesGraph.CREATE.last()
-              .expectTypes(
-                  Query(
-                      setOf(MOVIE, PERSON),
-                      setOf(ACTED_IN, DIRECTED, PRODUCED, WROTE, REVIEWED),
-                      setOf(
-                          PERSON_NAME with String::class,
-                          PERSON_BORN with Long::class,
-                          MOVIE_TITLE with String::class,
-                          MOVIE_RELEASED with Long::class,
-                          MOVIE_TAGLINE with String::class,
-                          ACTED_IN_ROLES with listOf(String::class),
-                          REVIEWED_SUMMARY with String::class,
-                          REVIEWED_RATING with Long::class),
-                      emptySet(), emptySet(),
-                      emptyMap())),
-          MoviesGraph.MATCH_TOM_HANKS expect
-              Query(
-                  setOf(PERSON),
-                  emptySet(),
-                  setOf(PERSON_NAME with "Tom Hanks"),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_CLOUD_ATLAS expect
-              Query(
-                  setOf(MOVIE),
-                  emptySet(),
-                  setOf(MOVIE_TITLE with "Cloud Atlas"),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_10_PEOPLE expect
-              Query(setOf(PERSON), emptySet(), setOf(PERSON_NAME), emptySet(),  emptySet(),emptyMap()),
-          MoviesGraph.MATCH_NINETIES_MOVIES expect
-              Query(
-                  setOf(MOVIE),
-                  emptySet(),
-                  setOf(MOVIE_TITLE, MOVIE_RELEASED with setOf(1990L, 2000L)),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_TOM_HANKS_MOVIES expect
-              Query(
-                  setOf(PERSON, MOVIE),
-                  setOf(ACTED_IN),
-                  setOf(PERSON_NAME with "Tom Hanks"),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_CLOUD_ATLAS_DIRECTOR expect
-              Query(
-                  setOf(MOVIE, PERSON),
-                  setOf(DIRECTED),
-                  setOf(MOVIE_TITLE with "Cloud Atlas", PERSON_NAME),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_TOM_HANKS_CO_ACTORS expect
-              Query(
-                  setOf(PERSON, MOVIE),
-                  setOf(ACTED_IN),
-                  setOf(PERSON_NAME with "Tom Hanks"),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE expect
-              Query(
-                  setOf(PERSON, MOVIE),
-                  emptySet(),
-                  setOf(PERSON_NAME, MOVIE_TITLE with "Cloud Atlas", ROLES),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON expect
-              Query(
-                  setOf(PERSON),
-                  emptySet(),
-                  setOf(PERSON_NAME with "Kevin Bacon"),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO expect
-              Query(
-                  setOf(PERSON),
-                  emptySet(),
-                  setOf(PERSON_NAME with setOf("Kevin Bacon", "name")),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS expect
-              Query(
-                  setOf(PERSON),
-                  setOf(PERSON_ACTED_IN),
-                  setOf(PERSON_NAME with "Tom Hanks", NAME),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND expect
-              Query(
-                  setOf(PERSON),
-                  setOf(PERSON_ACTED_IN),
-                  setOf(PERSON_NAME with setOf("Tom Hanks", "name")),
-                  emptySet(), emptySet(),
-                  emptyMap()),
-          MoviesGraph.MERGE_KEANU expect
-              Query(
-                  setOf(MOVIE, PERSON),
-                  setOf(ACTED_IN),
-                  setOf(
-                      PERSON_NAME with "Keanu Reeves",
-                      ACTED_IN_ROLES with listOf("Neo"),
-                      MOVIE_TITLE with "The Matrix",
-                      MOVIE_RELEASED with 1999L,
-                      MOVIE_TAGLINE with "Welcome to the Real World"),
-                  setOf(Query.MutatedProperty("Person", "properties")), emptySet(),
-                  emptyMap())) { (cypher, query, expectTypes) ->
-            val parsed = (Query.parse(cypher) shouldNotBe null)!!
-            parsed.nodes shouldContainExactlyInAnyOrder query.nodes
-            parsed.relationships shouldContainExactlyInAnyOrder query.relationships
-            val properties = if (expectTypes) parsed.properties.types() else parsed.properties
-            properties shouldHaveSize query.properties.size
-            properties.forEach { property ->
-              val queryProperty =
-                  (query.properties.find {
-                    property.name == it.name && property.owner == it.owner
-                  } shouldNotBe null)!!
-              property.values.values() shouldContainExactlyInAnyOrder queryProperty.values.values()
-            }
-            parsed.mutatedProperties shouldContainExactlyInAnyOrder query.mutatedProperties
-          }
+        MoviesGraph.CREATE.last()
+          .expectTypes(
+            Query(
+              setOf(MOVIE, PERSON),
+              setOf(ACTED_IN, DIRECTED, PRODUCED, WROTE, REVIEWED),
+              setOf(
+                PERSON_NAME with String::class,
+                PERSON_BORN with Long::class,
+                MOVIE_TITLE with String::class,
+                MOVIE_RELEASED with Long::class,
+                MOVIE_TAGLINE with String::class,
+                ACTED_IN_ROLES with listOf(String::class),
+                REVIEWED_SUMMARY with String::class,
+                REVIEWED_RATING with Long::class,
+              ),
+              emptySet(),
+              emptySet(),
+              emptyMap(),
+            )
+          ),
+        MoviesGraph.MATCH_TOM_HANKS expect
+          Query(
+            setOf(PERSON),
+            emptySet(),
+            setOf(PERSON_NAME with "Tom Hanks"),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_CLOUD_ATLAS expect
+          Query(
+            setOf(MOVIE),
+            emptySet(),
+            setOf(MOVIE_TITLE with "Cloud Atlas"),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_10_PEOPLE expect
+          Query(setOf(PERSON), emptySet(), setOf(PERSON_NAME), emptySet(), emptySet(), emptyMap()),
+        MoviesGraph.MATCH_NINETIES_MOVIES expect
+          Query(
+            setOf(MOVIE),
+            emptySet(),
+            setOf(MOVIE_TITLE, MOVIE_RELEASED with setOf(1990L, 2000L)),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_TOM_HANKS_MOVIES expect
+          Query(
+            setOf(PERSON, MOVIE),
+            setOf(ACTED_IN),
+            setOf(PERSON_NAME with "Tom Hanks"),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_CLOUD_ATLAS_DIRECTOR expect
+          Query(
+            setOf(MOVIE, PERSON),
+            setOf(DIRECTED),
+            setOf(MOVIE_TITLE with "Cloud Atlas", PERSON_NAME),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_TOM_HANKS_CO_ACTORS expect
+          Query(
+            setOf(PERSON, MOVIE),
+            setOf(ACTED_IN),
+            setOf(PERSON_NAME with "Tom Hanks"),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE expect
+          Query(
+            setOf(PERSON, MOVIE),
+            emptySet(),
+            setOf(PERSON_NAME, MOVIE_TITLE with "Cloud Atlas", ROLES),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON expect
+          Query(
+            setOf(PERSON),
+            emptySet(),
+            setOf(PERSON_NAME with "Kevin Bacon"),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO expect
+          Query(
+            setOf(PERSON),
+            emptySet(),
+            setOf(PERSON_NAME with setOf("Kevin Bacon", "name")),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS expect
+          Query(
+            setOf(PERSON),
+            setOf(PERSON_ACTED_IN),
+            setOf(PERSON_NAME with "Tom Hanks", NAME),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND expect
+          Query(
+            setOf(PERSON),
+            setOf(PERSON_ACTED_IN),
+            setOf(PERSON_NAME with setOf("Tom Hanks", "name")),
+            emptySet(),
+            emptySet(),
+            emptyMap(),
+          ),
+        MoviesGraph.MERGE_KEANU expect
+          Query(
+            setOf(MOVIE, PERSON),
+            setOf(ACTED_IN),
+            setOf(
+              PERSON_NAME with "Keanu Reeves",
+              ACTED_IN_ROLES with listOf("Neo"),
+              MOVIE_TITLE with "The Matrix",
+              MOVIE_RELEASED with 1999L,
+              MOVIE_TAGLINE with "Welcome to the Real World",
+            ),
+            setOf(Query.MutatedProperty("Person", "properties")),
+            emptySet(),
+            emptyMap(),
+          ),
+      ) { (cypher, query, expectTypes) ->
+        val parsed = (Query.parse(cypher) shouldNotBe null)!!
+        parsed.nodes shouldContainExactlyInAnyOrder query.nodes
+        parsed.relationships shouldContainExactlyInAnyOrder query.relationships
+        val properties = if (expectTypes) parsed.properties.types() else parsed.properties
+        properties shouldHaveSize query.properties.size
+        properties.forEach { property ->
+          val queryProperty =
+            (query.properties.find {
+              property.name == it.name && property.owner == it.owner
+            } shouldNotBe null)!!
+          property.values.values() shouldContainExactlyInAnyOrder queryProperty.values.values()
+        }
+        parsed.mutatedProperties shouldContainExactlyInAnyOrder query.mutatedProperties
+      }
     }
 
     context("resolvable function invocation") {
       withData(TIMES) { value: String ->
         val parsed = (Query.parse("CREATE (:N {n: $value})") shouldNotBe null)!!
         val values =
-            parsed.properties.flatMap { property ->
-              property.values.mapNotNull { value ->
-                if (value is Query.Property.Type.Resolvable) value.name else null
-              }
+          parsed.properties.flatMap { property ->
+            property.values.mapNotNull { value ->
+              if (value is Query.Property.Type.Resolvable) value.name else null
             }
+          }
         values shouldContainExactly setOf(value)
       }
     }
@@ -179,7 +209,7 @@ class QueryTest : FunSpec() {
      * [temporal functions](https://neo4j.com/docs/cypher-manual/current/functions/temporal/).
      */
     val TIMES =
-        """
+      """
         date()
         date({timezone: 'America/New York'})
         date({year: 1984, month: 10, day: 11})
@@ -264,9 +294,9 @@ class QueryTest : FunSpec() {
         time('2140-02')
         time('22+18:00')
         """
-            .lines()
-            .map(String::trim)
-            .filterNot(String::isBlank)
+        .lines()
+        .map(String::trim)
+        .filterNot(String::isBlank)
 
     private const val PERSON = "Person"
     private const val MOVIE = "Movie"
@@ -291,58 +321,59 @@ class QueryTest : FunSpec() {
     private val REVIEWED = Query.Relationship("REVIEWED", setOf(PERSON), setOf(MOVIE))
 
     private infix fun String.of(owner: String?): Query.Property =
-        Query.Property(owner, this, emptySet())
+      Query.Property(owner, this, emptySet())
 
     private infix fun Query.Property.with(value: Any): Query.Property =
-        when (value) {
-          is List<*> -> copy(values = setOf(Query.Property.Type.Container(value)))
-          is Set<*> ->
-              copy(
-                  values =
-                      value
-                          .mapNotNull {
-                            when (it) {
-                              is String ->
-                                  if (it.startsWith("$")) Query.Property.Type.Resolvable(it)
-                                  else Query.Property.Type.Value(it)
-                              is Boolean,
-                              is Long,
-                              is Float -> Query.Property.Type.Value(it)
-                              else -> null
-                            }
-                          }
-                          .toSet())
-          else -> copy(values = setOf(Query.Property.Type.Value(value)))
-        }
+      when (value) {
+        is List<*> -> copy(values = setOf(Query.Property.Type.Container(value)))
+        is Set<*> ->
+          copy(
+            values =
+              value
+                .mapNotNull {
+                  when (it) {
+                    is String ->
+                      if (it.startsWith("$")) Query.Property.Type.Resolvable(it)
+                      else Query.Property.Type.Value(it)
+                    is Boolean,
+                    is Long,
+                    is Float -> Query.Property.Type.Value(it)
+                    else -> null
+                  }
+                }
+                .toSet()
+          )
+        else -> copy(values = setOf(Query.Property.Type.Value(value)))
+      }
 
     private infix fun Query.Property.with(value: KClass<*>): Query.Property =
-        copy(values = setOf(Query.Property.Type.Value(value)))
+      copy(values = setOf(Query.Property.Type.Value(value)))
 
     private infix fun Query.Property.with(values: List<KClass<*>>): Query.Property =
-        copy(values = setOf(Query.Property.Type.Container(values)))
+      copy(values = setOf(Query.Property.Type.Container(values)))
 
     private fun Set<Query.Property>.types(): Set<Query.Property> {
       fun Query.Property.Type.type(): Query.Property.Type {
         return when (this) {
           is Query.Property.Type.Value -> Query.Property.Type.Value(value!!::class)
           is Query.Property.Type.Container ->
-              Query.Property.Type.Container(values.map { it!!::class })
+            Query.Property.Type.Container(values.map { it!!::class })
           is Query.Property.Type.Resolvable -> fail("Unknown value type")
         }
       }
       fun Query.Property.types(): Query.Property =
-          copy(values = values.map(Query.Property.Type::type).toSet())
+        copy(values = values.map(Query.Property.Type::type).toSet())
       return map(Query.Property::types).toSet()
     }
 
     private fun Set<Query.Property.Type>.values(): Set<Any?> =
-        flatMap { type ->
-              when (type) {
-                is Query.Property.Type.Value -> setOf(type.value)
-                is Query.Property.Type.Container -> type.values
-                is Query.Property.Type.Resolvable -> setOf(type.name)
-              }
-            }
-            .toSet()
+      flatMap { type ->
+          when (type) {
+            is Query.Property.Type.Value -> setOf(type.value)
+            is Query.Property.Type.Container -> type.values
+            is Query.Property.Type.Resolvable -> setOf(type.name)
+          }
+        }
+        .toSet()
   }
 }

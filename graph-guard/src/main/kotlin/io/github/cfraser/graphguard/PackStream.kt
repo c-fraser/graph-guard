@@ -219,8 +219,8 @@ internal object PackStream {
   /** Pack bytes using a [Packer]. */
   @OptIn(ExperimentalContracts::class)
   fun pack(
-      buffer: ByteBuffer = ByteBuffer.allocate(MAX_32)!!,
-      block: Packer.() -> Unit
+    buffer: ByteBuffer = ByteBuffer.allocate(MAX_32)!!,
+    block: Packer.() -> Unit,
   ): ByteArray {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     return Packer(buffer).apply(block).buffer.copyBytes()
@@ -396,71 +396,73 @@ internal object PackStream {
      * [Date](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-date).
      */
     fun date(localDate: LocalDate): Packer =
-        structure(Structure(DATE, listOf(localDate.toEpochDay())))
+      structure(Structure(DATE, listOf(localDate.toEpochDay())))
 
     /**
      * Pack the [offsetTime] as a
      * [Time](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-time).
      */
     fun time(offsetTime: OffsetTime): Packer =
-        structure(
-            Structure(
-                TIME,
-                listOf(offsetTime.toLocalTime().toNanoOfDay(), offsetTime.offset.totalSeconds)))
+      structure(
+        Structure(
+          TIME,
+          listOf(offsetTime.toLocalTime().toNanoOfDay(), offsetTime.offset.totalSeconds),
+        )
+      )
 
     /**
      * Pack the [localTime] as a
      * [LocalTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-localtime).
      */
     fun localTime(localTime: LocalTime): Packer =
-        structure(Structure(LOCAL_TIME, listOf(localTime.toNanoOfDay())))
+      structure(Structure(LOCAL_TIME, listOf(localTime.toNanoOfDay())))
 
     /**
      * Pack the [zonedDateTime] as a
      * [DateTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-datetime).
      */
     fun dateTime(zonedDateTime: ZonedDateTime): Packer =
-        when (val zone = zonedDateTime.zone) {
-          is ZoneOffset ->
-              structure(
-                  Structure(
-                      DATE_TIME,
-                      listOf(
-                          zonedDateTime.toInstant().epochSecond,
-                          zonedDateTime.nano,
-                          zone.totalSeconds)))
-          else -> error("ZonedDateTime '$zonedDateTime' is invalid")
-        }
+      when (val zone = zonedDateTime.zone) {
+        is ZoneOffset ->
+          structure(
+            Structure(
+              DATE_TIME,
+              listOf(zonedDateTime.toInstant().epochSecond, zonedDateTime.nano, zone.totalSeconds),
+            )
+          )
+        else -> error("ZonedDateTime '$zonedDateTime' is invalid")
+      }
 
     /**
      * Pack the [zonedDateTime] as a
      * [DateTimeZoneId](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-datetimezoneid).
      */
     fun dateTimeZoneId(zonedDateTime: ZonedDateTime): Packer =
-        structure(
-            Structure(
-                DATE_TIME_ZONE_ID,
-                listOf(
-                    zonedDateTime.toInstant().epochSecond,
-                    zonedDateTime.nano,
-                    zonedDateTime.zone.id)))
+      structure(
+        Structure(
+          DATE_TIME_ZONE_ID,
+          listOf(zonedDateTime.toInstant().epochSecond, zonedDateTime.nano, zonedDateTime.zone.id),
+        )
+      )
 
     /**
      * Pack the [localDateTime] as a
      * [LocalDateTime](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-localdatetime).
      */
     fun localDateTime(localDateTime: LocalDateTime): Packer =
-        structure(
-            Structure(
-                LOCAL_DATE_TIME,
-                listOf(localDateTime.toEpochSecond(ZoneOffset.UTC), localDateTime.nano)))
+      structure(
+        Structure(
+          LOCAL_DATE_TIME,
+          listOf(localDateTime.toEpochSecond(ZoneOffset.UTC), localDateTime.nano),
+        )
+      )
 
     /**
      * Pack the [duration] as a
      * [Duration](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-duration).
      */
     fun duration(duration: Duration): Packer =
-        structure(Structure(DURATION, listOf(0L, 0L, duration.seconds, duration.nano)))
+      structure(Structure(DURATION, listOf(0L, 0L, duration.seconds, duration.nano)))
 
     @Suppress("CyclomaticComplexMethod")
     private fun any(value: Any?) {
@@ -511,18 +513,18 @@ internal object PackStream {
     /** Unpack [Null](https://neo4j.com/docs/bolt/current/packstream/#data-type-null). */
     @Suppress("FunctionNaming")
     fun `null`(): Any? =
-        when (val marker = buffer.get()) {
-          NULL -> null
-          else -> marker.unexpected()
-        }
+      when (val marker = buffer.get()) {
+        NULL -> null
+        else -> marker.unexpected()
+      }
 
     /** Unpack a [Boolean](https://neo4j.com/docs/bolt/current/packstream/#data-type-boolean). */
     fun boolean(): Boolean =
-        when (val marker = buffer.get()) {
-          TRUE -> true
-          FALSE -> false
-          else -> marker.unexpected()
-        }
+      when (val marker = buffer.get()) {
+        TRUE -> true
+        FALSE -> false
+        else -> marker.unexpected()
+      }
 
     /** Unpack an [Integer](https://neo4j.com/docs/bolt/current/packstream/#data-type-integer). */
     fun integer(): Long {
@@ -539,20 +541,20 @@ internal object PackStream {
 
     /** Unpack a [Float](https://neo4j.com/docs/bolt/current/packstream/#data-type-float). */
     fun float(): Double =
-        when (val marker = buffer.get()) {
-          FLOAT_64 -> buffer.getDouble()
-          else -> marker.unexpected()
-        }
+      when (val marker = buffer.get()) {
+        FLOAT_64 -> buffer.getDouble()
+        else -> marker.unexpected()
+      }
 
     /** Unpack [Bytes](https://neo4j.com/docs/bolt/current/packstream/#data-type-bytes). */
     fun bytes(): ByteArray {
       val size =
-          when (val marker = buffer.get()) {
-            BYTES_8 -> buffer.getUInt8()
-            BYTES_16 -> buffer.getUInt16()
-            BYTES_32 -> buffer.getUInt32()
-            else -> marker.unexpected()
-          }
+        when (val marker = buffer.get()) {
+          BYTES_8 -> buffer.getUInt8()
+          BYTES_16 -> buffer.getUInt16()
+          BYTES_32 -> buffer.getUInt32()
+          else -> marker.unexpected()
+        }
       return buffer.getBytes(size)
     }
 
@@ -561,13 +563,13 @@ internal object PackStream {
       val marker = buffer.get()
       if (marker == TINY_STRING) return ""
       val size =
-          when {
-            marker and 0xf0.toByte() == TINY_STRING -> marker.toInt() and 0x0f
-            marker == STRING_8 -> buffer.getUInt8()
-            marker == STRING_16 -> buffer.getUInt16()
-            marker == STRING_32 -> buffer.getUInt32()
-            else -> marker.unexpected()
-          }
+        when {
+          marker and 0xf0.toByte() == TINY_STRING -> marker.toInt() and 0x0f
+          marker == STRING_8 -> buffer.getUInt8()
+          marker == STRING_16 -> buffer.getUInt16()
+          marker == STRING_32 -> buffer.getUInt32()
+          else -> marker.unexpected()
+        }
       return String(buffer.getBytes(size), Charsets.UTF_8)
     }
 
@@ -575,13 +577,13 @@ internal object PackStream {
     fun list(): List<Any?> {
       val marker = buffer.get()
       val size =
-          when {
-            marker and 0xf0.toByte() == TINY_LIST -> marker.toInt() and 0x0f
-            marker == LIST_8 -> buffer.getUInt8()
-            marker == LIST_16 -> buffer.getUInt16()
-            marker == LIST_32 -> buffer.getUInt32()
-            else -> marker.unexpected()
-          }
+        when {
+          marker and 0xf0.toByte() == TINY_LIST -> marker.toInt() and 0x0f
+          marker == LIST_8 -> buffer.getUInt8()
+          marker == LIST_16 -> buffer.getUInt16()
+          marker == LIST_32 -> buffer.getUInt32()
+          else -> marker.unexpected()
+        }
       return List(size) { _ -> any() }
     }
 
@@ -591,13 +593,13 @@ internal object PackStream {
     fun dictionary(): Map<String, Any?> {
       val marker = buffer.get()
       val size =
-          when {
-            marker and 0xf0.toByte() == TINY_DICT -> marker.toInt() and 0x0f
-            marker == DICT_8 -> buffer.getUInt8()
-            marker == DICT_16 -> buffer.getUInt16()
-            marker == DICT_32 -> buffer.getUInt32()
-            else -> marker.unexpected()
-          }
+        when {
+          marker and 0xf0.toByte() == TINY_DICT -> marker.toInt() and 0x0f
+          marker == DICT_8 -> buffer.getUInt8()
+          marker == DICT_16 -> buffer.getUInt16()
+          marker == DICT_32 -> buffer.getUInt32()
+          else -> marker.unexpected()
+        }
       return buildMap(size) {
         repeat(size) { _ ->
           val key = string()
@@ -613,12 +615,12 @@ internal object PackStream {
     fun structure(): Structure {
       val marker = buffer.get()
       val size =
-          when {
-            marker and 0xf0.toByte() == TINY_STRUCT -> marker.toInt() and 0x0f
-            marker == STRUCT_8 -> buffer.getUInt8()
-            marker == STRUCT_16 -> buffer.getUInt16()
-            else -> marker.unexpected()
-          }
+        when {
+          marker and 0xf0.toByte() == TINY_STRUCT -> marker.toInt() and 0x0f
+          marker == STRUCT_8 -> buffer.getUInt8()
+          marker == STRUCT_16 -> buffer.getUInt16()
+          else -> marker.unexpected()
+        }
       val tag = buffer.get()
       val fields = List(size) { _ -> any() }
       return Structure(tag, fields)
@@ -633,32 +635,32 @@ internal object PackStream {
         TINY_DICT -> dictionary()
         TINY_STRUCT -> structure().toType()
         else ->
-            when (marker) {
-              NULL -> `null`()
-              TRUE,
-              FALSE -> boolean()
-              INT_8,
-              INT_16,
-              INT_32,
-              INT_64 -> integer()
-              FLOAT_64 -> float()
-              BYTES_8,
-              BYTES_16,
-              BYTES_32 -> bytes()
-              STRING_8,
-              STRING_16,
-              STRING_32 -> string()
-              LIST_8,
-              LIST_16,
-              LIST_32 -> list()
-              DICT_8,
-              DICT_16,
-              DICT_32 -> dictionary()
-              STRUCT_8,
-              STRUCT_16 -> structure().toType()
-              // TINY_INT
-              else -> integer()
-            }
+          when (marker) {
+            NULL -> `null`()
+            TRUE,
+            FALSE -> boolean()
+            INT_8,
+            INT_16,
+            INT_32,
+            INT_64 -> integer()
+            FLOAT_64 -> float()
+            BYTES_8,
+            BYTES_16,
+            BYTES_32 -> bytes()
+            STRING_8,
+            STRING_16,
+            STRING_32 -> string()
+            LIST_8,
+            LIST_16,
+            LIST_32 -> list()
+            DICT_8,
+            DICT_16,
+            DICT_32 -> dictionary()
+            STRUCT_8,
+            STRUCT_16 -> structure().toType()
+            // TINY_INT
+            else -> integer()
+          }
       }
     }
 
@@ -695,13 +697,13 @@ internal object PackStream {
             val epochSecondLocal = fields[0] as Long
             val nano = fields[1] as Long
             val zoneId =
-                if (id == DATE_TIME) {
-                  val offsetSeconds = Math.toIntExact(fields[2] as Long)
-                  ZoneOffset.ofTotalSeconds(offsetSeconds)
-                } else {
-                  val zoneId = fields[2] as String
-                  ZoneId.of(zoneId)
-                }
+              if (id == DATE_TIME) {
+                val offsetSeconds = Math.toIntExact(fields[2] as Long)
+                ZoneOffset.ofTotalSeconds(offsetSeconds)
+              } else {
+                val zoneId = fields[2] as String
+                ZoneId.of(zoneId)
+              }
             val instant = Instant.ofEpochSecond(epochSecondLocal, nano)
             val localDateTime = LocalDateTime.ofInstant(instant, zoneId)
             ZonedDateTime.of(localDateTime, zoneId)

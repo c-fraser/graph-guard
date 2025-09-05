@@ -41,14 +41,15 @@ tasks {
     mustRunAfter(withType<AntlrTask>())
     doLast {
       fileTree(generateGrammarSource.get().outputDirectory) { include("*.java") }
-          .forEach { file ->
-            file.writeText(
-                file
-                    .readText()
-                    // reduce visibility of generated types
-                    .replace("public class", "class")
-                    .replace("public interface", "interface"))
-          }
+        .forEach { file ->
+          file.writeText(
+            file
+              .readText()
+              // reduce visibility of generated types
+              .replace("public class", "class")
+              .replace("public interface", "interface")
+          )
+        }
     }
   }
 

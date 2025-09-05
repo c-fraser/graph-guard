@@ -43,11 +43,11 @@ import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.validate.Schema
+import java.net.InetSocketAddress
+import java.net.URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
-import java.net.URI
 
 /** [main] is the entry point for the [Server] application, run by the [Command]. */
 fun main(args: Array<String>) {
@@ -62,53 +62,59 @@ internal class Command : CliktCommand(name = "graph-guard") {
   }
 
   private val hostname by
-      option("-h", "--hostname", help = "The hostname to bind the proxy (and web) server to")
-          .default("0.0.0.0")
+    option("-h", "--hostname", help = "The hostname to bind the proxy (and web) server to")
+      .default("0.0.0.0")
 
   private val port by
-      option("-p", "--port", help = "The port to bind the proxy server to").int().default(8787)
+    option("-p", "--port", help = "The port to bind the proxy server to").int().default(8787)
 
   private val graphUri by
-      option("-g", "--graph", help = "The Bolt URI of the graph to guard")
-          .default("bolt://127.0.0.1:7687")
-          .validate { uri ->
-            uri.runCatching(::URI).getOrElse { _ -> fail("Graph URI '$uri' is invalid") }
-          }
+    option("-g", "--graph", help = "The Bolt URI of the graph to guard")
+      .default("bolt://127.0.0.1:7687")
+      .validate { uri ->
+        uri.runCatching(::URI).getOrElse { _ -> fail("Graph URI '$uri' is invalid") }
+      }
 
   private val parallelism by
-      option(
-              "-n",
-              "--parallelism",
-              help = "The number of parallel coroutines used by the proxy server")
-          .int()
+    option(
+        "-n",
+        "--parallelism",
+        help = "The number of parallel coroutines used by the proxy server",
+      )
+      .int()
 
   private val schema by
-      mutuallyExclusiveOptions(
-          option("-s", help = "The input stream with the graph schema text")
-              .inputStream()
-              .convert { stream -> stream.use { it.readBytes().toString(Charsets.UTF_8) } },
-          option("--schema", help = "The graph schema file")
-              .file(mustExist = true, mustBeReadable = true, canBeDir = false)
-              .convert { it.readText() })
+    mutuallyExclusiveOptions(
+      option("-s", help = "The input stream with the graph schema text").inputStream().convert {
+        stream ->
+        stream.use { it.readBytes().toString(Charsets.UTF_8) }
+      },
+      option("--schema", help = "The graph schema file")
+        .file(mustExist = true, mustBeReadable = true, canBeDir = false)
+        .convert { it.readText() },
+    )
 
   private val script by
-      mutuallyExclusiveOptions(
-          option("-k", help = "The input stream with the plugin script text")
-              .inputStream()
-              .convert { stream -> stream.use { it.readBytes().toString(Charsets.UTF_8) } },
-          option("--script", help = "The plugin script file")
-              .file(mustExist = true, mustBeReadable = true, canBeDir = false)
-              .convert { it.readText() })
+    mutuallyExclusiveOptions(
+      option("-k", help = "The input stream with the plugin script text").inputStream().convert {
+        stream ->
+        stream.use { it.readBytes().toString(Charsets.UTF_8) }
+      },
+      option("--script", help = "The plugin script file")
+        .file(mustExist = true, mustBeReadable = true, canBeDir = false)
+        .convert { it.readText() },
+    )
 
   private val output by
-      mutuallyExclusiveOptions(
-          option("--debug", help = "Enable debug logging").flag().convert { Debug },
-          option("--inspect", help = "Inspect proxied Bolt messages").flag().convert { Inspect })
+    mutuallyExclusiveOptions(
+      option("--debug", help = "Enable debug logging").flag().convert { Debug },
+      option("--inspect", help = "Inspect proxied Bolt messages").flag().convert { Inspect },
+    )
 
   override fun run() {
     var plugin =
-        listOfNotNull(schema?.let(::Schema)?.let { Validator(it) }, script?.let(Script::evaluate))
-            .fold(plugin {}, Server.Plugin::then)
+      listOfNotNull(schema?.let(::Schema)?.let { Validator(it) }, script?.let(Script::evaluate))
+        .fold(plugin {}, Server.Plugin::then)
     when (val output = output) {
       null -> {}
       Debug -> {
@@ -121,11 +127,12 @@ internal class Command : CliktCommand(name = "graph-guard") {
       }
     }
     Server(
-            URI(graphUri),
-            plugin = plugin,
-            address = InetSocketAddress(hostname, port),
-            parallelism = parallelism)
-        .start()
+        URI(graphUri),
+        plugin = plugin,
+        address = InetSocketAddress(hostname, port),
+        parallelism = parallelism,
+      )
+      .start()
   }
 
   override fun help(context: Context) = "Graph query validation proxy server"
@@ -140,15 +147,16 @@ internal class Command : CliktCommand(name = "graph-guard") {
   private data object Inspect : Output, Server.Plugin {
 
     private val colors =
-        arrayOf(
-            TextColors.brightBlue,
-            TextColors.brightGreen,
-            TextColors.brightMagenta,
-            TextColors.brightRed,
-            TextColors.brightWhite,
-            TextColors.brightYellow)
+      arrayOf(
+        TextColors.brightBlue,
+        TextColors.brightGreen,
+        TextColors.brightMagenta,
+        TextColors.brightRed,
+        TextColors.brightWhite,
+        TextColors.brightYellow,
+      )
     private val sessions =
-        Caffeine.newBuilder().maximumSize(colors.size.toLong()).build<Bolt.Session, TextColors>()
+      Caffeine.newBuilder().maximumSize(colors.size.toLong()).build<Bolt.Session, TextColors>()
 
     override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) = message
 
@@ -161,24 +169,24 @@ internal class Command : CliktCommand(name = "graph-guard") {
     /** Style `this` [Server.Proxied] event. */
     private fun Server.Proxied.styled(): List<String> {
       fun Bolt.Message.styled() =
-          when (this) {
-            is Bolt.Request -> "➡\uFE0F  $this".styled(TextStyles.italic.style, TextColors.cyan)
-            is Bolt.Response -> "⬅\uFE0F  $this".styled(TextStyles.bold.style, TextColors.yellow)
-            else -> error(this)
-          }
+        when (this) {
+          is Bolt.Request -> "➡\uFE0F  $this".styled(TextStyles.italic.style, TextColors.cyan)
+          is Bolt.Response -> "⬅\uFE0F  $this".styled(TextStyles.bold.style, TextColors.yellow)
+          else -> error(this)
+        }
       val color =
-          sessions[session, { _ -> colors[sessions.estimatedSize().toInt() % colors.lastIndex] }]
+        sessions[session, { _ -> colors[sessions.estimatedSize().toInt() % colors.lastIndex] }]
       @Suppress("RemoveExplicitTypeArguments")
       return buildList<Bolt.Message> {
-            this += received
-            this +=
-                when (val sent = sent) {
-                  is Bolt.Messages -> sent.messages
-                  else -> listOf(sent)
-                }
-          }
-          .distinct()
-          .map { message -> "${session.id} ".styled(color) + message.styled() }
+          this += received
+          this +=
+            when (val sent = sent) {
+              is Bolt.Messages -> sent.messages
+              else -> listOf(sent)
+            }
+        }
+        .distinct()
+        .map { message -> "${session.id} ".styled(color) + message.styled() }
     }
   }
 
@@ -189,12 +197,12 @@ internal class Command : CliktCommand(name = "graph-guard") {
 
     /** Get the [Logger] with the [name] or throw an [IllegalStateException]. */
     fun logger(name: String): Logger =
-        checkNotNull(LoggerFactory.getLogger(name) as? Logger) { "Failed to get root logger" }
+      checkNotNull(LoggerFactory.getLogger(name) as? Logger) { "Failed to get root logger" }
 
     /** Print the styled ASCII text banner. */
     fun printBanner() {
       terminal.println(
-          """
+        """
             _____                 _      _____                     _ 
            / ____|               | |    / ____|                   | |
           | |  __ _ __ __ _ _ __ | |__ | |  __ _   _  __ _ _ __ __| |
@@ -204,12 +212,13 @@ internal class Command : CliktCommand(name = "graph-guard") {
                            | |                                       
                            |_|                                       ${"v${BuildConfig.VERSION}".styled(TextColors.brightYellow)}
           """
-              .trimIndent()
-              .styled(TextColors.brightBlue))
+          .trimIndent()
+          .styled(TextColors.brightBlue)
+      )
     }
 
     /** Style `this` [String]. */
     private fun String.styled(style: TextStyle, vararg styles: TextStyle): String =
-        styles.fold(style, TextStyle::plus)(this)
+      styles.fold(style, TextStyle::plus)(this)
   }
 }

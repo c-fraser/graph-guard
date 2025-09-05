@@ -1,3 +1,18 @@
+/*
+Copyright 2023 c-fraser
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package io.github.cfraser.graphguard.plugin
 
 import io.github.cfraser.graphguard.Bolt
@@ -17,11 +32,11 @@ import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.properties.Delegates.notNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class ValidatorTest : FunSpec() {
 
@@ -37,10 +52,10 @@ class ValidatorTest : FunSpec() {
         observe { event ->
           lock.withLock {
             if (event is Server.Connected)
-                when (event.connection) {
-                  is Server.Connection.Client -> clientAddresses += event.connection.address
-                  is Server.Connection.Graph -> graphAddress = event.connection.address
-                }
+              when (event.connection) {
+                is Server.Connection.Client -> clientAddresses += event.connection.address
+                is Server.Connection.Graph -> graphAddress = event.connection.address
+              }
             events += event
           }
         }
@@ -56,9 +71,9 @@ class ValidatorTest : FunSpec() {
       lock.isLocked shouldBe false
       events.forExactly(1) { it shouldBe Server.Started }
       events.filterIsInstance<Server.Connected>() shouldContainInOrder
-          clientConnections.flatMap {
-            listOf(Server.Connected(it), Server.Connected(graphConnection))
-          }
+        clientConnections.flatMap {
+          listOf(Server.Connected(it), Server.Connected(graphConnection))
+        }
       val ran = AtomicInteger()
       events.filterIsInstance<Server.Proxied>().forEach { event ->
         when (val message = event.received) {
@@ -76,31 +91,31 @@ class ValidatorTest : FunSpec() {
             message shouldBe event.sent
           }
           is Bolt.Run ->
-              if (message.query.contains("Tom Hanks")) {
-                ran.getAndIncrement() shouldBe 0
-                event.source.address shouldBeOneOf clientConnections.map { it.address }
-                event.destination.address shouldBe graphConnection.address
-                message shouldBe event.sent
-              } else {
-                ran.getAndIncrement() shouldBe 1
-                event.source.address shouldBe event.destination.address
-                event.sent.shouldBeTypeOf<Bolt.Messages>()
-                (event.sent as Bolt.Messages).messages.map { it::class } shouldBe emptyList()
-              }
+            if (message.query.contains("Tom Hanks")) {
+              ran.getAndIncrement() shouldBe 0
+              event.source.address shouldBeOneOf clientConnections.map { it.address }
+              event.destination.address shouldBe graphConnection.address
+              message shouldBe event.sent
+            } else {
+              ran.getAndIncrement() shouldBe 1
+              event.source.address shouldBe event.destination.address
+              event.sent.shouldBeTypeOf<Bolt.Messages>()
+              (event.sent as Bolt.Messages).messages.map { it::class } shouldBe emptyList()
+            }
           is Bolt.Pull ->
-              if (ran.get() == 2) {
-                event.source.address shouldBe event.destination.address
-                event.sent.shouldBeTypeOf<Bolt.Messages>()
-                (event.sent as Bolt.Messages).messages.map { it::class } shouldBe
-                    listOf(Bolt.Failure::class, Bolt.Ignored::class)
-              }
+            if (ran.get() == 2) {
+              event.source.address shouldBe event.destination.address
+              event.sent.shouldBeTypeOf<Bolt.Messages>()
+              (event.sent as Bolt.Messages).messages.map { it::class } shouldBe
+                listOf(Bolt.Failure::class, Bolt.Ignored::class)
+            }
           else -> fail("Received unexpected '$message'")
         }
       }
       events.filterIsInstance<Server.Disconnected>() shouldContainAll
-          clientConnections.flatMap {
-            listOf(Server.Disconnected(graphConnection), Server.Disconnected(it))
-          }
+        clientConnections.flatMap {
+          listOf(Server.Disconnected(graphConnection), Server.Disconnected(it))
+        }
       events.forExactly(1) { it shouldBe Server.Stopped }
     }
   }

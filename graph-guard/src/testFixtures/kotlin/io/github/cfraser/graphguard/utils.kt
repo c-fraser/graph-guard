@@ -20,6 +20,7 @@ import io.github.cfraser.graphguard.knit.test
 import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
+import java.net.URI
 import org.neo4j.driver.AuthToken
 import org.neo4j.driver.Config
 import org.neo4j.driver.Driver
@@ -27,7 +28,6 @@ import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
 import org.neo4j.harness.Neo4j
 import org.neo4j.harness.Neo4jBuilders
-import java.net.URI
 
 val LOCAL = NamedTag("Local")
 
@@ -58,14 +58,15 @@ val Neo4j.driver: Driver
 val Server.driver: Driver
   get() {
     return GraphDatabase.driver(
-        URI("bolt://${address.hostName}:${address.port}"),
-        Config.builder().withoutEncryption().build())
+      URI("bolt://${address.hostName}:${address.port}"),
+      Config.builder().withoutEncryption().build(),
+    )
   }
 
 /** Get a [Driver] for the proxy [server] with the [auth]. */
 fun driver(server: URI = URI("bolt://localhost:8787"), auth: AuthToken? = null): Driver {
   return if (auth == null)
-      GraphDatabase.driver(server, Config.builder().withoutEncryption().build())
+    GraphDatabase.driver(server, Config.builder().withoutEncryption().build())
   else GraphDatabase.driver(server, auth, Config.builder().withoutEncryption().build())
 }
 
@@ -83,17 +84,18 @@ fun runMoviesQueries(driver: Driver) {
     session.run(MoviesGraph.MATCH_CLOUD_ATLAS_PEOPLE).list() shouldHaveSize 10
     session.run(MoviesGraph.MATCH_SIX_DEGREES_OF_KEVIN_BACON).list() shouldHaveSize 170
     session
-        .run(MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO, Values.parameters("name", "Tom Hanks"))
-        .list() shouldHaveSize 1
+      .run(MoviesGraph.MATCH_PATH_FROM_KEVIN_BACON_TO, Values.parameters("name", "Tom Hanks"))
+      .list() shouldHaveSize 1
     session.run(MoviesGraph.MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS).list() shouldHaveSize 44
     session
-        .run(
-            MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND,
-            Values.parameters("name", "Keanu Reeves"))
-        .list() shouldHaveSize 4
+      .run(
+        MoviesGraph.MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND,
+        Values.parameters("name", "Keanu Reeves"),
+      )
+      .list() shouldHaveSize 4
     session
-        .runCatching { run("invalid cypher") }
-        .onSuccess { fail("Expected exception from invalid cypher") }
+      .runCatching { run("invalid cypher") }
+      .onSuccess { fail("Expected exception from invalid cypher") }
   }
 }
 
@@ -101,7 +103,7 @@ fun runMoviesQueries(driver: Driver) {
 object MoviesGraph {
 
   val CREATE =
-      """
+    """
 CREATE CONSTRAINT IF NOT EXISTS FOR (p:Person) REQUIRE (p.name) IS UNIQUE;
 CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.born);
 CREATE CONSTRAINT IF NOT EXISTS FOR (m:Movie) REQUIRE (m.title) IS UNIQUE;
@@ -568,74 +570,74 @@ MERGE (JessicaThompson)-[:REVIEWED {summary:"Slapstick redeemed only by the Robi
 MERGE (JessicaThompson)-[:REVIEWED {summary:'A solid romp', rating:68}]->(TheDaVinciCode)
 MERGE (JamesThompson)-[:REVIEWED {summary:'Fun, but a little far fetched', rating:65}]->(TheDaVinciCode)
 MERGE (JessicaThompson)-[:REVIEWED {summary:'You had me at Jerry', rating:92}]->(JerryMaguire);"""
-          .split(";")
-          .map(String::trim)
-          .filterNot(String::isEmpty)
+      .split(";")
+      .map(String::trim)
+      .filterNot(String::isEmpty)
 
   const val MATCH_TOM_HANKS =
-      """
+    """
 MATCH (tom:Person {name: 'Tom Hanks'})
 RETURN tom
 """
 
   const val MATCH_CLOUD_ATLAS =
-      """
+    """
 MATCH (cloudAtlas:Movie {title: 'Cloud Atlas'})
 RETURN cloudAtlas
 """
 
   const val MATCH_10_PEOPLE =
-      """
+    """
 MATCH (people:Person)
 RETURN people.name
   LIMIT 10
 """
 
   const val MATCH_NINETIES_MOVIES =
-      """
+    """
 MATCH (nineties:Movie)
   WHERE nineties.released >= 1990 AND nineties.released < 2000
 RETURN nineties.title
 """
 
   const val MATCH_TOM_HANKS_MOVIES =
-      """
+    """
 MATCH (tom:Person {name: 'Tom Hanks'})-[:ACTED_IN]->(tomHanksMovies:Movie)
 RETURN tom, tomHanksMovies
 """
 
   const val MATCH_CLOUD_ATLAS_DIRECTOR =
-      """
+    """
 MATCH (cloudAtlas:Movie {title: 'Cloud Atlas'})<-[:DIRECTED]-(directors:Person)
 RETURN directors.name
 """
 
   const val MATCH_TOM_HANKS_CO_ACTORS =
-      """
+    """
 MATCH (tom:Person {name: 'Tom Hanks'})-[:ACTED_IN]->(:Movie)<-[:ACTED_IN]-(coActors:Person)
 RETURN DISTINCT coActors.name
 """
 
   const val MATCH_CLOUD_ATLAS_PEOPLE =
-      """
+    """
 MATCH (people:Person)-[relatedTo]-(:Movie {title: 'Cloud Atlas'})
 RETURN people.name, type(relatedTo), relatedTo.roles
 """
 
   const val MATCH_SIX_DEGREES_OF_KEVIN_BACON =
-      """
+    """
 MATCH (bacon:Person {name: 'Kevin Bacon'})-[*1..6]-(hollywood)
 RETURN DISTINCT hollywood
 """
 
   const val MATCH_PATH_FROM_KEVIN_BACON_TO =
-      """
+    """
 MATCH p = shortestPath((bacon:Person {name: 'Kevin Bacon'})-[*]-(:Person {name: ${'$'}name}))
 RETURN p
 """
 
   const val MATCH_RECOMMENDED_TOM_HANKS_CO_ACTORS =
-      """
+    """
 MATCH (tom:Person {name: 'Tom Hanks'})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
       (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(cocoActors)
   WHERE NOT (tom)-[:ACTED_IN]->()<-[:ACTED_IN]-(cocoActors) AND tom <> cocoActors
@@ -644,20 +646,20 @@ RETURN cocoActors.name AS Recommended, COUNT(*) AS Strength
 """
 
   const val MATCH_CO_ACTORS_BETWEEN_TOM_HANKS_AND =
-      """
+    """
 MATCH (tom:Person {name: 'Tom Hanks'})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
       (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(p:Person {name: ${'$'}name})
 RETURN tom, m, coActors, m2, p
 """
 
   const val MERGE_KEANU =
-      """
+    """
 MERGE (Keanu:Person {name:'Keanu Reeves'})-[:ACTED_IN {roles:['Neo']}]->(:Movie {title:'The Matrix', released:1999, tagline:'Welcome to the Real World'})
 SET Keanu += ${"$"}properties
 """
 
   const val CREATE_MATRIX_SHOWING =
-      """
+    """
 MERGE (TheMatrix:Movie {title:'The Matrix', released:1999, tagline:'Welcome to the Real World'})
 MERGE (AMC:Theater {name: 'AMC'})
 MERGE (AMC)-[Showing:SHOWING]->(TheMatrix)
