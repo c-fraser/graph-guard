@@ -23,7 +23,7 @@ import io.github.cfraser.graphguard.knit.UNION_SCHEMA
 import io.github.cfraser.graphguard.validate.SchemaTest.Companion.MOVIES_GRAPH
 import io.github.cfraser.graphguard.validate.SchemaTest.Companion.PLACES_GRAPH
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.datatest.IsStableType
+import io.kotest.engine.stable.IsStableType
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import java.time.Duration

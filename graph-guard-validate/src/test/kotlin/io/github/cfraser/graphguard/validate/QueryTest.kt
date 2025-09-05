@@ -16,10 +16,10 @@ limitations under the License.
 package io.github.cfraser.graphguard.validate
 
 import io.github.cfraser.graphguard.MoviesGraph
-import io.kotest.assertions.fail
+import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
+import io.kotest.engine.stable.IsStableType
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize

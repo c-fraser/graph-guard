@@ -17,7 +17,7 @@ package io.github.cfraser.graphguard
 
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.knit.test
-import io.kotest.assertions.fail
+import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
 import org.neo4j.driver.AuthToken

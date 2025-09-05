@@ -8,7 +8,7 @@ import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.withNeo4j
 import io.github.cfraser.graphguard.withServer
-import io.kotest.assertions.fail
+import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.inspectors.forExactly
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -17,11 +17,11 @@ import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.properties.Delegates.notNull
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class ValidatorTest : FunSpec() {
 

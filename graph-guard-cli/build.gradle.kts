@@ -15,7 +15,6 @@ limitations under the License.
 */
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   application
   alias(libs.plugins.buildconfig)

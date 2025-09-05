@@ -25,7 +25,8 @@ class Example02Test : FunSpec() {
 
   init {
     test("Example02") {
-    captureOutput("Example02") { runExample02() }.verifyOutputLines(
+    val output = captureOutput("Example02") { runExample02() }
+      output.verifyOutputLines(
         "Unknown node TVShow",
         "Unknown property 'budget' for node Movie",
         "Unknown relationship WATCHED from Person to Movie",

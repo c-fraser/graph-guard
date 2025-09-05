@@ -1,7 +1,7 @@
 package io.github.cfraser.graphguard.validate
 
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.datatest.IsStableType
+import io.kotest.engine.stable.IsStableType
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 

@@ -37,7 +37,6 @@ buildscript {
   dependencies { classpath(libs.knit) }
 }
 
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
   alias(libs.plugins.dokka)
@@ -54,7 +53,7 @@ apply(plugin = "kotlinx-knit")
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.24.5"
+  version = "0.25.0"
 
   repositories { mavenCentral() }
 }

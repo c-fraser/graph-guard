@@ -377,7 +377,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       class Node(label: KString) : Entity("node $label")
 
       class Relationship(label: KString, sources: Collection<KString>?, targets: Collection<KString>?) :
-          Entity("relationship $label from $sources to $targets")
+          Entity("relationship $label from ${sources.asString()} to ${targets.asString()}")
     }
 
     class Unknown(entity: Entity) : Violation(Rule.Violation("Unknown ${entity.name}"))
@@ -390,6 +390,17 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
             Rule.Violation(
                 @Suppress("MaxLineLength")
                 "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.name}"))
+
+    private companion object {
+
+      /**
+       * If the [Collection] has a single element, then return it. Otherwise, return [Collection.toString].
+       */
+      fun Collection<KString>?.asString(): String  = when {
+        this?.size == 1 -> first()
+        else -> "$this"
+      }
+    }
   }
 
   private companion object {
