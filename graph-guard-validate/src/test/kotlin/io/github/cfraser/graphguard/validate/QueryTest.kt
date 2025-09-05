@@ -283,12 +283,12 @@ class QueryTest : FunSpec() {
     private val REVIEWED_SUMMARY = "summary" of "REVIEWED"
     private val REVIEWED_RATING = "rating" of "REVIEWED"
 
-    private val ACTED_IN = Query.Relationship("ACTED_IN", PERSON, MOVIE)
-    private val PERSON_ACTED_IN = Query.Relationship("ACTED_IN", PERSON, null)
-    private val DIRECTED = Query.Relationship("DIRECTED", PERSON, MOVIE)
-    private val PRODUCED = Query.Relationship("PRODUCED", PERSON, MOVIE)
-    private val WROTE = Query.Relationship("WROTE", PERSON, MOVIE)
-    private val REVIEWED = Query.Relationship("REVIEWED", PERSON, MOVIE)
+    private val ACTED_IN = Query.Relationship("ACTED_IN", setOf(PERSON), setOf(MOVIE))
+    private val PERSON_ACTED_IN = Query.Relationship("ACTED_IN", setOf(PERSON), null)
+    private val DIRECTED = Query.Relationship("DIRECTED", setOf(PERSON), setOf(MOVIE))
+    private val PRODUCED = Query.Relationship("PRODUCED", setOf(PERSON), setOf(MOVIE))
+    private val WROTE = Query.Relationship("WROTE", setOf(PERSON), setOf(MOVIE))
+    private val REVIEWED = Query.Relationship("REVIEWED", setOf(PERSON), setOf(MOVIE))
 
     private infix fun String.of(owner: String?): Query.Property =
         Query.Property(owner, this, emptySet())

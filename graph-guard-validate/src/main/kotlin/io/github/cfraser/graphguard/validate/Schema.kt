@@ -16,26 +16,26 @@ limitations under the License.
 
 package io.github.cfraser.graphguard.validate
 
-import java.time.Duration as JDuration
-import java.time.LocalDate as JLocalDate
-import java.time.LocalDate
-import java.time.LocalDateTime as JLocalDateTime
-import java.time.LocalTime as JLocalTime
-import java.time.OffsetTime
-import java.time.ZonedDateTime as JZonedDateTime
-import java.time.ZonedDateTime
-import kotlin.Any as KAny
-import kotlin.Any
-import kotlin.Boolean as KBoolean
-import kotlin.String as KString
-import kotlin.String
-import kotlin.collections.List as KList
-import kotlin.properties.Delegates.notNull
-import kotlin.reflect.KClass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
+import java.time.LocalDate
+import java.time.OffsetTime
+import java.time.ZonedDateTime
+import kotlin.Any
+import kotlin.String
+import kotlin.properties.Delegates.notNull
+import kotlin.reflect.KClass
+import java.time.Duration as JDuration
+import java.time.LocalDate as JLocalDate
+import java.time.LocalDateTime as JLocalDateTime
+import java.time.LocalTime as JLocalTime
+import java.time.ZonedDateTime as JZonedDateTime
+import kotlin.Any as KAny
+import kotlin.Boolean as KBoolean
+import kotlin.String as KString
+import kotlin.collections.List as KList
 
 /**
  * A [Schema] describes the *nodes* and *relationships* in a [Neo4j](https://neo4j.com/) database
@@ -109,11 +109,14 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       }
     }
     for (queryRelationship in query.relationships) {
-      val (label, source, target) = queryRelationship
-      if (source == null || target == null) continue
-      val entity = Violation.Entity.Relationship(label, source, target)
+      val (label, sources, targets) = queryRelationship
+      if (sources == null || targets == null) continue
+      val entity = Violation.Entity.Relationship(label, sources, targets)
       val schemaRelationship =
-          relationships.value[Relationship.Id(label, source, target)]
+        sources.flatMap { source -> targets.map { target -> source to target } }
+          .firstNotNullOfOrNull { (source, target) ->
+            relationships.value[Relationship.Id(label, source, target)]
+          }
               ?: return Violation.Unknown(entity).violation
       for (queryProperty in query.properties(label) + query.mutatedProperties(label, parameters)) {
         val schemaProperty =
@@ -243,7 +246,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
         append(" ")
         append(if (isDirected) "->" else "--")
         append(" ")
-        append(target)
+        append(this@Relationship.target)
       }
     }
   }
@@ -373,8 +376,8 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
       class Node(label: KString) : Entity("node $label")
 
-      class Relationship(label: KString, source: KString?, target: KString?) :
-          Entity("relationship $label from $source to $target")
+      class Relationship(label: KString, sources: Collection<KString>?, targets: Collection<KString>?) :
+          Entity("relationship $label from $sources to $targets")
     }
 
     class Unknown(entity: Entity) : Violation(Rule.Violation("Unknown ${entity.name}"))

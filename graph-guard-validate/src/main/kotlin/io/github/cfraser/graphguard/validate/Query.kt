@@ -62,8 +62,8 @@ internal data class Query(
     val entities: Map<String, Set<String>>
 ) {
 
-  /** A [Relationship] with the [label] from the [source] to the [target]. */
-  data class Relationship(val label: String, val source: String?, val target: String?)
+  /** A [Relationship] with the [label] from the [sources] to the [targets]. */
+  data class Relationship(val label: String, val sources: Collection<String>?, val targets: Collection<String>?)
 
   /** A [Property] of the [owner] with the [name] and [values]. */
   data class Property(val owner: String?, val name: String, val values: Set<Type>) {
@@ -275,20 +275,18 @@ internal data class Query(
     private val Statement.relationships: Set<Relationship>
       get() =
           catalog.relationshipTypes
-              .flatMap { type ->
+              .map { type ->
                 fun Collection<StatementCatalog.Token>?.orEmptyToken():
                     Collection<StatementCatalog.Token> =
                     takeUnless { it.isNullOrEmpty() } ?: listOf(StatementCatalog.Token.label(""))
                 val sources = catalog.getSourceNodes(type).orEmptyToken()
                 val targets = catalog.getTargetNodes(type).orEmptyToken()
-                sources
-                    .flatMap { source -> targets.map { target -> source to target } }
-                    .map { (source, target) ->
-                      Relationship(
-                          type.value,
-                          source.value.takeIf { type in catalog.getOutgoingRelations(source) },
-                          target.value.takeIf { type in catalog.getIncomingRelations(target) })
-                    }
+                Relationship(
+                  type.value,
+                  sources.filter { source -> type in catalog.getOutgoingRelations(source) }
+                    .takeUnless(Collection<StatementCatalog.Token>::isEmpty)
+                    ?.map(                    StatementCatalog.Token::value)?.toSet(),
+                  targets.filter { target -> type in catalog.getIncomingRelations(target) }.takeUnless(Collection<StatementCatalog.Token>::isEmpty)?.map(                    StatementCatalog.Token::value)?.toSet())
               }
               .toSet()
 

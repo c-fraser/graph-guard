@@ -20,6 +20,8 @@ import io.github.cfraser.graphguard.knit.METADATA_SCHEMA
 import io.github.cfraser.graphguard.knit.MOVIES_SCHEMA
 import io.github.cfraser.graphguard.knit.PLACES_SCHEMA
 import io.github.cfraser.graphguard.knit.UNION_SCHEMA
+import io.github.cfraser.graphguard.validate.SchemaTest.Companion.MOVIES_GRAPH
+import io.github.cfraser.graphguard.validate.SchemaTest.Companion.PLACES_GRAPH
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.IsStableType
 import io.kotest.datatest.withData
@@ -64,13 +66,13 @@ class SchemaTest : FunSpec() {
           "MATCH (person:Person)-[:WATCHED]->(movie:Movie) RETURN person, movie" with
               emptyMap() expect
               Schema.Violation.Unknown(
-                  Schema.Violation.Entity.Relationship("WATCHED", "Person", "Movie")),
+                  Schema.Violation.Entity.Relationship("WATCHED", setOf("Person"), setOf("Movie"))),
           """MATCH (:Person)-[produced:PRODUCED]->(:Movie {title:'The Matrix'})
               |SET produced.company = 'Warner Bros.'"""
               .trimMargin() with
               emptyMap() expect
               Schema.Violation.UnknownProperty(
-                  Schema.Violation.Entity.Relationship("PRODUCED", "Person", "Movie"), "company"),
+                  Schema.Violation.Entity.Relationship("PRODUCED", setOf("Person"), setOf("Movie")), "company"),
           MoviesGraph.CREATE.last() with emptyMap() expect null,
           MoviesGraph.MATCH_TOM_HANKS with emptyMap() expect null,
           MoviesGraph.MATCH_CLOUD_ATLAS with emptyMap() expect null,
@@ -485,6 +487,20 @@ class SchemaTest : FunSpec() {
           """
               .trimMargin()
     }
+
+    test("target node and relationship intersection") {
+      val schema =
+        Schema(
+          """
+              |graph G {
+              |  node A: AB -> B, AC -> C;
+              |  node B;
+              |  node C;
+              |}"""
+            .trimMargin()
+        )
+      schema.validate("MATCH (a:A)-[r:AB|AC]->(n:B|C) RETURN a, r, n", emptyMap()) shouldBe null
+    }
   }
 
   @IsStableType
@@ -691,7 +707,7 @@ class SchemaTest : FunSpec() {
     val PERSON = Schema.Violation.Entity.Node("Person")
     val NAME = Schema.Property("name", Schema.Property.Type.String, emptyList())
     val BORN = Schema.Property("born", Schema.Property.Type.Integer, emptyList())
-    val SHOWING = Schema.Violation.Entity.Relationship("SHOWING", "Theater", "Movie")
+    val SHOWING = Schema.Violation.Entity.Relationship("SHOWING", setOf("Theater"), setOf("Movie"))
     val TIMES =
         Schema.Property(
             "times", Schema.Property.Type.List(Schema.Property.Type.Integer), emptyList())
