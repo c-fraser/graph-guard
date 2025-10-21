@@ -18,6 +18,8 @@ import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessTask
 import io.github.gradlenexus.publishplugin.NexusPublishExtension
 import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.DetektPlugin
+import kotlinx.knit.KnitPlugin
 import kotlinx.knit.KnitPluginExtension
 import kotlinx.validation.KotlinApiBuildTask
 import org.gradle.internal.extensions.stdlib.capitalized
@@ -49,22 +51,22 @@ plugins {
   alias(libs.plugins.compatibility.validator)
 }
 
-apply(plugin = "kotlinx-knit")
+apply<KnitPlugin>()
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.25.0"
+  version = "1.0.0"
 
   repositories { mavenCentral() }
 }
 
 subprojects project@{
   apply(plugin = "org.jetbrains.kotlin.jvm")
-  apply(plugin = "org.jetbrains.dokka")
-  apply(plugin = "io.gitlab.arturbosch.detekt")
+  apply<DokkaPlugin>()
+  apply<DetektPlugin>()
 
   configure<JavaPluginExtension> {
-    toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
+    toolchain { languageVersion.set(JavaLanguageVersion.of(21)) }
     withSourcesJar()
   }
 

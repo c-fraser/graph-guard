@@ -58,7 +58,7 @@ val Neo4j.driver: Driver
 val Server.driver: Driver
   get() {
     return GraphDatabase.driver(
-      URI("bolt://${address.hostName}:${address.port}"),
+      URI("bolt://${serverAddress.hostName}:${serverAddress.port}"),
       Config.builder().withoutEncryption().build(),
     )
   }

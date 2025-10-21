@@ -129,7 +129,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
     Server(
         URI(graphUri),
         plugin = plugin,
-        address = InetSocketAddress(hostname, port),
+        serverAddress = InetSocketAddress(hostname, port),
         parallelism = parallelism,
       )
       .start()

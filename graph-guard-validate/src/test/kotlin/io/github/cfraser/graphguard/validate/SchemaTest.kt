@@ -156,12 +156,12 @@ class SchemaTest : FunSpec() {
     context("removal of unknown properties") {
       withData(
         "MATCH (person:Person) REMOVE person.ssn" with emptyMap() expect null,
-        "CREATE (person:Person) SET person += \$keanu" with
+        $$"CREATE (person:Person) SET person += $keanu" with
           mapOf(
             "keanu" to mapOf("name" to "Keanu Reeves", "born" to 1964L, "ssn" to "123-45-6789")
           ) expect
           Schema.Violation.UnknownProperty(PERSON, "ssn"),
-        "CREATE (person:Person) SET person += \$person REMOVE person.ssn" with
+        $$"CREATE (person:Person) SET person += $person REMOVE person.ssn" with
           mapOf(
             "person" to mapOf("name" to "Keanu Reeves", "born" to 1964L, "ssn" to "123-45-6789")
           ) expect
@@ -189,15 +189,15 @@ class SchemaTest : FunSpec() {
         "CREATE (:N {p: false})" with emptyMap() expect null,
         "CREATE (:N {p: 'true'})" with emptyMap() expect null,
         "CREATE (:N {p: 'false'})" with emptyMap() expect null,
-        "CREATE (:N {p: \$p})" with mapOf("p" to true) expect null,
-        "CREATE (:N {p: \$p})" with mapOf("p" to false) expect null,
-        "CREATE (:N {p: \$p})" with mapOf("p" to "true") expect null,
-        "CREATE (:N {p: \$p})" with mapOf("p" to "false") expect null,
+        $$"CREATE (:N {p: $p})" with mapOf("p" to true) expect null,
+        $$"CREATE (:N {p: $p})" with mapOf("p" to false) expect null,
+        $$"CREATE (:N {p: $p})" with mapOf("p" to "true") expect null,
+        $$"CREATE (:N {p: $p})" with mapOf("p" to "false") expect null,
         "CREATE (:N {p: ''})" with emptyMap() expect invalidProperty(""),
-        "CREATE (:N {p: \$p})" with mapOf("p" to "") expect invalidProperty(""),
-        "CREATE (:N {p: \$p})" with mapOf("p" to null) expect invalidProperty(null),
+        $$"CREATE (:N {p: $p})" with mapOf("p" to "") expect invalidProperty(""),
+        $$"CREATE (:N {p: $p})" with mapOf("p" to null) expect invalidProperty(null),
         "CREATE (:N {p: 'TRUE'})" with emptyMap() expect invalidProperty("TRUE"),
-        "CREATE (:N {p: \$p})" with mapOf("p" to "FALSE") expect invalidProperty("FALSE"),
+        $$"CREATE (:N {p: $p})" with mapOf("p" to "FALSE") expect invalidProperty("FALSE"),
       ) { (query, parameters, expected) ->
         UNION_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
       }
@@ -220,17 +220,17 @@ class SchemaTest : FunSpec() {
         "CREATE (:A {a: null})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(A, A_A, listOf(null)),
-        "CREATE (:A {a: \$a})" with
+        $$"CREATE (:A {a: $a})" with
           mapOf("a" to null) expect
           Schema.Violation.InvalidProperty(A, A_A, listOf(null)),
         "CREATE (:B {b: []})" with emptyMap() expect null,
         "CREATE (:B {b: [1, '2', 3.0]})" with emptyMap() expect null,
         "CREATE (:B {b: [null]]})" with emptyMap() expect null,
-        "CREATE (:B {b: \$b})" with mapOf("b" to listOf(null)) expect null,
+        $$"CREATE (:B {b: $b})" with mapOf("b" to listOf(null)) expect null,
         "CREATE (:B {b: null})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(B, B_B, listOf(null)),
-        "CREATE (:B {b: \$b})" with
+        $$"CREATE (:B {b: $b})" with
           mapOf("b" to null) expect
           Schema.Violation.InvalidProperty(B, B_B, listOf(null)),
       ) { (query, parameters, expected) ->
@@ -259,46 +259,46 @@ class SchemaTest : FunSpec() {
           .trimIndent()
           .let(::Schema)
       withData(
-        "CREATE (:C {c: \$c})" with mapOf("c" to localDate) expect null,
+        $$"CREATE (:C {c: $c})" with mapOf("c" to localDate) expect null,
         "CREATE (:C {c: time()})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(C, C_C, listOf("time()")),
-        "CREATE (:C {c: \$c})" with
+        $$"CREATE (:C {c: $c})" with
           mapOf("c" to offsetTime) expect
           Schema.Violation.InvalidProperty(C, C_C, listOf(offsetTime)),
-        "CREATE (:D {d: \$d})" with mapOf("d" to offsetTime) expect null,
+        $$"CREATE (:D {d: $d})" with mapOf("d" to offsetTime) expect null,
         "CREATE (:D {d: localtime()})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(D, D_D, listOf("localtime()")),
-        "CREATE (:D {d: \$d})" with
+        $$"CREATE (:D {d: $d})" with
           mapOf("d" to localTime) expect
           Schema.Violation.InvalidProperty(D, D_D, listOf(localTime)),
-        "CREATE (:E {e: \$e})" with mapOf("e" to localTime) expect null,
+        $$"CREATE (:E {e: $e})" with mapOf("e" to localTime) expect null,
         "CREATE (:E {e: datetime()})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(E, E_E, listOf("datetime()")),
-        "CREATE (:E {e: \$e})" with
+        $$"CREATE (:E {e: $e})" with
           mapOf("e" to zonedDateTime) expect
           Schema.Violation.InvalidProperty(E, E_E, listOf(zonedDateTime)),
-        "CREATE (:F {f: \$f})" with mapOf("f" to zonedDateTime) expect null,
+        $$"CREATE (:F {f: $f})" with mapOf("f" to zonedDateTime) expect null,
         "CREATE (:F {f: localdatetime()})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(F, F_F, listOf("localdatetime()")),
-        "CREATE (:F {f: \$f})" with
+        $$"CREATE (:F {f: $f})" with
           mapOf("f" to localDateTime) expect
           Schema.Violation.InvalidProperty(F, F_F, listOf(localDateTime)),
-        "CREATE (:G {g: \$g})" with mapOf("g" to localDateTime) expect null,
+        $$"CREATE (:G {g: $g})" with mapOf("g" to localDateTime) expect null,
         "CREATE (:G {g: date()})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(G, G_G, listOf("date()")),
-        "CREATE (:G {g: \$g})" with
+        $$"CREATE (:G {g: $g})" with
           mapOf("g" to localDate) expect
           Schema.Violation.InvalidProperty(G, G_G, listOf(localDate)),
-        "CREATE (:H {h: \$h})" with mapOf("h" to duration) expect null,
+        $$"CREATE (:H {h: $h})" with mapOf("h" to duration) expect null,
         "CREATE (:H {h: date()})" with
           emptyMap() expect
           Schema.Violation.InvalidProperty(H, H_H, listOf("date()")),
-        "CREATE (:H {h: \$h})" with
+        $$"CREATE (:H {h: $h})" with
           mapOf("h" to "") expect
           Schema.Violation.InvalidProperty(H, H_H, listOf("")),
         *listOf(

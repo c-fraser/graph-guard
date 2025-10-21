@@ -24,6 +24,7 @@ import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.SocketAddress as KSocketAddress
+import io.ktor.network.sockets.UnixSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -75,18 +76,16 @@ import org.slf4j.MDC.MDCCloseable
  * through the [plugin].
  *
  * @param plugin the [Server.Plugin] to use to intercept proxied messages and observe server events
- * @property graph the [URI] of the graph database to proxy data to/from
- * @property address the [InetSocketAddress] to bind the [Server] to
- * @property parallelism the number of parallel coroutines used by the [Server]
- * @property trustManager the [TrustManager] to use for the TLS connection to the [graph]
+ * @property graphURI the [URI] of the graph database to proxy data to/from
+ * @property serverAddress the [InetSocketAddress] to bind the [Server] to
+ * @property trustManager the [TrustManager] to use for the TLS connection to the [graphURI]
  */
 class Server
 @JvmOverloads
 constructor(
-  val graph: URI,
+  val graphURI: URI,
   plugin: Plugin = Plugin.DSL.plugin {},
-  val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
-  private val parallelism: Int? = null,
+  val serverAddress: InetSocketAddress = InetSocketAddress("localhost", 8787),
   private val trustManager: TrustManager? = null,
 ) : AutoCloseable {
 
@@ -126,13 +125,7 @@ constructor(
     check(running?.isActive?.not() ?: true) { "The proxy server is already running" }
     running =
       @OptIn(DelicateCoroutinesApi::class)
-      GlobalScope.launch(
-        MDCContext() +
-          when (val parallelism = parallelism) {
-            null -> Dispatchers.IO
-            else -> Dispatchers.IO.limitedParallelism(parallelism)
-          }
-      ) {
+      GlobalScope.launch(MDCContext() + Dispatchers.IO) {
         try {
           run(latch)
         } catch (thrown: Exception) {
@@ -149,7 +142,7 @@ constructor(
   }
 
   /**
-   * Run the [Server] on the [address], connecting to the [graph].
+   * Run the [Server] on the [serverAddress], connecting to the [graphURI].
    *
    * [Server.run] loops indefinitely. To stop the server, [Job.cancel] the [running] [Job].
    * [CancellationException] is **not** thrown after the server is stopped.
@@ -186,13 +179,18 @@ constructor(
     }
   }
 
-  /** Bind the proxy [ServerSocket] to the [address] then run the [block]. */
+  /** Bind the proxy [ServerSocket] to the [serverAddress] then run the [block]. */
   private suspend fun bind(block: suspend CoroutineScope.(SelectorManager, ServerSocket) -> Unit) {
-    withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graph") {
+    withLoggingContext(
+      "graph-guard.server" to "$serverAddress",
+      "graph-guard.graph" to "$graphURI",
+    ) {
       try {
         SelectorManager(coroutineContext).use { selector ->
           val socket =
-            aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
+            aSocket(selector)
+              .tcp()
+              .bind(KInetSocketAddress(serverAddress.hostname, serverAddress.port))
           LOGGER.info("Started proxy server on '{}'", socket.localAddress)
           plugin.observe(Started)
           socket.use { server -> block(selector, server) }
@@ -230,13 +228,19 @@ constructor(
     }
   }
 
-  /** Connect to the [graph] then run the [block] with the [Socket] channels. */
+  /** Connect to the [graphURI] then run the [block] with the [Socket] channels. */
   private suspend fun CoroutineScope.connect(
     selector: SelectorManager,
     block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
   ) {
-    var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
-    if ("+s" in graph.scheme)
+    var socket =
+      aSocket(selector)
+        .tcp()
+        .connect(
+          if ("+unix" in graphURI.scheme) UnixSocketAddress(graphURI.path)
+          else KInetSocketAddress(graphURI.host, graphURI.port)
+        )
+    if ("+s" in graphURI.scheme)
       socket =
         socket.tls(coroutineContext = coroutineContext) { trustManager = this@Server.trustManager }
     val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
