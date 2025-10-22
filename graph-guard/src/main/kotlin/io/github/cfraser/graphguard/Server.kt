@@ -23,7 +23,6 @@ import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
 import io.ktor.network.sockets.UnixSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -40,7 +39,7 @@ import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
 import io.ktor.utils.io.writeShort
-import java.net.InetSocketAddress
+import java.net.SocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.Path
@@ -219,7 +218,7 @@ constructor(
     block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
   ) {
     val socket = serverSocket.accept()
-    val clientConnection = Connection.Client(socket.remoteAddress.toInetSocketAddress())
+    val clientConnection = Connection.Client(socket.remoteAddress.toJavaAddress())
     launch {
       try {
         socket.withChannels { reader, writer ->
@@ -248,7 +247,7 @@ constructor(
     if ("+s" in graph.scheme)
       socket =
         socket.tls(coroutineContext = coroutineContext) { trustManager = this@Server.trustManager }
-    val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
+    val graphConnection = Connection.Graph(socket.remoteAddress.toJavaAddress())
     try {
       socket.withChannels { reader, writer ->
         LOGGER.debug("Connected to '{}'", graphConnection)
@@ -566,25 +565,25 @@ constructor(
   /**
    * A proxy connection.
    *
-   * @property address the [InetSocketAddress] of the proxy source/destination
+   * @property address the [SocketAddress] of the proxy source/destination
    */
   sealed interface Connection {
 
-    val address: InetSocketAddress
+    val address: SocketAddress
 
     /**
      * A client the [Server] accepted a connection from.
      *
-     * @property address the [InetSocketAddress] of the client
+     * @property address the [SocketAddress] of the client
      */
-    @JvmRecord data class Client(override val address: InetSocketAddress) : Connection
+    @JvmRecord data class Client(override val address: SocketAddress) : Connection
 
     /**
      * The graph database the [Server] connected to.
      *
-     * @property address the [InetSocketAddress] of the graph database
+     * @property address the [SocketAddress] of the graph database
      */
-    @JvmRecord data class Graph(override val address: InetSocketAddress) : Connection
+    @JvmRecord data class Graph(override val address: SocketAddress) : Connection
   }
 
   /**
@@ -624,10 +623,6 @@ constructor(
       reset.runCatching { forEach(MDCCloseable::close) }
       result.getOrThrow()
     }
-
-    /** Convert the [KSocketAddress] to an [InetSocketAddress]. */
-    private fun KSocketAddress.toInetSocketAddress(): InetSocketAddress =
-      checkNotNull(toJavaAddress() as? InetSocketAddress) { "Unexpected address '$this'" }
 
     /** Use the opened [ByteReadChannel] and [ByteWriteChannel] for the [Socket]. */
     private suspend fun Socket.withChannels(

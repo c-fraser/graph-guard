@@ -23,3 +23,8 @@ jobs:
         run: ./gradlew spotlessCheck
       - name: execute build
         run: ./gradlew clean build -Dkotest.tags='!Local'
+      - name: publish test report
+        uses: mikepenz/action-junit-report@v5
+        if: success() || failure()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
