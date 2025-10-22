@@ -1,6 +1,6 @@
 {
   "name": "graph-guard",
-  "image": "mcr.microsoft.com/devcontainers/java:17-bullseye",
+  "image": "mcr.microsoft.com/devcontainers/java:21-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.12",

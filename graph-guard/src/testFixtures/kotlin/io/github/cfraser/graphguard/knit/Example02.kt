@@ -18,17 +18,16 @@ limitations under the License.
 package io.github.cfraser.graphguard.knit
 
 import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.plugin.Validator
+import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.InetSocketAddress
 import org.neo4j.driver.Config
 import org.neo4j.driver.GraphDatabase
 
 fun runExample02() {
   withNeo4j {
 
-Server(boltURI(), Validator(Schema(MOVIES_SCHEMA)), InetSocketAddress("localhost", 8787)).use {
+Server(boltURI(), Validator(Schema(MOVIES_SCHEMA)), Server.Address.InetSocket("localhost", 8787)).use {
     server ->
   server.start()
   GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())

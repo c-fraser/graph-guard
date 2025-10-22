@@ -43,7 +43,6 @@ import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.validate.Schema
-import java.net.InetSocketAddress
 import java.net.URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -74,14 +73,6 @@ internal class Command : CliktCommand(name = "graph-guard") {
       .validate { uri ->
         uri.runCatching(::URI).getOrElse { _ -> fail("Graph URI '$uri' is invalid") }
       }
-
-  private val parallelism by
-    option(
-        "-n",
-        "--parallelism",
-        help = "The number of parallel coroutines used by the proxy server",
-      )
-      .int()
 
   private val schema by
     mutuallyExclusiveOptions(
@@ -129,8 +120,8 @@ internal class Command : CliktCommand(name = "graph-guard") {
     Server(
         URI(graphUri),
         plugin = plugin,
-        serverAddress = InetSocketAddress(hostname, port),
-        parallelism = parallelism,
+        // TODD: support unix domain socket address
+        address = Server.Address.InetSocket(hostname, port),
       )
       .start()
   }

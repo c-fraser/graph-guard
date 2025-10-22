@@ -30,8 +30,12 @@ import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeShort
 import java.net.URI
 import java.nio.ByteBuffer
+import java.nio.file.Path
 import java.security.cert.X509Certificate
+import java.util.concurrent.Executors
 import javax.net.ssl.X509TrustManager
+import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteExisting
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
@@ -40,12 +44,29 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.neo4j.configuration.connectors.BoltConnector
+import org.neo4j.configuration.helpers.SocketAddress
 import org.neo4j.harness.Neo4jBuilders
 
 class ServerTest : FunSpec() {
 
   init {
-    test("proxy bolt messages") { withNeo4j { withServer(block = ::runMoviesQueries) } }
+    test("proxy bolt messages via IP socket") {
+      withNeo4j { withServer(block = ::runMoviesQueries) }
+    }
+
+    test("proxy bolt messages via unix domain socket") {
+      val udsPath = createTempFile().also(Path::deleteExisting)
+      withNeo4j({
+        // disable TCP bolt
+        withConfig(BoltConnector.listen_address, SocketAddress("localhost", 0))
+          // enable unix socket
+          .withConfig(BoltConnector.enable_unix_socket, true)
+          // specify socket path
+          .withConfig(BoltConnector.unix_socket_path, udsPath)
+      }) {
+        withServer(block = ::runMoviesQueries)
+      }
+    }
 
     test("concurrent connections") {
       val neo4j = Neo4jBuilders.newInProcessBuilder().build()
@@ -63,10 +84,15 @@ class ServerTest : FunSpec() {
       }
     }
 
-    test("proxy bolt messages with async plugin") {
+    test("proxy bolt messages with sync plugin") {
       withNeo4j {
-        val server = JServer.initialize(boltURI())
-        server.test { server.driver.use(::runMoviesQueries) }
+        val executor = Executors.newVirtualThreadPerTaskExecutor()
+        val server = ServerFactory.init(boltURI(), executor)
+        try {
+          server.test { server.driver.use(::runMoviesQueries) }
+        } finally {
+          executor.shutdown()
+        }
       }
     }
 

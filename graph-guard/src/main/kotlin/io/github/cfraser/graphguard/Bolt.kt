@@ -147,7 +147,7 @@ object Bolt {
     val extra: Map<String, Any?>,
   ) : Request
 
-  /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
+  /** The [RESET](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
   data object Reset : Request
 
   /** The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message. */

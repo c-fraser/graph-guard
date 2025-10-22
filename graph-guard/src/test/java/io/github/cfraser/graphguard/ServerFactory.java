@@ -17,35 +17,32 @@ package io.github.cfraser.graphguard;
 
 import io.github.cfraser.graphguard.Bolt.Message;
 import java.net.URI;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import org.jetbrains.annotations.NotNull;
 
-final class JServer {
+final class ServerFactory {
 
-  private JServer() {}
+  private ServerFactory() {}
 
   /**
    * Initialize a {@link Server} in <i>Java</i>.
    *
-   * @param boltUri the URL of the graph database
+   * @param boltUri the {@link URI} of the graph database
+   * @param executor the {@link Executor} for {@link Server.Plugin.Blocking}
    * @return the {@link Server}
    */
-  static Server initialize(URI boltUri) {
+  static Server init(URI boltUri, Executor executor) {
     return new Server(
         boltUri,
-        new Server.Plugin.Async() {
+        new Server.Plugin.Blocking(executor) {
           @NotNull
           @Override
-          public CompletableFuture<Message> interceptAsync(
-              @NotNull String session, @NotNull Bolt.Message message) {
-            return CompletableFuture.completedFuture(message);
+          public Message interceptBlocking(@NotNull String session, @NotNull Bolt.Message message) {
+            return message;
           }
 
-          @NotNull
           @Override
-          public CompletableFuture<Void> observeAsync(@NotNull Server.Event event) {
-            return CompletableFuture.completedFuture(null);
-          }
+          public void observeBlocking(@NotNull Server.Event event) {}
         });
   }
 }
