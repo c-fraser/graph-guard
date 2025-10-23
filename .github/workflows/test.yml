@@ -9,6 +9,10 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      id-token: write
     steps:
       - name: checkout code
         uses: actions/checkout@v4
