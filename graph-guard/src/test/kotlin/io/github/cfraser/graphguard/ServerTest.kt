@@ -96,7 +96,7 @@ class ServerTest : FunSpec() {
       }
     }
 
-    test("dechunk message") {
+    test("dechunk message").config(invocations = 3) {
       val message =
         SelectorManager(coroutineContext)
           .use { selector ->
@@ -127,7 +127,7 @@ class ServerTest : FunSpec() {
           PackStreamTest.byteArrayOfSize(3))
     }
 
-    test("chunk message") {
+    test("chunk message").config(invocations = 3) {
       val chunked =
         SelectorManager(coroutineContext)
           .use { selector ->

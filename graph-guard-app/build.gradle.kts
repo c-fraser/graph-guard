@@ -19,6 +19,8 @@ plugins {
   application
   alias(libs.plugins.buildconfig)
   alias(libs.plugins.shadow)
+  alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.kotlinx.rpc)
 }
 
 application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
@@ -26,13 +28,24 @@ application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
 dependencies {
   implementation(project(":graph-guard"))
   implementation(project(":graph-guard-script"))
+  implementation(project(":graph-guard-rpc"))
   implementation(libs.caffeine)
   implementation(libs.clikt)
   implementation(libs.jackson)
   implementation(libs.kotlinx.coroutines)
+  implementation(libs.kotlinx.rpc.krpc.server)
+  implementation(libs.kotlinx.rpc.krpc.ktor.server)
+  implementation(libs.kotlinx.rpc.krpc.serialization.json)
+  implementation(libs.kotlinx.serialization.json)
+  implementation(libs.ktor.server.netty)
+  implementation(libs.ktor.server.core)
+  implementation(libs.ktor.server.cors)
+  implementation(libs.ktor.server.websockets)
   implementation(libs.logback.classic)
   runtimeOnly(libs.logback.encoder)
 
+  testImplementation(libs.kotest.assertions)
+  testImplementation(libs.kotest.runner)
   testImplementation(testFixtures(project(":graph-guard")))
   testImplementation(libs.neo4j.test.harness) { exclude(module = "neo4j-slf4j-provider") }
 }
@@ -61,4 +74,14 @@ tasks {
   distTar { mustRunAfter(shadowJar) }
   startScripts { mustRunAfter(shadowJar, ":spotlessKotlin") }
   startShadowScripts { mustRunAfter(jar, ":spotlessKotlin") }
+
+  val setupWeb by
+    registering(Copy::class) {
+      val buildWeb = project(":graph-guard-web").tasks.named("jsBrowserDistribution")
+      dependsOn(buildWeb)
+      from(buildWeb.map { it.outputs })
+      into(layout.buildDirectory.dir("resources/main/static"))
+    }
+
+  processResources { dependsOn(setupWeb) }
 }

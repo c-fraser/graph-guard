@@ -32,6 +32,7 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
+import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.path
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyle
@@ -43,11 +44,23 @@ import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.plugin.Validator
+import io.github.cfraser.graphguard.rpc.ProxiedMessage
+import io.github.cfraser.graphguard.rpc.WebService
 import io.github.cfraser.graphguard.validate.Schema
+import io.ktor.server.application.install
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.http.content.staticResources
+import io.ktor.server.netty.Netty
+import io.ktor.server.routing.routing
 import java.net.URI
 import kotlin.io.path.exists
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withContext
+import kotlinx.rpc.krpc.ktor.server.Krpc
+import kotlinx.rpc.krpc.ktor.server.rpc
+import kotlinx.rpc.krpc.serialization.json.json
 import org.slf4j.LoggerFactory
 
 /** [main] is the entry point for the [Server] application, run by the [Command]. */
@@ -120,6 +133,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
     mutuallyExclusiveOptions(
       option("--debug", help = "Enable debug logging").flag().convert { Debug },
       option("--inspect", help = "Inspect proxied Bolt messages").flag().convert { Inspect },
+      option("--web", help = "Run the web application").int().convert { port -> Web(port) },
     )
 
   override fun run() {
@@ -133,8 +147,17 @@ internal class Command : CliktCommand(name = "graph-guard") {
       }
       is Inspect -> {
         logger(Logger.ROOT_LOGGER_NAME).detachAppender("STDOUT")
-        plugin = plugin then checkNotNull(output as? Server.Plugin)
+        plugin = plugin then output
         printBanner()
+      }
+      is Web -> {
+        plugin = plugin then output
+        printBanner()
+        terminal.println(
+          "http://localhost:${output.port}"
+            .styled(TextColors.brightCyan, TextStyles.underline.style)
+        )
+        output.server.start(wait = true)
       }
     }
     Server(URI(graph), plugin = plugin, address = address).use { server ->
@@ -196,6 +219,45 @@ internal class Command : CliktCommand(name = "graph-guard") {
         .distinct()
         .map { message -> "${session.id} ".styled(color) + message.styled() }
     }
+  }
+
+  /**
+   * Start the [Web] application.
+   *
+   * @property port the port number to bind the [Command.Web.server] to
+   */
+  private class Web(val port: Int) : Output, Server.Plugin, WebService {
+
+    val server =
+      embeddedServer(Netty, port) {
+        install(Krpc)
+        routing {
+          staticResources("/", "static")
+          rpc("/web") {
+            rpcConfig { serialization { json() } }
+            registerService<WebService> { this@Web }
+          }
+        }
+      }
+
+    private val messages = MutableSharedFlow<ProxiedMessage>(replay = 100)
+
+    override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) = message
+
+    override suspend fun observe(event: Server.Event) {
+      if (event !is Server.Proxied) return
+      val proxiedMessage =
+        ProxiedMessage(
+          event.session.id,
+          "${event.source.address}",
+          "${event.received}",
+          "${event.destination.address}",
+          "${event.sent}",
+        )
+      messages.emit(proxiedMessage)
+    }
+
+    override fun getMessages(): Flow<ProxiedMessage> = messages
   }
 
   private companion object {

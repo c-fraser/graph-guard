@@ -13,11 +13,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-include(
-  "graph-guard",
-  "graph-guard-app",
-  "graph-guard-script",
-  "graph-guard-validate",
-  "graph-guard-rpc",
-  "graph-guard-web",
-)
+plugins {
+  alias(libs.plugins.kotlin.multiplatform)
+  alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.kotlinx.rpc)
+}
+
+kotlin {
+  jvm()
+  js {
+    browser()
+    binaries.executable()
+  }
+
+  sourceSets {
+    commonMain {
+      dependencies {
+        api(libs.kotlinx.rpc.krpc.core)
+        implementation(libs.kotlinx.serialization.json)
+      }
+    }
+  }
+}

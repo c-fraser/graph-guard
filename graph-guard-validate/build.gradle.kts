@@ -32,6 +32,8 @@ dependencies {
   implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
 
+  testImplementation(libs.kotest.assertions)
+  testImplementation(libs.kotest.runner)
   testImplementation(testFixtures(project(":graph-guard")))
   testImplementation(libs.neo4j.test.harness) { exclude(module = "neo4j-slf4j-provider") }
 }

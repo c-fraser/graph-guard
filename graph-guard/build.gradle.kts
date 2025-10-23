@@ -30,6 +30,8 @@ dependencies {
   implementation(libs.caffeine)
   implementation(libs.slf4j.api)
 
+  testImplementation(libs.kotest.assertions)
+  testImplementation(libs.kotest.runner)
   testImplementation(libs.knit.test)
   testImplementation(libs.neo4j.test.harness) { exclude(module = "neo4j-slf4j-provider") }
   testRuntimeOnly(libs.slf4j.nop)

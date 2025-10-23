@@ -22,3 +22,7 @@ graph-guard-app/neo4j.cid
 graph-guard-validate/src/main/java
 # dev notes
 TODO.md
+# kotlin/js artifacts
+kotlin-js-store
+node_modules
+.yarn

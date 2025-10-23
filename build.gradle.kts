@@ -29,6 +29,7 @@ import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jreleaser.gradle.plugin.JReleaserExtension
 import org.jreleaser.gradle.plugin.tasks.JReleaserFullReleaseTask
@@ -41,6 +42,9 @@ buildscript {
 
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
+  alias(libs.plugins.kotlin.multiplatform) apply false
+  //  alias(libs.plugins.kotlin.serialization) apply false
+  //  alias(libs.plugins.kotlinx.rpc) apply false
   alias(libs.plugins.dokka)
   alias(libs.plugins.spotless)
   alias(libs.plugins.detekt) apply false
@@ -60,15 +64,23 @@ allprojects {
   repositories { mavenCentral() }
 }
 
-subprojects project@{
-  apply(plugin = "org.jetbrains.kotlin.jvm")
-  apply<DokkaPlugin>()
-  apply<DetektPlugin>()
+val multiplatformProjects = setOf(project(":graph-guard-rpc"), project(":graph-guard-web"))
 
-  configure<JavaPluginExtension> {
-    toolchain { languageVersion.set(JavaLanguageVersion.of(21)) }
-    withSourcesJar()
+subprojects project@{
+  if (this@project in multiplatformProjects) apply(plugin = "org.jetbrains.kotlin.multiplatform")
+  else {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+
+    apply<DokkaPlugin>()
+
+    configure<JavaPluginExtension> { withSourcesJar() }
   }
+
+  configure<KotlinProjectExtension> {
+    jvmToolchain { languageVersion.set(JavaLanguageVersion.of(21)) }
+  }
+
+  apply<DetektPlugin>()
 
   tasks {
     withType<Jar> {
@@ -88,11 +100,6 @@ subprojects project@{
   }
 
   afterEvaluate {
-    dependencies {
-      "testImplementation"(libs.kotest.assertions)
-      "testImplementation"(libs.kotest.runner)
-    }
-
     tasks.withType<Test> {
       useJUnitPlatform()
       systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
@@ -318,7 +325,9 @@ configure<JReleaserExtension> {
   }
 }
 
-apiValidation { ignoredProjects += listOf(app.project.name) }
+apiValidation {
+  ignoredProjects += listOf(app.name, *multiplatformProjects.map { it.name }.toTypedArray())
+}
 
 configure<KnitPluginExtension> { files = files("README.md") }
 
