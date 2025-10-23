@@ -297,7 +297,7 @@ for an exact specification of the [schema](#schema) DSL.
 
 The `graph-guard*` libraries are accessible
 via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard*)
-and the `graph-guard-cli` application is published in
+and the `graph-guard-app` application is published in
 the [releases](https://github.com/c-fraser/graph-guard/releases).
 
 > `graph-guard` requires Java 21+.
@@ -387,19 +387,19 @@ try (Server server = new Server(boltUri, plugin)) { // use server in try-with-re
 
 Refer to the [graph-guard website](https://c-fraser.github.io/graph-guard/api/).
 
-### CLI
+### Application
 
-Download and run the `graph-guard-cli` application.
+Download and run the `graph-guard-app` application.
 
 ```shell
-curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar
-mkdir graph-guard-cli
-tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
-./graph-guard-cli/bin/graph-guard-cli --help
+curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app.tar
+mkdir graph-guard-app
+tar -xvf graph-guard-app.tar --strip-components=1 -C graph-guard-app
+./graph-guard-app/bin/graph-guard-app --help
 ```
 
-> Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
-> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-cli/demo.sh)).
+> Refer to the [demo](https://c-fraser.github.io/graph-guard/app/)
+> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-app/demo.sh)).
 
 ## Libraries
 

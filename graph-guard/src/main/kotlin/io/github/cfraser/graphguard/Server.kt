@@ -20,7 +20,7 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.UnixSocketAddress
@@ -194,7 +194,7 @@ constructor(
         SelectorManager(coroutineContext).use { selector ->
           val localAddress =
             when (address) {
-              is Address.InetSocket -> KInetSocketAddress(address.hostname, address.port)
+              is Address.InetSocket -> InetSocketAddress(address.hostname, address.port)
               is Address.UnixDomainSocket -> UnixSocketAddress("${address.path}")
             }
           val socket = aSocket(selector).tcp().bind(localAddress)
@@ -242,7 +242,7 @@ constructor(
   ) {
     val remoteAddress =
       if ("+unix" in graph.scheme) UnixSocketAddress(graph.path)
-      else KInetSocketAddress(graph.host, graph.port)
+      else InetSocketAddress(graph.host, graph.port)
     var socket = aSocket(selector).tcp().connect(remoteAddress)
     if ("+s" in graph.scheme)
       socket =
@@ -374,6 +374,7 @@ constructor(
 
     /**
      * A unix domain socket address.
+     * > The file at the [path] is created during [Server.start].
      *
      * @property path the [Path] to the unix domain socket file
      * @see java.net.UnixDomainSocketAddress

@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package io.github.cfraser.graphguard.cli
+package io.github.cfraser.graphguard.app
 
 import io.github.cfraser.graphguard.LOCAL
 import io.github.cfraser.graphguard.driver
@@ -24,14 +24,14 @@ import io.kotest.core.spec.style.StringSpec
 import org.neo4j.driver.AuthTokens
 
 /**
- * Execute queries proxied through the CLI application to a Neo4J container.
+ * Execute queries proxied through the application to a Neo4J container.
  *
- * Start the CLI application.
+ * Start the application.
  *
  * ```shell
- *  ./gradlew graph-guard-cli:clean graph-guard-cli:installShadowDist
+ *  ./gradlew graph-guard-app:clean graph-guard-app:installShadowDist
  *  echo ''
- *  cat <<'EOF' | ./graph-guard-cli/build/install/graph-guard-cli-shadow/bin/graph-guard-cli --inspect -s -
+ *  cat <<'EOF' | ./graph-guard-app/build/install/graph-guard-app-shadow/bin/graph-guard-app --inspect -s -
  *  graph Movies {
  *    node Person(name: String, born: Integer):
  *      ACTED_IN(roles: List<String>) -> Movie,
@@ -49,8 +49,8 @@ import org.neo4j.driver.AuthTokens
  * ```shell
  *  CONTAINER_ID=$(docker run -d -p 7687:7687 --env NEO4J_AUTH=neo4j/password neo4j:latest)
  *  sleep 10
- *  ./gradlew graph-guard-cli:test \
- *    --tests 'io.github.cfraser.graphguard.cli.E2ETest' \
+ *  ./gradlew graph-guard-app:test \
+ *    --tests 'io.github.cfraser.graphguard.app.E2ETest' \
  *    -Dkotest.tags='Local' \
  *    -Dgraph-guard.e2e.test='true' \
  *    --rerun

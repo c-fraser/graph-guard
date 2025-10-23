@@ -15,13 +15,14 @@ limitations under the License.
 */
 @file:JvmName("Main")
 
-package io.github.cfraser.graphguard.cli
+package io.github.cfraser.graphguard.app
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.parameters.groups.default
 import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
@@ -31,7 +32,7 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
-import com.github.ajalt.clikt.parameters.types.int
+import com.github.ajalt.clikt.parameters.types.path
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.rendering.TextStyles
@@ -44,6 +45,7 @@ import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.validate.Schema
 import java.net.URI
+import kotlin.io.path.exists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -60,19 +62,35 @@ internal class Command : CliktCommand(name = "graph-guard") {
     versionOption(BuildConfig.VERSION)
   }
 
-  private val hostname by
-    option("-h", "--hostname", help = "The hostname to bind the proxy (and web) server to")
-      .default("0.0.0.0")
-
-  private val port by
-    option("-p", "--port", help = "The port to bind the proxy server to").int().default(8787)
-
-  private val graphUri by
+  private val graph by
     option("-g", "--graph", help = "The Bolt URI of the graph to guard")
       .default("bolt://127.0.0.1:7687")
       .validate { uri ->
         uri.runCatching(::URI).getOrElse { _ -> fail("Graph URI '$uri' is invalid") }
       }
+
+  private val address by
+    mutuallyExclusiveOptions(
+        option("--address", help = $$"The $host:$port to bind the proxy server to").convert {
+          address ->
+          val (host, port) = address.split(":", limit = 2)
+          Server.Address.InetSocket(
+            host,
+            port.toIntOrNull() ?: fail("Port number '$port' is invalid"),
+          )
+        },
+        option(
+            "--path",
+            help = "The path of the unix domain socket file to bind the proxy server to",
+          )
+          .path(canBeDir = false)
+          .convert { path ->
+            if (path.exists()) fail("The unix domain socket file '$path' already exists")
+            Server.Address.UnixDomainSocket(path)
+          },
+        help = "The address the bind the proxy server to",
+      )
+      .default(Server.Address.InetSocket("0.0.0.0", 8787))
 
   private val schema by
     mutuallyExclusiveOptions(
@@ -83,6 +101,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
       option("--schema", help = "The graph schema file")
         .file(mustExist = true, mustBeReadable = true, canBeDir = false)
         .convert { it.readText() },
+      help = "The graph schema for the proxy server to validate",
     )
 
   private val script by
@@ -94,6 +113,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
       option("--script", help = "The plugin script file")
         .file(mustExist = true, mustBeReadable = true, canBeDir = false)
         .convert { it.readText() },
+      help = "The plugin script for the proxy server to use",
     )
 
   private val output by
@@ -117,13 +137,10 @@ internal class Command : CliktCommand(name = "graph-guard") {
         printBanner()
       }
     }
-    Server(
-        URI(graphUri),
-        plugin = plugin,
-        // TODD: support unix domain socket address
-        address = Server.Address.InetSocket(hostname, port),
-      )
-      .start()
+    Server(URI(graph), plugin = plugin, address = address).use { server ->
+      server.start()
+      Thread.currentThread().join()
+    }
   }
 
   override fun help(context: Context) = "Graph query validation proxy server"

@@ -53,8 +53,10 @@ class ValidatorTest : FunSpec() {
           lock.withLock {
             if (event is Server.Connected)
               when (event.connection) {
-                is Server.Connection.Client -> clientAddresses += event.connection.address
-                is Server.Connection.Graph -> graphAddress = event.connection.address
+                is Server.Connection.Client ->
+                  clientAddresses += event.connection.address as InetSocketAddress
+                is Server.Connection.Graph ->
+                  graphAddress = event.connection.address as InetSocketAddress
               }
             events += event
           }
@@ -100,13 +102,13 @@ class ValidatorTest : FunSpec() {
               ran.getAndIncrement() shouldBe 1
               event.source.address shouldBe event.destination.address
               event.sent.shouldBeTypeOf<Bolt.Messages>()
-              (event.sent as Bolt.Messages).messages.map { it::class } shouldBe emptyList()
+              event.sent.messages.map { it::class } shouldBe emptyList()
             }
           is Bolt.Pull ->
             if (ran.get() == 2) {
               event.source.address shouldBe event.destination.address
               event.sent.shouldBeTypeOf<Bolt.Messages>()
-              (event.sent as Bolt.Messages).messages.map { it::class } shouldBe
+              event.sent.messages.map { it::class } shouldBe
                 listOf(Bolt.Failure::class, Bolt.Ignored::class)
             }
           else -> fail("Received unexpected '$message'")

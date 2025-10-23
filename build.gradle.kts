@@ -100,6 +100,7 @@ subprojects project@{
   }
 
   plugins.withType<DokkaPlugin> {
+    @Suppress("unused")
     val dokkaHtmlPartial by
       tasks.getting(DokkaTaskPartial::class) {
         outputDirectory.set(layout.buildDirectory.dir("docs/partial"))
@@ -260,7 +261,7 @@ configure<NexusPublishExtension> publish@{
   }
 }
 
-val cli = project(":graph-guard-cli")
+val cli = project(":graph-guard-app")
 val cliTar: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
 val cliZip: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.zip")
 
@@ -301,7 +302,7 @@ configure<JReleaserExtension> {
         brew {
           active.set(Active.NEVER)
           downloadUrl.set(
-            "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.zip"
+            "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app.zip"
           )
           @Suppress("DEPRECATION")
           repository {
@@ -332,8 +333,8 @@ tasks {
   }
 
   val setupAsciinemaPlayer by registering {
-    val css = file("docs/cli/asciinema-player.css")
-    val js = file("docs/cli/asciinema-player.min.js")
+    val css = file("docs/app/asciinema-player.css")
+    val js = file("docs/app/asciinema-player.min.js")
     onlyIf { !css.exists() && !js.exists() }
     doLast {
       arrayOf(css, js).forEach { file ->
@@ -347,14 +348,14 @@ tasks {
           )
         }
       }
-      file("docs/cli/index.html")
+      file("docs/app/index.html")
         .writeText(
           """
           <!DOCTYPE html>
           <html lang='en'>
           <head>
             <meta charset='UTF-8'>
-            <title>graph-guard-cli demo</title>
+            <title>graph-guard-app demo</title>
             <link rel='stylesheet' type='text/css' href='asciinema-player.css'/>
           </head>
           <body>
@@ -422,10 +423,11 @@ tasks {
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
   val spotlessJava by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessJava) }
+  @Suppress("unused")
   val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
 
   val releaseCli by registering {
-    dependsOn(":graph-guard-cli:shadowDistTar", ":graph-guard-cli:shadowDistZip")
+    dependsOn(":graph-guard-app:shadowDistTar", ":graph-guard-app:shadowDistZip")
     doLast {
       arrayOf(cliTar, cliZip).forEach { dist ->
         cli.layout.buildDirectory

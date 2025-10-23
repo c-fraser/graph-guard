@@ -13,10 +13,10 @@ out
 # derivative doc files
 docs/index.md
 docs/api
-docs/cli/*
-!docs/cli/demo.cast
+docs/app/*
+!docs/app/demo.cast
 # runtime metadata
-graph-guard-cli/neo4j.cid
+graph-guard-app/neo4j.cid
 # generated antlr files
 graph-guard-validate/src/main/java
 # dev notes

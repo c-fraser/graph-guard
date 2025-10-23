@@ -21,7 +21,7 @@ plugins {
   alias(libs.plugins.shadow)
 }
 
-application { mainClass.set("io.github.cfraser.graphguard.cli.Main") }
+application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
 
 dependencies {
   implementation(project(":graph-guard"))

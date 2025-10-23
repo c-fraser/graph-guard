@@ -21,7 +21,7 @@ import io.github.cfraser.graphguard.knit.test
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -100,7 +100,7 @@ class ServerTest : FunSpec() {
       val message =
         SelectorManager(coroutineContext)
           .use { selector ->
-            val address = KInetSocketAddress("localhost", 8787)
+            val address = InetSocketAddress("localhost", 8787)
             aSocket(selector).tcp().bind(address).use { serverSocket ->
               async {
                   serverSocket.accept().use { socket ->
@@ -131,7 +131,7 @@ class ServerTest : FunSpec() {
       val chunked =
         SelectorManager(coroutineContext)
           .use { selector ->
-            val address = KInetSocketAddress("localhost", 8787)
+            val address = InetSocketAddress("localhost", 8787)
             aSocket(selector).tcp().bind(address).use { serverSocket ->
               async {
                   val buffer = ByteBuffer.allocate(13)
