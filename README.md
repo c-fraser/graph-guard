@@ -25,7 +25,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Kotlin](#kotlin)
     * [Java](#java)
   * [Documentation](#documentation)
-  * [CLI](#cli)
+  * [Application](#application)
 * [Libraries](#libraries)
   * [graph-guard-validate](#graph-guard-validate)
   * [graph-guard-script](#graph-guard-script)

@@ -261,9 +261,9 @@ configure<NexusPublishExtension> publish@{
   }
 }
 
-val cli = project(":graph-guard-app")
-val cliTar: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
-val cliZip: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.zip")
+val app = project(":graph-guard-app")
+val appTar: Provider<RegularFile> = app.layout.buildDirectory.file("distributions/${app.name}.tar")
+val appZip: Provider<RegularFile> = app.layout.buildDirectory.file("distributions/${app.name}.zip")
 
 configure<JReleaserExtension> {
   project {
@@ -296,9 +296,9 @@ configure<JReleaserExtension> {
       }
     }
     distributions {
-      create(cli.name) {
-        artifact { path.set(cliTar) }
-        artifact { path.set(cliZip) }
+      create(app.name) {
+        artifact { path.set(appTar) }
+        artifact { path.set(appZip) }
         brew {
           active.set(Active.NEVER)
           downloadUrl.set(
@@ -318,7 +318,7 @@ configure<JReleaserExtension> {
   }
 }
 
-apiValidation { ignoredProjects += listOf(cli.name) }
+apiValidation { ignoredProjects += listOf(app.project.name) }
 
 configure<KnitPluginExtension> { files = files("README.md") }
 
@@ -338,15 +338,20 @@ tasks {
     onlyIf { !css.exists() && !js.exists() }
     doLast {
       arrayOf(css, js).forEach { file ->
-        providers.exec {
-          commandLine(
-            "curl",
-            "-L",
-            "-o",
-            file,
-            "https://github.com/asciinema/asciinema-player/releases/download/v3.6.3/${file.name}",
-          )
-        }
+        providers
+          .exec {
+            commandLine(
+              "curl",
+              "-L",
+              "-o",
+              file,
+              "https://github.com/asciinema/asciinema-player/releases/download/v3.6.3/${file.name}",
+            )
+          }
+          .standardError
+          .asText
+          .get()
+          .also(::println)
       }
       file("docs/app/index.html")
         .writeText(
@@ -429,9 +434,9 @@ tasks {
   val releaseCli by registering {
     dependsOn(":graph-guard-app:shadowDistTar", ":graph-guard-app:shadowDistZip")
     doLast {
-      arrayOf(cliTar, cliZip).forEach { dist ->
-        cli.layout.buildDirectory
-          .file("distributions/${cli.name}-shadow-$version.${dist.get().asFile.extension}")
+      arrayOf(appTar, appZip).forEach { dist ->
+        app.layout.buildDirectory
+          .file("distributions/${app.name}-shadow-$version.${dist.get().asFile.extension}")
           .map(RegularFile::getAsFile)
           .get()
           .copyTo(dist.map(RegularFile::getAsFile).get())

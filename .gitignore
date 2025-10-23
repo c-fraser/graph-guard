@@ -15,6 +15,7 @@ docs/index.md
 docs/api
 docs/app/*
 !docs/app/demo.cast
+!docs/app/demo.gif
 # runtime metadata
 graph-guard-app/neo4j.cid
 # generated antlr files

@@ -6,7 +6,7 @@
 #   agg -v --idle-time-limit 1 docs/app/demo.cast docs/app/demo.gif
 
 if [ $# -gt 0 ]; then
-    echo 'Execute queries proxied through the CLI application to a Neo4J container.'
+    echo 'Execute queries proxied through the application to a Neo4J container.'
     echo ''
     echo 'Usage:'
     echo '  ./demo.sh'
@@ -36,4 +36,4 @@ sleep 10 && \
   > /dev/null 2>&1 &
 ./gradlew graph-guard-app:clean graph-guard-app:installShadowDist > /dev/null 2>&1
 python3 -c "import pathlib, re; print(re.search(r'\"{3}([\s\S]*?)\"{3}', pathlib.Path('$PROJECT_DIR/graph-guard/src/testFixtures/kotlin/io/github/cfraser/graphguard/knit/Example03.kt').read_text(), re.RegexFlag.MULTILINE)[1])" \
-  | timeout 15 ./graph-guard-app/build/install/graph-guard-app-shadow/bin/graph-guard-app --inspect -s -
+  | timeout 45 ./graph-guard-app/build/install/graph-guard-app-shadow/bin/graph-guard-app --inspect -s -
