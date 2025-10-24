@@ -35,11 +35,9 @@ kotlin {
         implementation(libs.kotlinx.rpc.krpc.client)
         implementation(libs.kotlinx.rpc.krpc.ktor.client)
         implementation(libs.kotlinx.rpc.krpc.serialization.json)
-
-        // React
+        implementation(libs.kotlin.js)
         implementation(libs.kotlin.react)
         implementation(libs.kotlin.react.dom)
-        implementation(libs.kotlin.emotion)
       }
     }
   }

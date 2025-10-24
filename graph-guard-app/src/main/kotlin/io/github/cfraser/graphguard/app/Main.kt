@@ -151,13 +151,13 @@ internal class Command : CliktCommand(name = "graph-guard") {
         printBanner()
       }
       is Web -> {
+        output.server.start()
         plugin = plugin then output
         printBanner()
         terminal.println(
           "http://localhost:${output.port}"
             .styled(TextColors.brightCyan, TextStyles.underline.style)
         )
-        output.server.start(wait = true)
       }
     }
     Server(URI(graph), plugin = plugin, address = address).use { server ->

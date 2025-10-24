@@ -44,6 +44,7 @@ neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "
 neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "2025.09.0" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
+kotlin-js = { module = "org.jetbrains.kotlin-wrappers:kotlin-js", version.ref = "kotlin-wrappers" }
 kotlin-react = { module = "org.jetbrains.kotlin-wrappers:kotlin-react", version = "2025.10.7-19.2.0" }
 kotlin-react-dom = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-dom", version = "2025.10.7-19.2.0" }
 kotlin-emotion = { module = "org.jetbrains.kotlin-wrappers:kotlin-emotion", version = "2025.3.26" }

@@ -1,22 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GraphGuard - Bolt Message Monitor</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>graph-guard-web</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      #root {
+        width: 100%;
+        height: 100vh;
+      }
+      .app-container {
+        background: linear-gradient(135deg, rgb(102, 126, 234), rgb(118, 75, 162));
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .main-card {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, rgb(52, 152, 219), rgb(41, 128, 185));
+        color: white;
+        padding: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      .header-status {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+      .header-status span {
+        margin-right: 10px;
+      }
+      .message-list {
+        padding: 20px;
+        max-height: calc(100vh - 250px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+      }
+      .message-list::-webkit-scrollbar {
+        width: 8px;
+      }
+      .message-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .message-list::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      .message-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      .message-header {
+        padding: 15px 20px;
+        background-color: rgb(248, 249, 250);
+        border-bottom: 2px solid rgb(236, 240, 241);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .message-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: rgb(44, 62, 80);
+      }
+      .message-counter {
+        background: rgb(52, 152, 219);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      .latest-indicator {
+        background: linear-gradient(90deg, rgb(76, 175, 80) 0%, transparent 100%);
+        animation: fadeOut 2s ease-out;
+      }
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
         }
-        #root {
-            width: 100%;
-            height: 100vh;
+        to {
+          opacity: 0;
         }
+      }
+      .empty-state {
+        padding: 30px;
+        text-align: center;
+        color: rgb(127, 140, 141);
+      }
+      .empty-state p:first-child {
+        font-size: 1rem;
+      }
+      .empty-state p:last-child {
+        font-size: 0.9rem;
+      }
+      .message-card {
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+      }
+      .message-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .session-header {
+        background-color: rgb(248, 249, 250);
+        padding: 12px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+      }
+      .session-header-title {
+        font-weight: 600;
+        color: rgb(44, 62, 80);
+      }
+      .session-header-route {
+        color: rgb(127, 140, 141);
+        font-size: 0.85rem;
+      }
+      .message-received {
+        padding: 15px 20px;
+        background-color: rgb(227, 242, 253);
+        border-bottom: 1px solid rgb(236, 240, 241);
+      }
+      .message-received-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: rgb(33, 150, 243);
+        margin-bottom: 8px;
+      }
+      .message-received-content {
+        background-color: white;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: rgb(52, 73, 94);
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        border-left: 3px solid rgb(33, 150, 243);
+      }
+      .message-sent {
+        padding: 15px 20px;
+        background-color: rgb(255, 249, 230);
+      }
+      .message-sent-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: rgb(243, 156, 18);
+        margin-bottom: 8px;
+      }
+      .message-sent-content {
+        background-color: white;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: rgb(52, 73, 94);
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        border-left: 3px solid rgb(243, 156, 18);
+      }
+      .error-display {
+        padding: 30px;
+        text-align: center;
+        color: rgb(231, 76, 60);
+      }
+      .error-display p {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="root"></div>
     <script src="graph-guard-web.js"></script>
-</body>
+  </body>
 </html>

@@ -250,7 +250,7 @@ configure<SpotlessExtension> {
     pretty()
     target(
       fileTree(rootProject.rootDir) {
-        include("**/*.json", "**/*.yml")
+        include("**/*.html", "**/*.json", "**/*.yml")
         excludes()
       }
     )
