@@ -1,4 +1,9 @@
-# graph-guard
+<div align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" src="docs/graph-guard-dark.png">
+        <img alt="graph-guard logo" src="docs/graph-guard-light.png">
+    </picture>
+</div>
 
 [![Test](https://github.com/c-fraser/graph-guard/workflows/test/badge.svg)](https://github.com/c-fraser/graph-guard/actions)
 [![Release](https://img.shields.io/github/v/release/c-fraser/graph-guard?logo=github&sort=semver)](https://github.com/c-fraser/graph-guard/releases)

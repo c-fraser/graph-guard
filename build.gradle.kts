@@ -250,7 +250,7 @@ configure<SpotlessExtension> {
     pretty()
     target(
       fileTree(rootProject.rootDir) {
-        include("**/*.html", "**/*.json", "**/*.yml")
+        include("**/*.css", "**/*.html", "**/*.json", "**/*.yml")
         excludes()
       }
     )
@@ -410,6 +410,7 @@ tasks {
           .readText()
           // unqualify docs references
           .replace(Regex("\\(docs/.*\\)")) { it.value.replace("docs/", "") }
+          .replace(Regex("src=\"docs/")) { "src=\"" }
           // remove inline TOC
           .replace(
             Regex("<!--- TOC -->[\\s\\S]*<!--- END -->[\\n|\\r|\\n\\r]", RegexOption.MULTILINE),

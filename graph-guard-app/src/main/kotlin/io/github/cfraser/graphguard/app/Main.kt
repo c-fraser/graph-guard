@@ -155,8 +155,11 @@ internal class Command : CliktCommand(name = "graph-guard") {
         plugin = plugin then output
         printBanner()
         terminal.println(
-          "http://localhost:${output.port}"
-            .styled(TextColors.brightCyan, TextStyles.underline.style)
+          System.lineSeparator() +
+            "Running web application: " +
+            "http://localhost:${output.port}"
+              .styled(TextColors.brightCyan, TextStyles.underline.style) +
+            System.lineSeparator()
         )
       }
     }
@@ -233,7 +236,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
         install(Krpc)
         routing {
           staticResources("/", "static")
-          rpc("/web") {
+          rpc("/rpc") {
             rpcConfig { serialization { json() } }
             registerService<WebService> { this@Web }
           }

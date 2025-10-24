@@ -10,6 +10,7 @@ out
 *.hprof
 *.log
 .kotlin
+*.bak
 # derivative doc files
 docs/index.md
 docs/api
@@ -26,3 +27,6 @@ TODO.md
 kotlin-js-store
 node_modules
 .yarn
+# static assets
+graph-guard-web/src/jsMain/resources
+!graph-guard-web/src/jsMain/resources/index.html

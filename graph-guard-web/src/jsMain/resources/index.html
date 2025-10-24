@@ -3,8 +3,80 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>graph-guard-web</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <title>graph-guard</title>
     <style>
+      :root {
+        /* Light mode colors */
+        --bg-gradient-start: rgb(102, 126, 234);
+        --bg-gradient-end: rgb(118, 75, 162);
+        --card-bg: white;
+        --sidebar-bg-start: rgb(44, 62, 80);
+        --sidebar-bg-end: rgb(52, 73, 94);
+        --sidebar-text: rgba(255, 255, 255, 0.7);
+        --sidebar-text-hover: white;
+        --sidebar-border: rgba(255, 255, 255, 0.1);
+        --header-bg-start: rgb(52, 152, 219);
+        --header-bg-end: rgb(41, 128, 185);
+        --header-text: white;
+        --text-primary: rgb(44, 62, 80);
+        --text-secondary: rgb(127, 140, 141);
+        --border-color: rgb(236, 240, 241);
+        --section-bg: rgb(248, 249, 250);
+        --accent-primary: rgb(52, 152, 219);
+        --accent-success: rgb(76, 175, 80);
+        --accent-warning: rgb(243, 156, 18);
+        --accent-error: rgb(231, 76, 60);
+        --message-received-bg: rgb(227, 242, 253);
+        --message-received-accent: rgb(33, 150, 243);
+        --message-sent-bg: rgb(255, 249, 230);
+        --message-sent-accent: rgb(243, 156, 18);
+        --content-bg: white;
+        --scrollbar-track: #f1f1f1;
+        --scrollbar-thumb: #888;
+        --scrollbar-thumb-hover: #555;
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+        --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          /* Dark mode colors */
+          --bg-gradient-start: rgb(26, 32, 44);
+          --bg-gradient-end: rgb(45, 55, 72);
+          --card-bg: rgb(26, 32, 44);
+          --sidebar-bg-start: rgb(17, 24, 39);
+          --sidebar-bg-end: rgb(31, 41, 55);
+          --sidebar-text: rgba(209, 213, 219, 0.7);
+          --sidebar-text-hover: rgb(243, 244, 246);
+          --sidebar-border: rgba(75, 85, 99, 0.3);
+          --header-bg-start: rgb(30, 58, 138);
+          --header-bg-end: rgb(29, 78, 216);
+          --header-text: rgb(243, 244, 246);
+          --text-primary: rgb(229, 231, 235);
+          --text-secondary: rgb(156, 163, 175);
+          --border-color: rgb(55, 65, 81);
+          --section-bg: rgb(31, 41, 55);
+          --accent-primary: rgb(59, 130, 246);
+          --accent-success: rgb(34, 197, 94);
+          --accent-warning: rgb(251, 146, 60);
+          --accent-error: rgb(239, 68, 68);
+          --message-received-bg: rgb(30, 58, 138);
+          --message-received-accent: rgb(96, 165, 250);
+          --message-sent-bg: rgb(120, 53, 15);
+          --message-sent-accent: rgb(251, 146, 60);
+          --content-bg: rgb(17, 24, 39);
+          --scrollbar-track: rgb(55, 65, 81);
+          --scrollbar-thumb: rgb(107, 114, 128);
+          --scrollbar-thumb-hover: rgb(156, 163, 175);
+          --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+          --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+          --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+      }
+
       body {
         margin: 0;
         padding: 0;
@@ -15,25 +87,177 @@
         height: 100vh;
       }
       .app-container {
-        background: linear-gradient(135deg, rgb(102, 126, 234), rgb(118, 75, 162));
+        background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
         min-height: 100vh;
         padding: 20px;
+        transition: background 0.3s ease;
       }
       .main-card {
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
-        background-color: white;
+        background-color: var(--card-bg);
         border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        display: flex;
+        flex-direction: row;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      }
+      .sidebar {
+        width: 240px;
+        background: linear-gradient(180deg, var(--sidebar-bg-start), var(--sidebar-bg-end));
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        transition: background 0.3s ease;
+      }
+      .sidebar-logo {
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-bottom: 1px solid var(--sidebar-border);
+        margin-bottom: 10px;
+      }
+      .sidebar-logo img {
+        width: 120px;
+        height: auto;
+      }
+      .sidebar-item {
+        padding: 15px 25px;
+        color: var(--sidebar-text);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        border-left: 3px solid transparent;
+      }
+      .sidebar-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--sidebar-text-hover);
+      }
+      .sidebar-item.active {
+        background-color: rgba(52, 152, 219, 0.2);
+        color: var(--sidebar-text-hover);
+        border-left-color: var(--accent-primary);
+      }
+      .sidebar-icon {
+        font-size: 1.3rem;
+        width: 24px;
+        text-align: center;
+      }
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
         overflow: hidden;
       }
-      .header {
-        background: linear-gradient(135deg, rgb(52, 152, 219), rgb(41, 128, 185));
+      .message-stream-container {
+        display: flex;
+        flex-direction: row;
+        flex: 1;
+        overflow: hidden;
+      }
+      .session-selector {
+        width: 200px;
+        background-color: var(--section-bg);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: background-color 0.3s ease;
+      }
+      .session-selector-header {
+        padding: 15px 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        border-bottom: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .session-count-badge {
+        background: var(--accent-primary);
         color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .session-list {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      .session-list::-webkit-scrollbar {
+        width: 6px;
+      }
+      .session-list::-webkit-scrollbar-track {
+        background: var(--scrollbar-track);
+      }
+      .session-list::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 3px;
+      }
+      .session-list::-webkit-scrollbar-thumb:hover {
+        background: var(--scrollbar-thumb-hover);
+      }
+      .session-item {
+        padding: 12px 20px;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .session-item:hover {
+        background-color: rgba(52, 152, 219, 0.1);
+      }
+      .session-item.active {
+        background-color: rgba(52, 152, 219, 0.15);
+        border-left-color: var(--accent-primary);
+      }
+      .session-id {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .session-message-count {
+        background: var(--text-secondary);
+        color: var(--content-bg);
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        min-width: 20px;
+        text-align: center;
+      }
+      .session-item.active .session-message-count {
+        background: var(--accent-primary);
+        color: white;
+      }
+      .empty-sessions {
+        padding: 20px;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+      }
+      .header {
+        background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
+        color: var(--header-text);
         padding: 30px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: background 0.3s ease;
       }
       .header h1 {
         font-size: 2rem;
@@ -61,32 +285,33 @@
         width: 8px;
       }
       .message-list::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--scrollbar-track);
         border-radius: 4px;
       }
       .message-list::-webkit-scrollbar-thumb {
-        background: #888;
+        background: var(--scrollbar-thumb);
         border-radius: 4px;
       }
       .message-list::-webkit-scrollbar-thumb:hover {
-        background: #555;
+        background: var(--scrollbar-thumb-hover);
       }
       .message-header {
         padding: 15px 20px;
-        background-color: rgb(248, 249, 250);
-        border-bottom: 2px solid rgb(236, 240, 241);
+        background-color: var(--section-bg);
+        border-bottom: 2px solid var(--border-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: background-color 0.3s ease;
       }
       .message-header h2 {
         margin: 0;
         font-size: 1.2rem;
         font-weight: 600;
-        color: rgb(44, 62, 80);
+        color: var(--text-primary);
       }
       .message-counter {
-        background: rgb(52, 152, 219);
+        background: var(--accent-primary);
         color: white;
         padding: 4px 12px;
         border-radius: 12px;
@@ -94,7 +319,7 @@
         font-weight: 600;
       }
       .latest-indicator {
-        background: linear-gradient(90deg, rgb(76, 175, 80) 0%, transparent 100%);
+        background: linear-gradient(90deg, var(--accent-success) 0%, transparent 100%);
         animation: fadeOut 2s ease-out;
       }
       @keyframes fadeOut {
@@ -108,7 +333,7 @@
       .empty-state {
         padding: 30px;
         text-align: center;
-        color: rgb(127, 140, 141);
+        color: var(--text-secondary);
       }
       .empty-state p:first-child {
         font-size: 1rem;
@@ -120,80 +345,110 @@
         margin-bottom: 20px;
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.2s, box-shadow 0.2s;
       }
       .message-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: var(--shadow-md);
       }
       .session-header {
-        background-color: rgb(248, 249, 250);
+        background-color: var(--section-bg);
         padding: 12px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         font-size: 0.9rem;
+        transition: background-color 0.3s ease;
       }
       .session-header-title {
         font-weight: 600;
-        color: rgb(44, 62, 80);
+        color: var(--text-primary);
       }
       .session-header-route {
-        color: rgb(127, 140, 141);
+        color: var(--text-secondary);
         font-size: 0.85rem;
       }
       .message-received {
         padding: 15px 20px;
-        background-color: rgb(227, 242, 253);
-        border-bottom: 1px solid rgb(236, 240, 241);
+        background-color: var(--message-received-bg);
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.3s ease;
       }
       .message-received-label {
         font-size: 0.85rem;
         font-weight: 600;
-        color: rgb(33, 150, 243);
+        color: var(--message-received-accent);
         margin-bottom: 8px;
       }
       .message-received-content {
-        background-color: white;
+        background-color: var(--content-bg);
         padding: 12px;
         border-radius: 6px;
         font-family: 'Courier New', monospace;
         font-size: 0.9rem;
-        color: rgb(52, 73, 94);
+        color: var(--text-primary);
         word-wrap: break-word;
         white-space: pre-wrap;
-        border-left: 3px solid rgb(33, 150, 243);
+        border-left: 3px solid var(--message-received-accent);
+        transition: background-color 0.3s ease;
       }
       .message-sent {
         padding: 15px 20px;
-        background-color: rgb(255, 249, 230);
+        background-color: var(--message-sent-bg);
+        transition: background-color 0.3s ease;
       }
       .message-sent-label {
         font-size: 0.85rem;
         font-weight: 600;
-        color: rgb(243, 156, 18);
+        color: var(--message-sent-accent);
         margin-bottom: 8px;
       }
       .message-sent-content {
-        background-color: white;
+        background-color: var(--content-bg);
         padding: 12px;
         border-radius: 6px;
         font-family: 'Courier New', monospace;
         font-size: 0.9rem;
-        color: rgb(52, 73, 94);
+        color: var(--text-primary);
         word-wrap: break-word;
         white-space: pre-wrap;
-        border-left: 3px solid rgb(243, 156, 18);
+        border-left: 3px solid var(--message-sent-accent);
+        transition: background-color 0.3s ease;
       }
       .error-display {
         padding: 30px;
         text-align: center;
-        color: rgb(231, 76, 60);
+        color: var(--accent-error);
       }
       .error-display p {
         font-size: 1.2rem;
         font-weight: 600;
+      }
+      .placeholder-page {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 40px;
+        color: var(--text-secondary);
+      }
+      .placeholder-page-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+      .placeholder-page-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+      }
+      .placeholder-page-description {
+        font-size: 1rem;
+        text-align: center;
+        max-width: 500px;
       }
     </style>
   </head>

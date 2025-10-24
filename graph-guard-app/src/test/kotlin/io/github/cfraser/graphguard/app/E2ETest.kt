@@ -47,7 +47,7 @@ import org.neo4j.driver.AuthTokens
  * In a separate terminal, start the Neo4J container then run the graph queries.
  *
  * ```shell
- *  CONTAINER_ID=$(docker run -d -p 7687:7687 --env NEO4J_AUTH=neo4j/password neo4j:latest)
+ *  CONTAINER_ID=$(docker run -d -p 7687:7687 --env NEO4J_AUTH=neo4j/password neo4j:2025)
  *  sleep 10
  *  ./gradlew graph-guard-app:test \
  *    --tests 'io.github.cfraser.graphguard.app.E2ETest' \

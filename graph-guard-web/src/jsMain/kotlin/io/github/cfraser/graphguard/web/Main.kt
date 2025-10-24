@@ -34,25 +34,61 @@ import react.create
 import react.dom.client.createRoot
 import react.dom.html.ReactHTML.div
 import react.dom.html.ReactHTML.h1
-import react.dom.html.ReactHTML.h2
 import react.dom.html.ReactHTML.header
+import react.dom.html.ReactHTML.img
 import react.dom.html.ReactHTML.p
+import react.dom.html.ReactHTML.picture
+import react.dom.html.ReactHTML.source
 import react.dom.html.ReactHTML.span
 import react.useState
 import web.cssom.ClassName
 import web.dom.ElementId
 import web.dom.document
+import web.location.location
 
-/** Main entry point for the GraphGuard web application. */
+/**
+ * Main entry point for the *graph-guard-web* application.
+ *
+ * Initializes the [React](https://react.dev/) application by rendering the [App] component into the
+ * DOM root element.
+ */
 fun main() {
-  val container = document.getElementById(ElementId("root")) ?: error("Root element not found")
-  createRoot(container).render(App.create())
+  document.getElementById(ElementId("root"))?.let(::createRoot)?.render(App.create())
+    ?: error("Failed to initialize app")
 }
 
-/** [App] is the root React component for the GraphGuard web application. */
-val App =
+/**
+ * Available pages in the application.
+ *
+ * @property displayName the human-readable name of the page
+ * @property icon the emoji icon representing the page
+ */
+internal enum class Page(val displayName: String, val icon: String) {
+  /** The message stream page displaying real-time Bolt traffic. */
+  MESSAGE_STREAM("Bolt Traffic", "📡"),
+
+  /** The query log page (placeholder). */
+  QUERY_LOG("Query Log", "📋"),
+
+  /** The plugins management page (placeholder). */
+  PLUGINS("Plugins", "🔌"),
+}
+
+/**
+ * [App] is the root React component for the *graph-guard-web* application.
+ *
+ * Manages the application state including:
+ * - Current active page
+ * - Connection to the [WebService] via WebSocket RPC
+ * - Real-time streaming of [ProxiedMessage] data
+ * - Error handling and connection status
+ * - Message buffer management (maintains last 100 messages per session)
+ */
+internal val App =
   FC<Props> {
+    var currentPage by useState(Page.MESSAGE_STREAM)
     var messages by useState(emptyList<ProxiedMessage>())
+    var selectedSession by useState<String?>(null)
     var connected by useState(false)
     var error by useState<String?>(null)
 
@@ -61,13 +97,18 @@ val App =
       val scope = CoroutineScope(Dispatchers.Default)
       scope.launch {
         try {
-          val rpcClient =
-            HttpClient(Js) { installKrpc() }
-              .rpc("ws://localhost:8080/web") { rpcConfig { serialization { json() } } }
+          // Build WebSocket URL from current page location
+          val protocol = if (location.protocol == "https:") "wss:" else "ws:"
+          val wsUrl = "$protocol//${location.host}/rpc"
 
-          val service = rpcClient.withService<WebService>()
+          // Initialize RPC service
+          val service =
+            HttpClient(Js) { installKrpc() }
+              .rpc(wsUrl) { rpcConfig { serialization { json() } } }
+              .withService<WebService>()
           connected = true
 
+          // Collect proxied messages
           service
             .getMessages()
             .catch { e ->
@@ -75,7 +116,12 @@ val App =
               connected = false
             }
             .collect { message ->
-              messages = listOf(message) + messages.take(99) // Keep last 100 messages
+              // Keep last 100 messages total, newest first
+              messages = (listOf(message) + messages).take(100)
+              // Auto-select first session if none selected
+              if (selectedSession == null && messages.isNotEmpty()) {
+                selectedSession = messages.first().session
+              }
             }
         } catch (e: Exception) {
           error = "Failed to connect: ${e.message}"
@@ -90,63 +136,272 @@ val App =
       div {
         className = ClassName("main-card")
 
-        Header {
-          this.connected = connected
-          this.messageCount = messages.size
+        Sidebar {
+          this.currentPage = currentPage
+          this.onPageChange = { newPage -> currentPage = newPage }
         }
 
-        if (error != null) {
-          ErrorDisplay { this.message = error!! }
-        } else {
-          MessageList { this.messages = messages }
+        div {
+          className = ClassName("main-content")
+
+          Header {
+            this.connected = connected
+            this.messageCount = messages.size
+            this.currentPage = currentPage
+          }
+
+          when (currentPage) {
+            Page.MESSAGE_STREAM -> {
+              if (error != null) {
+                ErrorDisplay { this.message = error!! }
+              } else {
+                MessageStreamPage {
+                  this.messages = messages
+                  this.selectedSession = selectedSession
+                  this.onSessionChange = { session -> selectedSession = session }
+                }
+              }
+            }
+            Page.QUERY_LOG -> {
+              PlaceholderPage {
+                this.title = "Query Log"
+                this.description =
+                  "View and analyze Neo4j query logs. Coming soon with detailed query performance metrics and filtering capabilities."
+                this.icon = "📋"
+              }
+            }
+            Page.PLUGINS -> {
+              PlaceholderPage {
+                this.title = "Plugins"
+                this.description =
+                  "Manage graph-guard plugins to extend functionality. Configure validation rules, custom transformations, and monitoring extensions."
+                this.icon = "🔌"
+              }
+            }
+          }
         }
       }
     }
   }
 
-external interface HeaderProps : Props {
-  var connected: Boolean
-  var messageCount: Int
+/**
+ * Properties for the [Sidebar] component.
+ *
+ * @property currentPage the currently active [Page]
+ * @property onPageChange callback invoked when the user selects a different page
+ */
+internal external interface SidebarProps : Props {
+  var currentPage: Page
+  var onPageChange: (Page) -> Unit
 }
 
-/** [Header] component displays the application title and status. */
-val Header =
+/**
+ * [Sidebar] component displays the navigation menu.
+ *
+ * Shows all available pages with icons and highlights the currently active page.
+ */
+internal val Sidebar =
+  FC<SidebarProps> { props ->
+    div {
+      className = ClassName("sidebar")
+
+      div {
+        className = ClassName("sidebar-logo")
+        picture {
+          source {
+            media = "(prefers-color-scheme: dark)"
+            srcSet = "graph-guard-dark.png"
+          }
+          img {
+            src = "graph-guard-light.png"
+            alt = "graph-guard logo"
+          }
+        }
+      }
+
+      Page.entries.forEach { page ->
+        div {
+          className =
+            if (page == props.currentPage) ClassName("sidebar-item active")
+            else ClassName("sidebar-item")
+          onClick = { props.onPageChange(page) }
+
+          span {
+            className = ClassName("sidebar-icon")
+            +page.icon
+          }
+          +page.displayName
+        }
+      }
+    }
+  }
+
+/**
+ * Properties for the [Header] component.
+ *
+ * @property connected whether the WebSocket connection is active
+ * @property messageCount the total number of messages received
+ * @property currentPage the currently active [Page]
+ */
+internal external interface HeaderProps : Props {
+  var connected: Boolean
+  var messageCount: Int
+  var currentPage: Page
+}
+
+/**
+ * [Header] component displays the application title and connection status.
+ *
+ * Shows the current page name, connection indicator, and message count.
+ */
+internal val Header =
   FC<HeaderProps> { props ->
     header {
       className = ClassName("header")
 
-      h1 { +"GraphGuard - Bolt Message Monitor" }
+      h1 { +props.currentPage.displayName }
 
-      div {
-        className = ClassName("header-status")
+      if (props.currentPage == Page.MESSAGE_STREAM) {
+        div {
+          className = ClassName("header-status")
 
-        span { +(if (props.connected) "🟢" else "🔴") }
-        +"${props.messageCount} Messages"
+          span { +(if (props.connected) "🟢" else "🔴") }
+        }
       }
     }
   }
 
-external interface MessageListProps : Props {
+/**
+ * Properties for the [MessageStreamPage] component.
+ *
+ * @property messages the list of [ProxiedMessage] instances to display
+ * @property selectedSession the currently selected session ID
+ * @property onSessionChange callback invoked when a session is selected
+ */
+internal external interface MessageStreamPageProps : Props {
   var messages: List<ProxiedMessage>
+  var selectedSession: String?
+  var onSessionChange: (String?) -> Unit
 }
 
-/** [MessageList] component displays the list of proxied messages. */
-val MessageList =
-  FC<MessageListProps> { props ->
-    // Header with message count
+/**
+ * [MessageStreamPage] component displays the message stream page.
+ *
+ * Contains the session selector and message list with real-time Bolt traffic monitoring.
+ */
+internal val MessageStreamPage =
+  FC<MessageStreamPageProps> { props ->
     div {
-      className = ClassName("message-header")
+      className = ClassName("message-stream-container")
 
-      h2 { +"Message Stream" }
+      SessionSelector {
+        this.messages = props.messages
+        this.selectedSession = props.selectedSession
+        this.onSessionChange = props.onSessionChange
+      }
 
-      if (props.messages.isNotEmpty()) {
-        div {
-          className = ClassName("message-counter")
-          +"${props.messages.size} message${if (props.messages.size != 1) "s" else ""}"
+      val filteredMessages =
+        props.selectedSession?.let { session -> props.messages.filter { it.session == session } }
+          ?: emptyList()
+
+      MessageList { this.messages = filteredMessages }
+    }
+  }
+
+/**
+ * Properties for the [SessionSelector] component.
+ *
+ * @property messages the list of all [ProxiedMessage] instances
+ * @property selectedSession the currently selected session ID
+ * @property onSessionChange callback invoked when a session is selected
+ */
+internal external interface SessionSelectorProps : Props {
+  var messages: List<ProxiedMessage>
+  var selectedSession: String?
+  var onSessionChange: (String?) -> Unit
+}
+
+/**
+ * [SessionSelector] component displays the session selection sidebar.
+ *
+ * Shows all active sessions with message counts and allows filtering by session.
+ */
+internal val SessionSelector =
+  FC<SessionSelectorProps> { props ->
+    // Group messages by session and count
+    val sessionCounts =
+      props.messages
+        .groupBy { it.session }
+        .mapValues { (_, msgs) -> msgs.size }
+        .entries
+        .sortedByDescending { (_, count) -> count }
+
+    div {
+      className = ClassName("session-selector")
+
+      div {
+        className = ClassName("session-selector-header")
+        +"Sessions"
+        if (sessionCounts.isNotEmpty()) {
+          span {
+            className = ClassName("session-count-badge")
+            +"${sessionCounts.size}"
+          }
+        }
+      }
+
+      div {
+        className = ClassName("session-list")
+
+        if (sessionCounts.isEmpty()) {
+          div {
+            className = ClassName("empty-sessions")
+            +"No sessions yet"
+          }
+        } else {
+          sessionCounts.forEach { (session, count) ->
+            div {
+              className =
+                if (session == props.selectedSession) ClassName("session-item active")
+                else ClassName("session-item")
+              onClick = { props.onSessionChange(session) }
+
+              div {
+                className = ClassName("session-id")
+                +session.take(12) // Show first 12 chars of session ID
+              }
+
+              span {
+                className = ClassName("session-message-count")
+                +"$count"
+              }
+            }
+          }
         }
       }
     }
+  }
 
+/**
+ * Properties for the [MessageList] component.
+ *
+ * @property messages the list of [ProxiedMessage] instances to display
+ */
+internal external interface MessageListProps : Props {
+  var messages: List<ProxiedMessage>
+}
+
+/**
+ * [MessageList] component displays the scrollable list of proxied messages.
+ *
+ * Includes:
+ * - A header section with message count
+ * - A scrollable container with custom styling
+ * - Empty state when no messages are present
+ * - Latest message indicator with fade animation
+ */
+internal val MessageList =
+  FC<MessageListProps> { props ->
     // Scrollable message list
     div {
       className = ClassName("message-list")
@@ -168,13 +423,28 @@ val MessageList =
     }
   }
 
-external interface MessageCardProps : Props {
+/**
+ * Properties for the [MessageCard] component.
+ *
+ * @property message the [ProxiedMessage] to display
+ * @property isLatest whether this is the most recently received message
+ */
+internal external interface MessageCardProps : Props {
   var message: ProxiedMessage
   var isLatest: Boolean
 }
 
-/** [MessageCard] component displays a single proxied message. */
-val MessageCard =
+/**
+ * [MessageCard] component displays a single proxied
+ * [Bolt](https://neo4j.com/docs/bolt/current/bolt/) message.
+ *
+ * Displays:
+ * - Session information (session ID and routing)
+ * - Received message content (from client to server)
+ * - Sent message content (from server to client)
+ * - Visual indicator for the latest message
+ */
+internal val MessageCard =
   FC<MessageCardProps> { props ->
     val message = props.message
 
@@ -230,12 +500,61 @@ val MessageCard =
     }
   }
 
-external interface ErrorDisplayProps : Props {
+/**
+ * Properties for the [PlaceholderPage] component.
+ *
+ * @property title the page title
+ * @property description a brief description of the page functionality
+ * @property icon the emoji icon for the page
+ */
+internal external interface PlaceholderPageProps : Props {
+  var title: String
+  var description: String
+  var icon: String
+}
+
+/**
+ * [PlaceholderPage] component displays a placeholder for unimplemented pages.
+ *
+ * Shows a centered message with an icon and description of the future functionality.
+ */
+internal val PlaceholderPage =
+  FC<PlaceholderPageProps> { props ->
+    div {
+      className = ClassName("placeholder-page")
+
+      div {
+        className = ClassName("placeholder-page-icon")
+        +props.icon
+      }
+
+      div {
+        className = ClassName("placeholder-page-title")
+        +props.title
+      }
+
+      div {
+        className = ClassName("placeholder-page-description")
+        +props.description
+      }
+    }
+  }
+
+/**
+ * Properties for the [ErrorDisplay] component.
+ *
+ * @property message the error message to display
+ */
+internal external interface ErrorDisplayProps : Props {
   var message: String
 }
 
-/** [ErrorDisplay] component shows error messages. */
-val ErrorDisplay =
+/**
+ * [ErrorDisplay] component shows error messages.
+ *
+ * Displayed when the WebSocket connection fails or encounters an error during message streaming.
+ */
+internal val ErrorDisplay =
   FC<ErrorDisplayProps> { props ->
     div {
       className = ClassName("error-display")

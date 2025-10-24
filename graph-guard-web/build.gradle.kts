@@ -42,3 +42,18 @@ kotlin {
     }
   }
 }
+
+tasks {
+  val copyLogos by
+    registering(Copy::class) {
+      from(
+        project.rootDir.resolve("docs/favicon.ico"),
+        project.rootDir.resolve("docs/graph-guard-dark.png"),
+        project.rootDir.resolve("docs/graph-guard-light.png"),
+      )
+      into("${project.projectDir}/src/jsMain/resources")
+    }
+
+  @Suppress("unused")
+  val jsProcessResources by getting(ProcessResources::class) { dependsOn(copyLogos) }
+}
