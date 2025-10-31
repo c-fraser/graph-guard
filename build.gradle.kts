@@ -443,7 +443,8 @@ tasks {
           .toTypedArray(),
         provider {
           web.tasks.filter { task ->
-            task.name.contains("Metadata", ignoreCase = true) ||
+            task.name.contains("Compile", ignoreCase = true) ||
+              task.name.contains("Metadata", ignoreCase = true) ||
               task.name.contains("commonMain", ignoreCase = true)
           }
         },
