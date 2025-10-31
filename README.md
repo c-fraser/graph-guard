@@ -1,4 +1,9 @@
-# graph-guard
+<div align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" src="docs/graph-guard-dark.png">
+        <img alt="graph-guard logo" src="docs/graph-guard-light.png">
+    </picture>
+</div>
 
 [![Test](https://github.com/c-fraser/graph-guard/workflows/test/badge.svg)](https://github.com/c-fraser/graph-guard/actions)
 [![Release](https://img.shields.io/github/v/release/c-fraser/graph-guard?logo=github&sort=semver)](https://github.com/c-fraser/graph-guard/releases)
@@ -25,7 +30,8 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Kotlin](#kotlin)
     * [Java](#java)
   * [Documentation](#documentation)
-  * [CLI](#cli)
+  * [Application](#application)
+    * [Demo](#demo)
 * [Libraries](#libraries)
   * [graph-guard-validate](#graph-guard-validate)
   * [graph-guard-script](#graph-guard-script)
@@ -95,10 +101,9 @@ fun runInvalidMoviesQueries(driver: Driver) {
 <!--- TEST_NAME Example02Test --> 
 <!--- INCLUDE
 import io.github.cfraser.graphguard.Server
-import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.plugin.Validator
+import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.withNeo4j
-import java.net.InetSocketAddress
 import org.neo4j.driver.Config
 import org.neo4j.driver.GraphDatabase
 
@@ -111,7 +116,7 @@ fun runExample02() {
 
 [//]: # (@formatter:off)
 ```kotlin
-Server(boltURI(), Validator(Schema(MOVIES_SCHEMA)), InetSocketAddress("localhost", 8787)).use {
+Server(boltURI(), Validator(Schema(MOVIES_SCHEMA)), Server.Address.InetSocket("localhost", 8787)).use {
     server ->
   server.start()
   GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())
@@ -298,10 +303,10 @@ for an exact specification of the [schema](#schema) DSL.
 
 The `graph-guard*` libraries are accessible
 via [Maven Central](https://search.maven.org/search?q=g:io.github.c-fraser%20AND%20a:graph-guard*)
-and the `graph-guard-cli` application is published in
+and the `graph-guard-app` application is published in
 the [releases](https://github.com/c-fraser/graph-guard/releases).
 
-> `graph-guard` requires Java 17+.
+> `graph-guard` requires Java 21+.
 
 > `Server` doesn't currently support TLS (because
 > of [ktor-network](https://youtrack.jetbrains.com/issue/KTOR-694) limitations).
@@ -362,27 +367,19 @@ Server(
 
 [//]: # (@formatter:off)
 ```java
-Server.Plugin plugin = // implement async plugin; can't utilize Kotlin coroutines plugin interface in Java
-    new Server.Plugin.Async() {
+Executor executor = Executors.newVirtualThreadPerTaskExecutor(); // run blocking operations on virtual threads
+Server.Plugin plugin = // implement blocking plugin; can't utilize Kotlin coroutines plugin interface in Java
+    new Server.Plugin.Blocking(executor) {
       @NotNull
       @Override
-      public CompletableFuture<Message> interceptAsync(
-              @NotNull String session, @NotNull Bolt.Message message) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                  System.out.println(message);
-                  return message;
-                });
+      public Message interceptBlocking(@NotNull String session, @NotNull Bolt.Message message) {
+        System.out.println(message);
+        return message;
       }
 
-      @NotNull
       @Override
-      public CompletableFuture<Void> observeAsync(@NotNull Server.Event event) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                  System.out.println(event);
-                  return null;
-                });
+      public void observeBlocking(@NotNull Server.Event event) {
+        System.out.println(event);
       }
     };
 try (Server server = new Server(boltUri, plugin)) { // use server in try-with-resources to automate cleanup
@@ -396,19 +393,24 @@ try (Server server = new Server(boltUri, plugin)) { // use server in try-with-re
 
 Refer to the [graph-guard website](https://c-fraser.github.io/graph-guard/api/).
 
-### CLI
+### Application
 
-Download and run the `graph-guard-cli` application.
+Download and run the `graph-guard-app` application.
 
 ```shell
-curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.tar
-mkdir graph-guard-cli
-tar -xvf graph-guard-cli.tar --strip-components=1 -C graph-guard-cli
-./graph-guard-cli/bin/graph-guard-cli --help
+curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app.tar
+mkdir graph-guard-app
+tar -xvf graph-guard-app.tar --strip-components=1 -C graph-guard-app
+./graph-guard-app/bin/graph-guard-app --help
 ```
 
-> Refer to the [demo](https://c-fraser.github.io/graph-guard/cli/)
-> (and [source script](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-cli/demo.sh)).
+#### Demo
+
+Refer to the *Docker Compose* [example](https://github.com/c-fraser/graph-guard/blob/main/demo/).
+
+```shell
+./demo/run.sh
+```
 
 ## Libraries
 

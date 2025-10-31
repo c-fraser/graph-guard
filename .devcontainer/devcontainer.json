@@ -1,9 +1,9 @@
 {
   "name": "graph-guard",
-  "image": "mcr.microsoft.com/devcontainers/java:17-bullseye",
+  "image": "mcr.microsoft.com/devcontainers/java:21-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12",
+      "version": "3.14",
       "installTools": false
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
@@ -15,7 +15,8 @@
   },
   "postCreateCommand": {
     "install mkdocs-material and asciinema": "pip install --upgrade pip && pip install mkdocs-material asciinema",
-    "install agg": "cargo install --git https://github.com/asciinema/agg"
+    "install agg": "cargo install --git https://github.com/asciinema/agg",
+    "install uv": "curl -LsSf https://astral.sh/uv/install.sh | sh"
   },
   "forwardPorts": [8000],
   "portsAttributes": {

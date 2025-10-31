@@ -1,11 +1,14 @@
 [versions]
+fritz2 = "1.0-RC20"
 knit = "0.5.0"
-kotest = "6.0.2"
-kotlin = "2.2.10"
+kotest = "6.0.4"
+kotlin = "2.2.20"
 kotlinx-coroutines = "1.10.2"
+kotlinx-rpc = "0.10.0"
+kotlinx-serialization = "1.9.0"
 ktfmt = "0.58"
-ktor = "3.2.3"
-slf4j = "2.0.16"
+ktor = "3.3.1"
+slf4j = "2.0.17"
 
 [libraries]
 antlr4 = { module = "org.antlr:antlr4", version = "4.13.2" }
@@ -18,27 +21,46 @@ kotest-assertions = { module = "io.kotest:kotest-assertions-core-jvm", version.r
 kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-slf4j = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j", version.ref = "kotlinx-coroutines" }
+kotlinx-rpc-krpc-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-client", version.ref = "kotlinx-rpc" }
+kotlinx-rpc-krpc-core = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-core", version.ref = "kotlinx-rpc" }
+kotlinx-rpc-krpc-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-server", version.ref = "kotlinx-rpc" }
+kotlinx-rpc-krpc-ktor-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client", version.ref = "kotlinx-rpc" }
+kotlinx-rpc-krpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server", version.ref = "kotlinx-rpc" }
+kotlinx-rpc-krpc-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json", version.ref = "kotlinx-rpc" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-network-tls = { module = "io.ktor:ktor-network-tls", version.ref = "ktor" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.18" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-cors = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "ktor" }
+ktor-server-websockets = { module = "io.ktor:ktor-server-websockets-jvm", version.ref = "ktor" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+ktor-client-websockets = { module = "io.ktor:ktor-client-websockets-js", version.ref = "ktor" }
+fritz2-core = { module = "dev.fritz2:core", version.ref = "fritz2" }
+fritz2-headless = { module = "dev.fritz2:headless", version.ref = "fritz2" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.20" }
 logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "8.1" }
 mordant = { module = "com.github.ajalt.mordant:mordant-jvm", version = "2.2.0" }
-neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2025.0.1" }
-neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "5.28.9" }
-neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "5.26.12" }
+neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2025.1.0" }
+neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "6.0.1" }
+neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "2025.09.0" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.6.7" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.7.0" }
 compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.18.1" }
-dependency-versions = { id = "com.github.ben-manes.versions", version = "0.52.0" }
+dependency-versions = { id = "com.github.ben-manes.versions", version = "0.53.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 dokka = { id = "org.jetbrains.dokka", version = "1.9.20" }
+jib = { id = "com.google.cloud.tools.jib", version = "3.4.5" }
 jreleaser = { id = "org.jreleaser", version = "1.20.0" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kover = { id = "org.jetbrains.kotlinx.kover", version = "0.9.1" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlinx-rpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
+kover = { id = "org.jetbrains.kotlinx.kover", version = "0.9.3" }
 nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
-shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
-spotless = { id = "com.diffplug.spotless", version = "7.2.1" }
+shadow = { id = "com.gradleup.shadow", version = "9.2.2" }
+spotless = { id = "com.diffplug.spotless", version = "8.0.0" }

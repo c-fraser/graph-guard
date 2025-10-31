@@ -19,7 +19,7 @@ import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
 import org.neo4j.cypherdsl.core.KeyValueMapEntry
-import org.neo4j.cypherdsl.core.LabelExpression
+import org.neo4j.cypherdsl.core.Labels
 import org.neo4j.cypherdsl.core.ListExpression
 import org.neo4j.cypherdsl.core.Literal
 import org.neo4j.cypherdsl.core.NodeBase
@@ -188,21 +188,26 @@ internal data class Query(
           ?.toSet()
           .orEmpty()
           .toMutableSet()
-      fun add(vararg labelExpressions: LabelExpression) =
+      fun add(vararg labelExpressions: Labels) =
         labelExpressions.forEach { labelExpression ->
-          if (labelExpression.type == LabelExpression.Type.LEAF)
-            labels += labelExpression.value.orEmpty()
+          if (labelExpression.type == Labels.Type.LEAF)
+            labels +=
+              labelExpression.value
+                ?.map { value ->
+                  // TODO: inspect value.visitable?
+                  value.cypher()
+                }
+                .orEmpty()
         }
       val labelTypes =
         setOf(
-          LabelExpression.Type.CONJUNCTION,
-          LabelExpression.Type.COLON_CONJUNCTION,
-          LabelExpression.Type.COLON_DISJUNCTION,
-          LabelExpression.Type.DISJUNCTION,
+          Labels.Type.CONJUNCTION,
+          Labels.Type.COLON_CONJUNCTION,
+          Labels.Type.COLON_DISJUNCTION,
+          Labels.Type.DISJUNCTION,
         )
       node.accept { visitable ->
-        if (visitable is LabelExpression && visitable.type in labelTypes)
-          add(visitable.lhs, visitable.rhs)
+        if (visitable is Labels && visitable.type in labelTypes) add(visitable.lhs, visitable.rhs)
       }
       compute(symbolicName) { _, previousLabels -> previousLabels.orEmpty() + labels }
     }

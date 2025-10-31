@@ -29,6 +29,8 @@ dependencies {
   implementation(libs.kotlinx.coroutines)
   implementation(libs.slf4j.api)
 
+  testImplementation(libs.kotest.assertions)
+  testImplementation(libs.kotest.runner)
   testImplementation(testFixtures(project(":graph-guard")))
   testRuntimeOnly(libs.slf4j.nop)
 }

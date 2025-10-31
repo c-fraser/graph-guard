@@ -21,12 +21,16 @@ import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.NamedTag
 import io.kotest.matchers.collections.shouldHaveSize
 import java.net.URI
+import java.nio.file.Path
+import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteExisting
 import org.neo4j.driver.AuthToken
 import org.neo4j.driver.Config
 import org.neo4j.driver.Driver
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.Values
 import org.neo4j.harness.Neo4j
+import org.neo4j.harness.Neo4jBuilder
 import org.neo4j.harness.Neo4jBuilders
 
 val LOCAL = NamedTag("Local")
@@ -36,14 +40,18 @@ val isE2eTest: Boolean
   get() = System.getProperty("graph-guard.e2e.test")?.toBooleanStrictOrNull() == true
 
 /** Use a running [Neo4j] with the test [block]. */
-fun <T> withNeo4j(block: Neo4j.() -> T): T {
-  return Neo4jBuilders.newInProcessBuilder().build().use { neo4j -> neo4j.block() }
+fun <T> withNeo4j(customize: Neo4jBuilder.() -> Neo4jBuilder = { this }, block: Neo4j.() -> T): T {
+  return Neo4jBuilders.newInProcessBuilder().run(customize).build().use { neo4j -> neo4j.block() }
 }
 
 /** Run the [block] using a [Server] initialized with the [plugin]. */
 fun <T> Neo4j.withServer(plugin: Server.Plugin = plugin {}, block: (Driver) -> T): T {
+  val udsPath by lazy { createTempFile().also(Path::deleteExisting) }
   var t: T? = null
-  val server = Server(boltURI(), plugin)
+  val server =
+    if ("+unix" in boltURI().scheme)
+      Server(boltURI(), plugin, Server.Address.UnixDomainSocket(udsPath))
+    else Server(boltURI(), plugin)
   server.test { server.driver.use { driver -> t = block(driver) } }
   return checkNotNull(t)
 }
@@ -57,10 +65,12 @@ val Neo4j.driver: Driver
 /** Get a [Driver] for the proxy [Server]. */
 val Server.driver: Driver
   get() {
-    return GraphDatabase.driver(
-      URI("bolt://${address.hostName}:${address.port}"),
-      Config.builder().withoutEncryption().build(),
-    )
+    val bolt =
+      when (address) {
+        is Server.Address.InetSocket -> "bolt://${address.hostname}:${address.port}"
+        is Server.Address.UnixDomainSocket -> "bolt+unix:///${address.path}"
+      }
+    return GraphDatabase.driver(URI(bolt), Config.builder().withoutEncryption().build())
   }
 
 /** Get a [Driver] for the proxy [server] with the [auth]. */

@@ -40,7 +40,7 @@ object Bolt {
       major.compareTo(other.major).takeIf { i -> i != 0 } ?: minor.compareTo(other.minor)
 
     override fun toString(): String =
-      if (range != 0) "%1\$d.%2\$d..%1\$d.%3\$d".format(major, minor - range, minor)
+      if (range != 0) $$"%1$d.%2$d..%1$d.%3$d".format(major, minor - range, minor)
       else "$major.$minor"
 
     override fun equals(other: Any?): Boolean =
@@ -147,7 +147,7 @@ object Bolt {
     val extra: Map<String, Any?>,
   ) : Request
 
-  /** The [HELLO](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
+  /** The [RESET](https://neo4j.com/docs/bolt/current/bolt/message/#messages-reset) message. */
   data object Reset : Request
 
   /** The [RUN](https://neo4j.com/docs/bolt/current/bolt/message/#messages-run) message. */

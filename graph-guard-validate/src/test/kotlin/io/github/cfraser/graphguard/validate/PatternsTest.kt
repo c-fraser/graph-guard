@@ -44,7 +44,7 @@ class PatternsTest : FunSpec() {
           """// graph-guard:exclude
               MATCH (n:N)-[r]->(z:Z) RETURN r""" expect
           null,
-        Patterns.UnparameterizedQuery with "MATCH (n) WHERE id(n) = \$id RETURN n" expect null,
+        Patterns.UnparameterizedQuery with $$"MATCH (n) WHERE id(n) = $id RETURN n" expect null,
         Patterns.UnparameterizedQuery with
           "MATCH (n) WHERE id(n) = \"n\" RETURN n" expect
           Rule.Violation("Query has literals ['n']"),
@@ -58,14 +58,14 @@ class PatternsTest : FunSpec() {
             .trimIndent() expect
           null,
         Patterns.UnlabeledEntity with
-          "MATCH (a:A)-[:B]->(c:C)-[:D]->(e:E) UNWIND \$z AS y MATCH (x:X) MERGE (e)-[:R]->(x)" expect
+          $$"MATCH (a:A)-[:B]->(c:C)-[:D]->(e:E) UNWIND $z AS y MATCH (x:X) MERGE (e)-[:R]->(x)" expect
           null,
         Patterns.UnlabeledEntity with
           "MATCH (a:A)-[:B]->(c:D|E) RETURN a.z AS Z, collect(c.y) AS Y ORDER BY c.x" expect
           null,
         Patterns.UnlabeledEntity with
           @Suppress("MaxLineLength")
-          "MERGE (az:A&Z {id: toUpper(\$id)}) ON CREATE SET az.created = timestamp() SET az.updated = timestamp()" expect
+          $$"MERGE (az:A&Z {id: toUpper($id)}) ON CREATE SET az.created = timestamp() SET az.updated = timestamp()" expect
           null,
       ) { (rule, query, expected) ->
         rule.validate(query, emptyMap()) shouldBe expected

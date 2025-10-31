@@ -1,0 +1,47 @@
+services:
+  neo4j:
+    image: neo4j:2025
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    ports:
+      - '7687:7687'
+    healthcheck:
+      test: ['CMD', 'cypher-shell', '-u', 'neo4j', '-p', 'password', 'RETURN 1']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  graph-guard:
+    image: graph-guard-app:latest
+    ports:
+      - '8080:8080'
+      - '8787:8787'
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ./schema.gg:/app/schema.gg:ro
+      - ./plugin.gg.kts:/app/plugin.gg.kts:ro
+    command:
+      - '--graph'
+      - 'bolt://neo4j:7687'
+      - '--web'
+      - '8080'
+      - '--schema'
+      - '/app/schema.gg'
+      - '--script'
+      - '/app/plugin.gg.kts'
+      - '--debug'
+    healthcheck:
+      test: ['CMD-SHELL', 'exit 0']
+      # wait 30 seconds for graph-guard to compile the plugin script before starting the server
+      start_period: 30s
+
+  client:
+    build:
+      dockerfile: client.Dockerfile
+    pull_policy: build
+    depends_on:
+      graph-guard:
+        condition: service_healthy
+    restart: on-failure

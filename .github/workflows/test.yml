@@ -9,6 +9,10 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      id-token: write
     steps:
       - name: checkout code
         uses: actions/checkout@v4
@@ -18,8 +22,13 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: check code
         run: ./gradlew spotlessCheck
       - name: execute build
         run: ./gradlew clean build -Dkotest.tags='!Local'
+      - name: publish test report
+        uses: mikepenz/action-junit-report@v5
+        if: success() || failure()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'

@@ -10,14 +10,23 @@ out
 *.hprof
 *.log
 .kotlin
+*.bak
 # derivative doc files
 docs/index.md
 docs/api
-docs/cli/*
-!docs/cli/demo.cast
-# runtime metadata
-graph-guard-cli/neo4j.cid
+docs/app/*
+!docs/app/demo.cast
+!docs/app/demo.gif
 # generated antlr files
 graph-guard-validate/src/main/java
 # dev notes
 TODO.md
+# kotlin/js artifacts
+kotlin-js-store
+node_modules
+.yarn
+# static assets
+graph-guard-web/src/jsMain/resources
+!graph-guard-web/src/jsMain/resources/index.html
+# demo
+demo/*.gg*

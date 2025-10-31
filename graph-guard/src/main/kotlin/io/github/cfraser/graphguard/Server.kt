@@ -20,16 +20,15 @@ import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.SocketAddress as KSocketAddress
+import io.ktor.network.sockets.UnixSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.sockets.toJavaAddress
 import io.ktor.network.tls.tls
-import io.ktor.util.network.hostname
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readByte
@@ -40,13 +39,19 @@ import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
 import io.ktor.utils.io.writeShort
-import java.net.InetSocketAddress
+import java.io.EOFException
+import java.net.SocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
+import java.nio.file.Path
 import java.util.UUID
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.TrustManager
+import kotlin.io.path.createFile
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.notExists
 import kotlin.time.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -54,9 +59,13 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -76,8 +85,7 @@ import org.slf4j.MDC.MDCCloseable
  *
  * @param plugin the [Server.Plugin] to use to intercept proxied messages and observe server events
  * @property graph the [URI] of the graph database to proxy data to/from
- * @property address the [InetSocketAddress] to bind the [Server] to
- * @property parallelism the number of parallel coroutines used by the [Server]
+ * @property address the [Server.Address] to bind the [Server] to
  * @property trustManager the [TrustManager] to use for the TLS connection to the [graph]
  */
 class Server
@@ -85,8 +93,7 @@ class Server
 constructor(
   val graph: URI,
   plugin: Plugin = Plugin.DSL.plugin {},
-  val address: InetSocketAddress = InetSocketAddress("localhost", 8787),
-  private val parallelism: Int? = null,
+  val address: Address = Address.InetSocket("localhost", 8787),
   private val trustManager: TrustManager? = null,
 ) : AutoCloseable {
 
@@ -122,30 +129,29 @@ constructor(
   @Synchronized
   @Suppress("TooGenericExceptionCaught")
   fun start() {
-    val latch = CountDownLatch(1)
+    val ready = CountDownLatch(1)
     check(running?.isActive?.not() ?: true) { "The proxy server is already running" }
+    if (address is Address.UnixDomainSocket) {
+      check(address.path.notExists()) { "The unix domain socket file already exists" }
+      address.path.createFile()
+    }
     running =
       @OptIn(DelicateCoroutinesApi::class)
-      GlobalScope.launch(
-        MDCContext() +
-          when (val parallelism = parallelism) {
-            null -> Dispatchers.IO
-            else -> Dispatchers.IO.limitedParallelism(parallelism)
-          }
-      ) {
+      GlobalScope.launch(MDCContext() + Dispatchers.IO) {
         try {
-          run(latch)
+          run(ready)
         } catch (thrown: Exception) {
           LOGGER.error("Proxy server failed to run", thrown)
         }
       }
-    latch.await()
+    ready.await(10, TimeUnit.SECONDS) || error("Proxy server failed to start within timeout")
   }
 
   /** Stop the [Server]. */
   override fun close() {
     runBlocking(MDCContext() + Dispatchers.IO) { running?.runCatching { cancelAndJoin() } }
     running = null
+    if (address is Address.UnixDomainSocket) address.path.deleteExisting()
   }
 
   /**
@@ -156,10 +162,10 @@ constructor(
    * > [CountDownLatch.countDown] when the [Server] is ready to accept client connections.
    */
   @Suppress("TooGenericExceptionCaught")
-  private suspend fun run(latch: CountDownLatch) {
+  private suspend fun run(ready: CountDownLatch) {
     try {
       bind { selector, serverSocket ->
-        latch.countDown()
+        ready.countDown()
         while (isActive) {
           try {
             accept(serverSocket) { clientConnection, clientReader, clientWriter ->
@@ -182,7 +188,7 @@ constructor(
         }
       }
     } catch (_: CancellationException) {} finally {
-      latch.countDown()
+      ready.countDown()
     }
   }
 
@@ -191,8 +197,12 @@ constructor(
     withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graph") {
       try {
         SelectorManager(coroutineContext).use { selector ->
-          val socket =
-            aSocket(selector).tcp().bind(KInetSocketAddress(address.hostname, address.port))
+          val localAddress =
+            when (address) {
+              is Address.InetSocket -> InetSocketAddress(address.hostname, address.port)
+              is Address.UnixDomainSocket -> UnixSocketAddress("${address.path}")
+            }
+          val socket = aSocket(selector).tcp().bind(localAddress)
           LOGGER.info("Started proxy server on '{}'", socket.localAddress)
           plugin.observe(Started)
           socket.use { server -> block(selector, server) }
@@ -213,7 +223,7 @@ constructor(
     block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
   ) {
     val socket = serverSocket.accept()
-    val clientConnection = Connection.Client(socket.remoteAddress.toInetSocketAddress())
+    val clientConnection = Connection.Client(socket.remoteAddress.toJavaAddress())
     launch {
       try {
         socket.withChannels { reader, writer ->
@@ -235,11 +245,14 @@ constructor(
     selector: SelectorManager,
     block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
   ) {
-    var socket = aSocket(selector).tcp().connect(KInetSocketAddress(graph.host, graph.port))
+    val remoteAddress =
+      if ("+unix" in graph.scheme) UnixSocketAddress(graph.path)
+      else InetSocketAddress(graph.host, graph.port)
+    var socket = aSocket(selector).tcp().connect(remoteAddress)
     if ("+s" in graph.scheme)
       socket =
         socket.tls(coroutineContext = coroutineContext) { trustManager = this@Server.trustManager }
-    val graphConnection = Connection.Graph(socket.remoteAddress.toInetSocketAddress())
+    val graphConnection = Connection.Graph(socket.remoteAddress.toJavaAddress())
     try {
       socket.withChannels { reader, writer ->
         LOGGER.debug("Connected to '{}'", graphConnection)
@@ -262,7 +275,13 @@ constructor(
     graphReader: ByteReadChannel,
     graphWriter: ByteWriteChannel,
   ) {
-    val handshake = clientReader.readHandshake()
+    val handshake =
+      flow { emit(clientReader.readHandshake()) }
+        .retry(3) { cause -> cause is EOFException }
+        .catch { thrown ->
+          LOGGER.error("Failed to read handshake from {}", clientConnection, thrown)
+        }
+        .firstOrNull() ?: return
     LOGGER.debug("Read handshake from {} '{}'", clientConnection, handshake)
     graphWriter.writeByteArray(handshake)
     LOGGER.debug("Wrote handshake to {}", graphConnection)
@@ -352,6 +371,28 @@ constructor(
     }
   }
 
+  /** An address for the [Server] to bind to. */
+  sealed interface Address {
+
+    /**
+     * An IP socket address.
+     *
+     * @property hostname the hostname to bind to
+     * @property port the port to bind to
+     * @see java.net.InetSocketAddress
+     */
+    @JvmRecord data class InetSocket(val hostname: String, val port: Int) : Address
+
+    /**
+     * A unix domain socket address.
+     * > The file at the [path] is created during [Server.start].
+     *
+     * @property path the [Path] to the unix domain socket file
+     * @see java.net.UnixDomainSocketAddress
+     */
+    @JvmInline value class UnixDomainSocket(val path: Path) : Address
+  }
+
   /**
    * [Server.Plugin] enables [Server] functionality to be augmented and/or observed.
    *
@@ -403,39 +444,44 @@ constructor(
       }
     }
 
-    /** [Server.Plugin.Async] is an asynchronous [Server.Plugin] intended for use by *Java* code. */
-    abstract class Async : Plugin {
+    /**
+     * [Server.Plugin.Blocking] is a blocking [Server.Plugin] intended for use in *Java* code.
+     *
+     * @param executor the [Executor] to use as a [kotlinx.coroutines.CoroutineDispatcher] to run
+     *   the blocking operations
+     */
+    abstract class Blocking(executor: Executor) : Plugin {
+
+      private val dispatcher = executor.asCoroutineDispatcher()
 
       /**
-       * Asynchronously [intercept] the [message].
+       * [Server.Plugin.intercept] the [message].
+       * > [interceptBlocking] is run on the [executor] to prevent blocking [Server] coroutines.
        *
        * @param session the [Bolt.Session]
        * @param message the intercepted
        *   [Bolt message](https://neo4j.com/docs/bolt/current/bolt/message/#messages)
-       * @return a [CompletableFuture] with the [Bolt.Message] to send
+       * @return the [Bolt.Message] to send
        */
-      abstract fun interceptAsync(
-        session: String,
-        message: Bolt.Message,
-      ): CompletableFuture<Bolt.Message>
+      abstract fun interceptBlocking(session: String, message: Bolt.Message): Bolt.Message
 
       /**
-       * Asynchronously [observe] the [event].
+       * [Server.Plugin.observe] the [event].
+       * > [observeBlocking] is run on the [executor] to prevent blocking [Server] coroutines.
        *
        * @param event the [Server.Event] that occurred
-       * @return a [CompletableFuture] of [Void]
        */
-      abstract fun observeAsync(event: Event): CompletableFuture<Void>
+      abstract fun observeBlocking(event: Event)
 
-      /** [interceptAsync] then [await] for the [CompletableFuture] to complete. */
+      /** [interceptBlocking] on the [dispatcher]. */
       final override suspend fun intercept(
         session: Bolt.Session,
         message: Bolt.Message,
-      ): Bolt.Message = interceptAsync(session.id, message).await()
+      ): Bolt.Message = withContext(dispatcher) { interceptBlocking(session.id, message) }
 
-      /** [observeAsync] then [await] for the [CompletableFuture] to complete. */
+      /** [observeBlocking] on the [dispatcher]. */
       final override suspend fun observe(event: Event) {
-        observeAsync(event).await()
+        withContext(dispatcher) { observeBlocking(event) }
       }
     }
 
@@ -531,25 +577,25 @@ constructor(
   /**
    * A proxy connection.
    *
-   * @property address the [InetSocketAddress] of the proxy source/destination
+   * @property address the [SocketAddress] of the proxy source/destination
    */
   sealed interface Connection {
 
-    val address: InetSocketAddress
+    val address: SocketAddress
 
     /**
      * A client the [Server] accepted a connection from.
      *
-     * @property address the [InetSocketAddress] of the client
+     * @property address the [SocketAddress] of the client
      */
-    @JvmRecord data class Client(override val address: InetSocketAddress) : Connection
+    @JvmRecord data class Client(override val address: SocketAddress) : Connection
 
     /**
      * The graph database the [Server] connected to.
      *
-     * @property address the [InetSocketAddress] of the graph database
+     * @property address the [SocketAddress] of the graph database
      */
-    @JvmRecord data class Graph(override val address: InetSocketAddress) : Connection
+    @JvmRecord data class Graph(override val address: SocketAddress) : Connection
   }
 
   /**
@@ -585,14 +631,10 @@ constructor(
       block: suspend CoroutineScope.() -> Unit,
     ) {
       val reset = context.map { (key, value) -> MDC.putCloseable(key, value) }
-      val result = withContext(MDCContext()) { runCatching { block() } }
+      val result = withContext(MDCContext() + Dispatchers.IO) { runCatching { block() } }
       reset.runCatching { forEach(MDCCloseable::close) }
       result.getOrThrow()
     }
-
-    /** Convert the [KSocketAddress] to an [InetSocketAddress]. */
-    private fun KSocketAddress.toInetSocketAddress(): InetSocketAddress =
-      checkNotNull(toJavaAddress() as? InetSocketAddress) { "Unexpected address '$this'" }
 
     /** Use the opened [ByteReadChannel] and [ByteWriteChannel] for the [Socket]. */
     private suspend fun Socket.withChannels(

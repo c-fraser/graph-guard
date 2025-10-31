@@ -18,6 +18,8 @@ import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessTask
 import io.github.gradlenexus.publishplugin.NexusPublishExtension
 import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.DetektPlugin
+import kotlinx.knit.KnitPlugin
 import kotlinx.knit.KnitPluginExtension
 import kotlinx.validation.KotlinApiBuildTask
 import org.gradle.internal.extensions.stdlib.capitalized
@@ -27,6 +29,7 @@ import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jreleaser.gradle.plugin.JReleaserExtension
 import org.jreleaser.gradle.plugin.tasks.JReleaserFullReleaseTask
@@ -39,6 +42,7 @@ buildscript {
 
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
+  alias(libs.plugins.kotlin.multiplatform) apply false
   alias(libs.plugins.dokka)
   alias(libs.plugins.spotless)
   alias(libs.plugins.detekt) apply false
@@ -49,24 +53,32 @@ plugins {
   alias(libs.plugins.compatibility.validator)
 }
 
-apply(plugin = "kotlinx-knit")
+apply<KnitPlugin>()
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "0.25.0"
+  version = "1.0.0"
 
   repositories { mavenCentral() }
 }
 
-subprojects project@{
-  apply(plugin = "org.jetbrains.kotlin.jvm")
-  apply(plugin = "org.jetbrains.dokka")
-  apply(plugin = "io.gitlab.arturbosch.detekt")
+val web = project(":graph-guard-web")
 
-  configure<JavaPluginExtension> {
-    toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
-    withSourcesJar()
+subprojects project@{
+  if (this@project == web) apply(plugin = "org.jetbrains.kotlin.multiplatform")
+  else {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+
+    apply<DokkaPlugin>()
+
+    configure<JavaPluginExtension> { withSourcesJar() }
   }
+
+  configure<KotlinProjectExtension> {
+    jvmToolchain { languageVersion.set(JavaLanguageVersion.of(21)) }
+  }
+
+  apply<DetektPlugin>()
 
   tasks {
     withType<Jar> {
@@ -86,11 +98,6 @@ subprojects project@{
   }
 
   afterEvaluate {
-    dependencies {
-      "testImplementation"(libs.kotest.assertions)
-      "testImplementation"(libs.kotest.runner)
-    }
-
     tasks.withType<Test> {
       useJUnitPlatform()
       systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
@@ -98,6 +105,7 @@ subprojects project@{
   }
 
   plugins.withType<DokkaPlugin> {
+    @Suppress("unused")
     val dokkaHtmlPartial by
       tasks.getting(DokkaTaskPartial::class) {
         outputDirectory.set(layout.buildDirectory.dir("docs/partial"))
@@ -240,7 +248,7 @@ configure<SpotlessExtension> {
     pretty()
     target(
       fileTree(rootProject.rootDir) {
-        include("**/*.json", "**/*.yml")
+        include("**/*.css", "**/*.html", "**/*.json", "**/*.mjs", "**/*.yml")
         excludes()
       }
     )
@@ -258,9 +266,9 @@ configure<NexusPublishExtension> publish@{
   }
 }
 
-val cli = project(":graph-guard-cli")
-val cliTar: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.tar")
-val cliZip: Provider<RegularFile> = cli.layout.buildDirectory.file("distributions/${cli.name}.zip")
+val app = project(":graph-guard-app")
+val appTar: Provider<RegularFile> = app.layout.buildDirectory.file("distributions/${app.name}.tar")
+val appZip: Provider<RegularFile> = app.layout.buildDirectory.file("distributions/${app.name}.zip")
 
 configure<JReleaserExtension> {
   project {
@@ -293,13 +301,13 @@ configure<JReleaserExtension> {
       }
     }
     distributions {
-      create(cli.name) {
-        artifact { path.set(cliTar) }
-        artifact { path.set(cliZip) }
+      create(app.name) {
+        artifact { path.set(appTar) }
+        artifact { path.set(appZip) }
         brew {
           active.set(Active.NEVER)
           downloadUrl.set(
-            "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-cli.zip"
+            "https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app.zip"
           )
           @Suppress("DEPRECATION")
           repository {
@@ -315,7 +323,7 @@ configure<JReleaserExtension> {
   }
 }
 
-apiValidation { ignoredProjects += listOf(cli.name) }
+apiValidation { ignoredProjects += listOf(app.name, web.name) }
 
 configure<KnitPluginExtension> { files = files("README.md") }
 
@@ -330,29 +338,34 @@ tasks {
   }
 
   val setupAsciinemaPlayer by registering {
-    val css = file("docs/cli/asciinema-player.css")
-    val js = file("docs/cli/asciinema-player.min.js")
+    val css = file("docs/app/asciinema-player.css")
+    val js = file("docs/app/asciinema-player.min.js")
     onlyIf { !css.exists() && !js.exists() }
     doLast {
       arrayOf(css, js).forEach { file ->
-        providers.exec {
-          commandLine(
-            "curl",
-            "-L",
-            "-o",
-            file,
-            "https://github.com/asciinema/asciinema-player/releases/download/v3.6.3/${file.name}",
-          )
-        }
+        providers
+          .exec {
+            commandLine(
+              "curl",
+              "-L",
+              "-o",
+              file,
+              "https://github.com/asciinema/asciinema-player/releases/download/v3.6.3/${file.name}",
+            )
+          }
+          .standardError
+          .asText
+          .get()
+          .also(::println)
       }
-      file("docs/cli/index.html")
+      file("docs/app/index.html")
         .writeText(
           """
           <!DOCTYPE html>
           <html lang='en'>
           <head>
             <meta charset='UTF-8'>
-            <title>graph-guard-cli demo</title>
+            <title>graph-guard-app demo</title>
             <link rel='stylesheet' type='text/css' href='asciinema-player.css'/>
           </head>
           <body>
@@ -393,6 +406,7 @@ tasks {
           .readText()
           // unqualify docs references
           .replace(Regex("\\(docs/.*\\)")) { it.value.replace("docs/", "") }
+          .replace(Regex("src=\"docs/")) { "src=\"" }
           // remove inline TOC
           .replace(
             Regex("<!--- TOC -->[\\s\\S]*<!--- END -->[\\n|\\r|\\n\\r]", RegexOption.MULTILINE),
@@ -402,7 +416,19 @@ tasks {
     }
   }
 
-  spotlessApply { mustRunAfter(setupDocs) }
+  val demoScript = rootDir.resolve("demo/client.py").toPath()
+
+  val ruffCheck by
+    registering(Exec::class) { commandLine("uvx", "ruff", "check", "--fix", demoScript) }
+
+  val ruffFormat by registering(Exec::class) { commandLine("uvx", "ruff", "format", demoScript) }
+
+  val spotlessPython by registering { dependsOn(ruffCheck, ruffFormat) }
+
+  spotlessApply {
+    finalizedBy(spotlessPython)
+    mustRunAfter(setupDocs)
+  }
 
   val spotlessKotlin by
     getting(SpotlessTask::class) {
@@ -414,20 +440,27 @@ tasks {
               it.tasks.withType<KotlinApiBuildTask>() +
               it.tasks.withType<Test>()
           }
-          .toTypedArray()
+          .toTypedArray(),
+        provider {
+          web.tasks.filter { task ->
+            task.name.contains("Metadata", ignoreCase = true) ||
+              task.name.contains("commonMain", ignoreCase = true)
+          }
+        },
       )
     }
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
   val spotlessJava by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessJava) }
+  @Suppress("unused")
   val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
 
   val releaseCli by registering {
-    dependsOn(":graph-guard-cli:shadowDistTar", ":graph-guard-cli:shadowDistZip")
+    dependsOn(":graph-guard-app:shadowDistTar", ":graph-guard-app:shadowDistZip")
     doLast {
-      arrayOf(cliTar, cliZip).forEach { dist ->
-        cli.layout.buildDirectory
-          .file("distributions/${cli.name}-shadow-$version.${dist.get().asFile.extension}")
+      arrayOf(appTar, appZip).forEach { dist ->
+        app.layout.buildDirectory
+          .file("distributions/${app.name}-shadow-$version.${dist.get().asFile.extension}")
           .map(RegularFile::getAsFile)
           .get()
           .copyTo(dist.map(RegularFile::getAsFile).get())

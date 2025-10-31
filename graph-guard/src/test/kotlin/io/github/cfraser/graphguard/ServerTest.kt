@@ -21,7 +21,7 @@ import io.github.cfraser.graphguard.knit.test
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KInetSocketAddress
+import io.ktor.network.sockets.UnixSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -30,8 +30,13 @@ import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeShort
 import java.net.URI
 import java.nio.ByteBuffer
+import java.nio.file.Path
 import java.security.cert.X509Certificate
+import java.util.concurrent.Executors
 import javax.net.ssl.X509TrustManager
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteExisting
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
@@ -40,12 +45,29 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.neo4j.configuration.connectors.BoltConnector
+import org.neo4j.configuration.helpers.SocketAddress
 import org.neo4j.harness.Neo4jBuilders
 
 class ServerTest : FunSpec() {
 
   init {
-    test("proxy bolt messages") { withNeo4j { withServer(block = ::runMoviesQueries) } }
+    test("proxy bolt messages via IP socket") {
+      withNeo4j { withServer(block = ::runMoviesQueries) }
+    }
+
+    test("proxy bolt messages via unix domain socket") {
+      val udsPath = createTempFile().also(Path::deleteExisting)
+      withNeo4j({
+        // disable TCP bolt
+        withConfig(BoltConnector.listen_address, SocketAddress("localhost", 0))
+          // enable unix socket
+          .withConfig(BoltConnector.enable_unix_socket, true)
+          // specify socket path
+          .withConfig(BoltConnector.unix_socket_path, udsPath)
+      }) {
+        withServer(block = ::runMoviesQueries)
+      }
+    }
 
     test("concurrent connections") {
       val neo4j = Neo4jBuilders.newInProcessBuilder().build()
@@ -63,74 +85,83 @@ class ServerTest : FunSpec() {
       }
     }
 
-    test("proxy bolt messages with async plugin") {
+    test("proxy bolt messages with sync plugin") {
       withNeo4j {
-        val server = JServer.initialize(boltURI())
-        server.test { server.driver.use(::runMoviesQueries) }
+        val executor = Executors.newVirtualThreadPerTaskExecutor()
+        val server = ServerFactory.init(boltURI(), executor)
+        try {
+          server.test { server.driver.use(::runMoviesQueries) }
+        } finally {
+          executor.shutdown()
+        }
       }
     }
 
     test("dechunk message") {
-      val message =
-        SelectorManager(coroutineContext)
-          .use { selector ->
-            val address = KInetSocketAddress("localhost", 8787)
+      val socket = createTempFile(suffix = ".sock").also(Path::deleteExisting)
+      try {
+        val message =
+          SelectorManager(coroutineContext).use { selector ->
+            val address = UnixSocketAddress(socket.absolutePathString())
             aSocket(selector).tcp().bind(address).use { serverSocket ->
-              async {
-                  serverSocket.accept().use { socket ->
-                    socket.openReadChannel().readChunked(3.seconds)
-                  }
+              val receiveJob = async {
+                serverSocket.accept().use { socket ->
+                  socket.openReadChannel().readChunked(3.seconds)
                 }
-                .also { _ ->
-                  aSocket(selector).tcp().connect(address).use { socket ->
-                    val writer = socket.openWriteChannel(autoFlush = true)
-                    for (size in 1..3) {
-                      val data = PackStreamTest.byteArrayOfSize(size)
-                      writer.writeShort(size.toShort())
-                      writer.writeByteArray(data)
-                    }
-                    writer.writeByteArray(byteArrayOf(0x00, 0x00))
-                  }
+              }
+              aSocket(selector).tcp().connect(address).use { socket ->
+                val writer = socket.openWriteChannel(autoFlush = true)
+                for (size in 1..3) {
+                  val data = PackStreamTest.byteArrayOfSize(size)
+                  writer.writeShort(size.toShort())
+                  writer.writeByteArray(data)
                 }
+                writer.writeByteArray(byteArrayOf(0x00, 0x00))
+              }
+              receiveJob.await()
             }
           }
-          .await()
-      message shouldBe
-        (PackStreamTest.byteArrayOfSize(1) +
-          PackStreamTest.byteArrayOfSize(2) +
-          PackStreamTest.byteArrayOfSize(3))
+        message shouldBe
+          (PackStreamTest.byteArrayOfSize(1) +
+            PackStreamTest.byteArrayOfSize(2) +
+            PackStreamTest.byteArrayOfSize(3))
+      } finally {
+        socket.deleteExisting()
+      }
     }
 
     test("chunk message") {
-      val chunked =
-        SelectorManager(coroutineContext)
-          .use { selector ->
-            val address = KInetSocketAddress("localhost", 8787)
+      val socket = createTempFile(suffix = ".sock").also(Path::deleteExisting)
+      try {
+        val chunked =
+          SelectorManager(coroutineContext).use { selector ->
+            val address = UnixSocketAddress(socket.absolutePathString())
             aSocket(selector).tcp().bind(address).use { serverSocket ->
-              async {
-                  val buffer = ByteBuffer.allocate(13)
-                  serverSocket.accept().use { socket ->
-                    withTimeout(3.seconds) { socket.openReadChannel().readFully(buffer) }
-                  }
-                  buffer
+              val receiveJob = async {
+                val buffer = ByteBuffer.allocate(13)
+                serverSocket.accept().use { socket ->
+                  withTimeout(3.seconds) { socket.openReadChannel().readFully(buffer) }
                 }
-                .also { _ ->
-                  aSocket(selector).tcp().connect(address).use { socket ->
-                    socket
-                      .openWriteChannel(autoFlush = true)
-                      .writeChunked(PackStreamTest.byteArrayOfSize(5), 3)
-                  }
-                }
+                buffer
+              }
+              aSocket(selector).tcp().connect(address).use { socket ->
+                socket
+                  .openWriteChannel(autoFlush = true)
+                  .writeChunked(PackStreamTest.byteArrayOfSize(5), 3)
+              }
+              receiveJob.await()
             }
           }
-          .await()
-      chunked.array() shouldBe
-        (byteArrayOf(0x0, 0x3) +
-          PackStreamTest.byteArrayOfSize(3) +
-          byteArrayOf(0x00, 0x00) +
-          byteArrayOf(0x0, 0x2) +
-          PackStreamTest.byteArrayOfSize(2) +
-          byteArrayOf(0x00, 0x00))
+        chunked.array() shouldBe
+          (byteArrayOf(0x0, 0x3) +
+            PackStreamTest.byteArrayOfSize(3) +
+            byteArrayOf(0x00, 0x00) +
+            byteArrayOf(0x0, 0x2) +
+            PackStreamTest.byteArrayOfSize(2) +
+            byteArrayOf(0x00, 0x00))
+      } finally {
+        socket.deleteExisting()
+      }
     }
 
     test("encrypted connection to graph") {
