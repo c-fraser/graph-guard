@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import com.diffplug.gradle.spotless.FormatExtension
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessTask
 import io.github.gradlenexus.publishplugin.NexusPublishExtension
@@ -237,19 +236,13 @@ configure<SpotlessExtension> {
     target("**/src/main/antlr/*.g4")
   }
 
-  fun FormatExtension.pretty() =
+  format("prettier") {
     prettier()
       .config(mapOf("printWidth" to 100, "tabWidth" to 2, "semi" to false, "singleQuote" to true))
-
-  fun ConfigurableFileTree.excludes() =
-    exclude("**/bin/**", "**/build/**", "**/dist/**", "**/docs/**")
-
-  format("prettier") {
-    pretty()
     target(
       fileTree(rootProject.rootDir) {
-        include("**/*.css", "**/*.html", "**/*.json", "**/*.mjs", "**/*.yml")
-        excludes()
+        include("**/extra.css", "**/index.html", "**/*.json", "**/*.yml")
+        exclude("**/bin/**", "**/build/**", "**/dist/**", "**/docs/**")
       }
     )
   }

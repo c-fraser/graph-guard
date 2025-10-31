@@ -406,11 +406,9 @@ tar -xvf graph-guard-app.tar --strip-components=1 -C graph-guard-app
 
 #### Demo
 
-Refer to the *Docker Compose* [example](https://github.com/c-fraser/graph-guard/blob/main/demo/).
+Refer to the *Docker Compose* [demo](https://c-fraser.github.io/graph-guard/app/).
 
-```shell
-./demo/run.sh
-```
+> See [demo/run.sh](https://github.com/c-fraser/graph-guard/blob/main/demo/run.sh)
 
 ## Libraries
 

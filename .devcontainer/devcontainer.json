@@ -18,10 +18,16 @@
     "install agg": "cargo install --git https://github.com/asciinema/agg",
     "install uv": "curl -LsSf https://astral.sh/uv/install.sh | sh"
   },
-  "forwardPorts": [8000],
+  "forwardPorts": [8000, 8787, 8080],
   "portsAttributes": {
     "8000": {
       "label": "docs site"
+    },
+    "8787": {
+      "label": "proxy server"
+    },
+    "8080": {
+      "label": "web app"
     }
   },
   "customizations": {
