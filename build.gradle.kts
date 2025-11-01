@@ -37,6 +37,12 @@ import org.jreleaser.model.Active
 buildscript {
   repositories { mavenCentral() }
   dependencies { classpath(libs.knit) }
+  configurations.classpath {
+    resolutionStrategy {
+      // See https://github.com/jreleaser/jreleaser/issues/1643
+      force("org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r")
+    }
+  }
 }
 
 plugins {
