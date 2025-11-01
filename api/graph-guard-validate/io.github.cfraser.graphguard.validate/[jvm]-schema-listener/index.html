@@ -1,0 +1,625 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>[jvm]SchemaListener</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            graph-guard
+                    </a>            </div>
+            <div class="library-version">1.0.0
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":graph-guard-validate:dokkaHtmlPartial/main">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="graph-guard-validate::io.github.cfraser.graphguard.validate/SchemaListener///PointingToDeclaration//1933987083">
+  <div class="breadcrumbs"><a href="../../index.html">graph-guard-validate</a><span class="delimiter">/</span><a href="../index.html">io.github.cfraser.graphguard.validate</a><span class="delimiter">/</span><span class="current">[jvm]SchemaListener</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Schema</span><wbr><span><span>Listener</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">SchemaListener</a> : <span data-unresolved-link="org.antlr.v4.runtime.tree/ParseTreeListener///PointingToDeclaration/">ParseTreeListener</span></div><p class="paragraph">This interface defines a complete listener for a parse tree produced by <a href="../[jvm]-schema-parser/index.html">SchemaParser</a>.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../[jvm]-schema-base-listener/index.html">SchemaBaseListener</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../[jvm]-schema-base-listener/index.html">SchemaBaseListener</a></div></span></div><div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="592815717%2FFunctions%2F1933987083" anchor-label="enterEveryRule" id="592815717%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#592815717%2FFunctions%2F1933987083"><span>enter</span><wbr><span>Every</span><wbr><span><span>Rule</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="592815717%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="index.html#592815717%2FFunctions%2F1933987083"><span class="token function">enterEveryRule</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">p<span class="token operator">: </span><span data-unresolved-link="org.antlr.v4.runtime/ParserRuleContext///PointingToDeclaration/">ParserRuleContext</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1624658907%2FFunctions%2F1933987083" anchor-label="enterGraph" id="-1624658907%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-graph.html"><span>enter</span><wbr><span><span>Graph</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1624658907%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-graph.html"><span class="token function">enterGraph</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-graph-context/index.html">SchemaParser.GraphContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/graph.html">graph</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-614128587%2FFunctions%2F1933987083" anchor-label="enterList" id="-614128587%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-list.html"><span>enter</span><wbr><span><span>List</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-614128587%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-list.html"><span class="token function">enterList</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-list-context/index.html">SchemaParser.ListContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/list.html">list</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-129250091%2FFunctions%2F1933987083" anchor-label="enterMetadata" id="-129250091%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-metadata.html"><span>enter</span><wbr><span><span>Metadata</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-129250091%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-metadata.html"><span class="token function">enterMetadata</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-metadata-context/index.html">SchemaParser.MetadataContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/metadata.html">metadata</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="847907725%2FFunctions%2F1933987083" anchor-label="enterMetadataValue" id="847907725%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-metadata-value.html"><span>enter</span><wbr><span>Metadata</span><wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="847907725%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-metadata-value.html"><span class="token function">enterMetadataValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-metadata-value-context/index.html">SchemaParser.MetadataValueContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/metadata-value.html">metadataValue</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1888824107%2FFunctions%2F1933987083" anchor-label="enterName" id="-1888824107%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-name.html"><span>enter</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1888824107%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-name.html"><span class="token function">enterName</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-name-context/index.html">SchemaParser.NameContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/name.html">name</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2056590155%2FFunctions%2F1933987083" anchor-label="enterNode" id="-2056590155%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-node.html"><span>enter</span><wbr><span><span>Node</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2056590155%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-node.html"><span class="token function">enterNode</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-node-context/index.html">SchemaParser.NodeContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/node.html">node</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1134823445%2FFunctions%2F1933987083" anchor-label="enterProperties" id="1134823445%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-properties.html"><span>enter</span><wbr><span><span>Properties</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1134823445%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-properties.html"><span class="token function">enterProperties</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-properties-context/index.html">SchemaParser.PropertiesContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/properties.html">properties</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-37101931%2FFunctions%2F1933987083" anchor-label="enterProperty" id="-37101931%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-property.html"><span>enter</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-37101931%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-property.html"><span class="token function">enterProperty</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-property-context/index.html">SchemaParser.PropertyContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/property.html">property</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="920929345%2FFunctions%2F1933987083" anchor-label="enterQualified" id="920929345%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-qualified.html"><span>enter</span><wbr><span><span>Qualified</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="920929345%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-qualified.html"><span class="token function">enterQualified</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-qualified-context/index.html">SchemaParser.QualifiedContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/qualified.html">qualified</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-703658635%2FFunctions%2F1933987083" anchor-label="enterRelationship" id="-703658635%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-relationship.html"><span>enter</span><wbr><span><span>Relationship</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-703658635%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-relationship.html"><span class="token function">enterRelationship</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-relationship-context/index.html">SchemaParser.RelationshipContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/relationship.html">relationship</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="359693133%2FFunctions%2F1933987083" anchor-label="enterStart" id="359693133%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-start.html"><span>enter</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="359693133%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-start.html"><span class="token function">enterStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-start-context/index.html">SchemaParser.StartContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/start.html">start</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1810259387%2FFunctions%2F1933987083" anchor-label="enterStringLiteral" id="-1810259387%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-string-literal.html"><span>enter</span><wbr><span>String</span><wbr><span><span>Literal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1810259387%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-string-literal.html"><span class="token function">enterStringLiteral</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-string-literal-context/index.html">SchemaParser.StringLiteralContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/string-literal.html">stringLiteral</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1670364117%2FFunctions%2F1933987083" anchor-label="enterTarget" id="1670364117%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-target.html"><span>enter</span><wbr><span><span>Target</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1670364117%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-target.html"><span class="token function">enterTarget</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-target-context/index.html">SchemaParser.TargetContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/target.html">target</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="27188149%2FFunctions%2F1933987083" anchor-label="enterType" id="27188149%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-type.html"><span>enter</span><wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="27188149%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-type.html"><span class="token function">enterType</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-type-context/index.html">SchemaParser.TypeContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/type.html">type</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="56494071%2FFunctions%2F1933987083" anchor-label="enterTypeValue" id="56494071%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-type-value.html"><span>enter</span><wbr><span>Type</span><wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="56494071%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-type-value.html"><span class="token function">enterTypeValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-type-value-context/index.html">SchemaParser.TypeValueContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/type-value.html">typeValue</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="819872871%2FFunctions%2F1933987083" anchor-label="enterUnion" id="819872871%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="enter-union.html"><span>enter</span><wbr><span><span>Union</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="819872871%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="enter-union.html"><span class="token function">enterUnion</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-union-context/index.html">SchemaParser.UnionContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Enter a parse tree produced by <a href="../[jvm]-schema-parser/union.html">union</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="327005035%2FFunctions%2F1933987083" anchor-label="exitEveryRule" id="327005035%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#327005035%2FFunctions%2F1933987083"><span>exit</span><wbr><span>Every</span><wbr><span><span>Rule</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="327005035%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="index.html#327005035%2FFunctions%2F1933987083"><span class="token function">exitEveryRule</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">p<span class="token operator">: </span><span data-unresolved-link="org.antlr.v4.runtime/ParserRuleContext///PointingToDeclaration/">ParserRuleContext</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1752242219%2FFunctions%2F1933987083" anchor-label="exitGraph" id="-1752242219%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-graph.html"><span>exit</span><wbr><span><span>Graph</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1752242219%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-graph.html"><span class="token function">exitGraph</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-graph-context/index.html">SchemaParser.GraphContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/graph.html">graph</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="172329957%2FFunctions%2F1933987083" anchor-label="exitList" id="172329957%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-list.html"><span>exit</span><wbr><span><span>List</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="172329957%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-list.html"><span class="token function">exitList</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-list-context/index.html">SchemaParser.ListContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/list.html">list</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1092516731%2FFunctions%2F1933987083" anchor-label="exitMetadata" id="-1092516731%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-metadata.html"><span>exit</span><wbr><span><span>Metadata</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1092516731%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-metadata.html"><span class="token function">exitMetadata</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-metadata-context/index.html">SchemaParser.MetadataContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/metadata.html">metadata</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1541531453%2FFunctions%2F1933987083" anchor-label="exitMetadataValue" id="1541531453%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-metadata-value.html"><span>exit</span><wbr><span>Metadata</span><wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1541531453%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-metadata-value.html"><span class="token function">exitMetadataValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-metadata-value-context/index.html">SchemaParser.MetadataValueContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/metadata-value.html">metadataValue</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1102365563%2FFunctions%2F1933987083" anchor-label="exitName" id="-1102365563%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-name.html"><span>exit</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1102365563%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-name.html"><span class="token function">exitName</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-name-context/index.html">SchemaParser.NameContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/name.html">name</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1270131611%2FFunctions%2F1933987083" anchor-label="exitNode" id="-1270131611%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-node.html"><span>exit</span><wbr><span><span>Node</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1270131611%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-node.html"><span class="token function">exitNode</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-node-context/index.html">SchemaParser.NodeContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/node.html">node</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-734631995%2FFunctions%2F1933987083" anchor-label="exitProperties" id="-734631995%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-properties.html"><span>exit</span><wbr><span><span>Properties</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-734631995%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-properties.html"><span class="token function">exitProperties</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-properties-context/index.html">SchemaParser.PropertiesContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/properties.html">properties</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1000368571%2FFunctions%2F1933987083" anchor-label="exitProperty" id="-1000368571%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-property.html"><span>exit</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1000368571%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-property.html"><span class="token function">exitProperty</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-property-context/index.html">SchemaParser.PropertyContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/property.html">property</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1360343055%2FFunctions%2F1933987083" anchor-label="exitQualified" id="-1360343055%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-qualified.html"><span>exit</span><wbr><span><span>Qualified</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1360343055%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-qualified.html"><span class="token function">exitQualified</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-qualified-context/index.html">SchemaParser.QualifiedContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/qualified.html">qualified</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="302648613%2FFunctions%2F1933987083" anchor-label="exitRelationship" id="302648613%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-relationship.html"><span>exit</span><wbr><span><span>Relationship</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="302648613%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-relationship.html"><span class="token function">exitRelationship</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-relationship-context/index.html">SchemaParser.RelationshipContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/relationship.html">relationship</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="232109821%2FFunctions%2F1933987083" anchor-label="exitStart" id="232109821%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-start.html"><span>exit</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="232109821%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-start.html"><span class="token function">exitStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-start-context/index.html">SchemaParser.StartContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/start.html">start</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1116635659%2FFunctions%2F1933987083" anchor-label="exitStringLiteral" id="-1116635659%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-string-literal.html"><span>exit</span><wbr><span>String</span><wbr><span><span>Literal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1116635659%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-string-literal.html"><span class="token function">exitStringLiteral</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-string-literal-context/index.html">SchemaParser.StringLiteralContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/string-literal.html">stringLiteral</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-678114427%2FFunctions%2F1933987083" anchor-label="exitTarget" id="-678114427%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-target.html"><span>exit</span><wbr><span><span>Target</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-678114427%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-target.html"><span class="token function">exitTarget</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-target-context/index.html">SchemaParser.TargetContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/target.html">target</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="813646693%2FFunctions%2F1933987083" anchor-label="exitType" id="813646693%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-type.html"><span>exit</span><wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="813646693%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-type.html"><span class="token function">exitType</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-type-context/index.html">SchemaParser.TypeContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/type.html">type</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2070188967%2FFunctions%2F1933987083" anchor-label="exitTypeValue" id="2070188967%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-type-value.html"><span>exit</span><wbr><span>Type</span><wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2070188967%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-type-value.html"><span class="token function">exitTypeValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-type-value-context/index.html">SchemaParser.TypeValueContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/type-value.html">typeValue</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="692289559%2FFunctions%2F1933987083" anchor-label="exitUnion" id="692289559%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exit-union.html"><span>exit</span><wbr><span><span>Union</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="692289559%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="exit-union.html"><span class="token function">exitUnion</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ctx<span class="token operator">: </span><a href="../[jvm]-schema-parser/-union-context/index.html">SchemaParser.UnionContext</a></span></span><span class="token punctuation">)</span></div><div class="brief ">Exit a parse tree produced by <a href="../[jvm]-schema-parser/union.html">union</a>.</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-64790961%2FFunctions%2F1933987083" anchor-label="visitErrorNode" id="-64790961%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-64790961%2FFunctions%2F1933987083"><span>visit</span><wbr><span>Error</span><wbr><span><span>Node</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-64790961%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="index.html#-64790961%2FFunctions%2F1933987083"><span class="token function">visitErrorNode</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">p<span class="token operator">: </span><span data-unresolved-link="org.antlr.v4.runtime.tree/ErrorNode///PointingToDeclaration/">ErrorNode</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="891846403%2FFunctions%2F1933987083" anchor-label="visitTerminal" id="891846403%2FFunctions%2F1933987083" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":graph-guard-validate:dokkaHtmlPartial/main" data-filterable-set=":graph-guard-validate:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#891846403%2FFunctions%2F1933987083"><span>visit</span><wbr><span><span>Terminal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="891846403%2FFunctions%2F1933987083"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":graph-guard-validate:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="index.html#891846403%2FFunctions%2F1933987083"><span class="token function">visitTerminal</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">p<span class="token operator">: </span><span data-unresolved-link="org.antlr.v4.runtime.tree/TerminalNode///PointingToDeclaration/">TerminalNode</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>Copyright © 2023 c-fraser</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
