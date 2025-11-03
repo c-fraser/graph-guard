@@ -398,7 +398,7 @@ Refer to the [graph-guard website](https://c-fraser.github.io/graph-guard/api/).
 Download and run the `graph-guard-app` application.
 
 ```shell
-curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app.tar
+curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
 mkdir graph-guard-app
 tar -xvf graph-guard-app.tar --strip-components=1 -C graph-guard-app
 ./graph-guard-app/bin/graph-guard-app --help
@@ -406,9 +406,9 @@ tar -xvf graph-guard-app.tar --strip-components=1 -C graph-guard-app
 
 #### Demo
 
-Refer to the *Docker Compose* [demo](https://c-fraser.github.io/graph-guard/app/).
+Refer to the *Docker Compose* [demo](https://github.com/c-fraser/graph-guard/blob/main/demo/run.sh).
 
-> See [demo/run.sh](https://github.com/c-fraser/graph-guard/blob/main/demo/run.sh)
+<video src="docs/app-demo.webm" controls width="100%"></video>
 
 ## Libraries
 

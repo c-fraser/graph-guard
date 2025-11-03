@@ -62,7 +62,7 @@ apply<KnitPlugin>()
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "1.0.0"
+  version = "1.0.1"
 
   repositories { mavenCentral() }
 }
@@ -266,8 +266,12 @@ configure<NexusPublishExtension> publish@{
 }
 
 val app = project(":graph-guard-app")
-val appTar: Provider<RegularFile> = app.layout.buildDirectory.file("distributions/${app.name}.tar")
-val appZip: Provider<RegularFile> = app.layout.buildDirectory.file("distributions/${app.name}.zip")
+val appTar: Provider<RegularFile> =
+  app.layout.buildDirectory.file("distributions/${app.name}-shadow.tar")
+val appZip: Provider<RegularFile> =
+  app.layout.buildDirectory.file("distributions/${app.name}-shadow.zip")
+val appImage: Provider<RegularFile> =
+  app.layout.buildDirectory.file("distributions/${app.name}-image.tar")
 
 configure<JReleaserExtension> {
   project {
@@ -336,53 +340,6 @@ tasks {
     }
   }
 
-  val setupAsciinemaPlayer by registering {
-    val css = file("docs/app/asciinema-player.css")
-    val js = file("docs/app/asciinema-player.min.js")
-    onlyIf { !css.exists() && !js.exists() }
-    doLast {
-      arrayOf(css, js).forEach { file ->
-        providers
-          .exec {
-            commandLine(
-              "curl",
-              "-L",
-              "-o",
-              file,
-              "https://github.com/asciinema/asciinema-player/releases/download/v3.6.3/${file.name}",
-            )
-          }
-          .standardError
-          .asText
-          .get()
-          .also(::println)
-      }
-      file("docs/app/index.html")
-        .writeText(
-          """
-          <!DOCTYPE html>
-          <html lang='en'>
-          <head>
-            <meta charset='UTF-8'>
-            <title>graph-guard-app demo</title>
-            <link rel='stylesheet' type='text/css' href='asciinema-player.css'/>
-          </head>
-          <body>
-          <div id='demo'></div>
-          <script src='asciinema-player.min.js'></script>
-          <script>
-            AsciinemaPlayer.create(
-                'demo.cast',
-                document.getElementById('demo'),
-                {autoPlay: true, loop: true, idleTimeLimit: 3});
-          </script>
-          </body>
-          </html>"""
-            .trimIndent()
-        )
-    }
-  }
-
   withType<DokkaMultiModuleTask> {
     pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
       footerMessage = "Copyright &copy; 2023 c-fraser"
@@ -392,7 +349,7 @@ tasks {
   val dokkaHtmlMultiModule by getting(DokkaMultiModuleTask::class)
 
   val setupDocs by registering {
-    dependsOn(setupAsciinemaPlayer, dokkaHtmlMultiModule)
+    dependsOn(dokkaHtmlMultiModule)
     doLast {
       copy {
         from(dokkaHtmlMultiModule.outputDirectory)
@@ -455,8 +412,12 @@ tasks {
   @Suppress("unused")
   val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
 
-  val releaseCli by registering {
-    dependsOn(":graph-guard-app:shadowDistTar", ":graph-guard-app:shadowDistZip")
+  val releaseApp by registering {
+    dependsOn(
+      ":graph-guard-app:shadowDistTar",
+      ":graph-guard-app:shadowDistZip",
+      ":graph-guard-app:jibBuildTar",
+    )
     doLast {
       arrayOf(appTar, appZip).forEach { dist ->
         app.layout.buildDirectory
@@ -465,8 +426,13 @@ tasks {
           .get()
           .copyTo(dist.map(RegularFile::getAsFile).get())
       }
+      app.layout.buildDirectory
+        .file("jib-image.tar")
+        .map(RegularFile::getAsFile)
+        .get()
+        .copyTo(appImage.map(RegularFile::getAsFile).get())
     }
   }
 
-  withType<JReleaserFullReleaseTask> { dependsOn(releaseCli) }
+  withType<JReleaserFullReleaseTask> { dependsOn(releaseApp) }
 }

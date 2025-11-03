@@ -14,9 +14,6 @@ out
 # derivative doc files
 docs/index.md
 docs/api
-docs/app/*
-!docs/app/demo.cast
-!docs/app/demo.gif
 # generated antlr files
 graph-guard-validate/src/main/java
 # dev notes
