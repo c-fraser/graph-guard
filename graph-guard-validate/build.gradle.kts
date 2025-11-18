@@ -31,6 +31,7 @@ dependencies {
   implementation(libs.caffeine)
   implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
+  implementation(project(":graph-guard-utils"))
 
   testImplementation(libs.kotest.assertions)
   testImplementation(libs.kotest.runner)

@@ -16,6 +16,136 @@ public final class io/github/cfraser/graphguard/validate/Patterns$Unparameterize
 	public fun validate-uxJLViw (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 }
 
+public final class io/github/cfraser/graphguard/validate/Query {
+	public static final field Companion Lio/github/cfraser/graphguard/validate/Query$Companion;
+	public fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun component5 ()Ljava/util/Set;
+	public final fun component6 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Map;)Lio/github/cfraser/graphguard/validate/Query;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Map;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntities ()Ljava/util/Map;
+	public final fun getMutatedProperties ()Ljava/util/Set;
+	public final fun getNodes ()Ljava/util/Set;
+	public final fun getProperties ()Ljava/util/Set;
+	public final fun getRelationships ()Ljava/util/Set;
+	public final fun getRemovedProperties ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$Companion {
+	public final fun parse (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Query;
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$MutatedProperty : io/github/cfraser/graphguard/validate/Query$Owned {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun assign (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Query$MutatedProperty;
+	public synthetic fun assign (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Query$MutatedProperty;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query$MutatedProperty;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query$MutatedProperty;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getOwner ()Ljava/lang/String;
+	public final fun getProperties ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/cfraser/graphguard/validate/Query$Owned {
+	public abstract fun assign (Ljava/lang/String;)Ljava/lang/Object;
+	public abstract fun getOwner ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$Property {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)Lio/github/cfraser/graphguard/validate/Query$Property;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query$Property;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query$Property;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOwner ()Ljava/lang/String;
+	public final fun getValues ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/cfraser/graphguard/validate/Query$Property$Type {
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$Property$Type$Container : io/github/cfraser/graphguard/validate/Query$Property$Type {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/cfraser/graphguard/validate/Query$Property$Type$Container;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query$Property$Type$Container;Ljava/util/List;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query$Property$Type$Container;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValues ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$Property$Type$Resolvable : io/github/cfraser/graphguard/validate/Query$Property$Type {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Query$Property$Type$Resolvable;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query$Property$Type$Resolvable;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query$Property$Type$Resolvable;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$Property$Type$Value : io/github/cfraser/graphguard/validate/Query$Property$Type {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Query$Property$Type$Value;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query$Property$Type$Value;Ljava/lang/Object;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query$Property$Type$Value;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCypher ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$Relationship {
+	public fun <init> (Ljava/lang/String;Ljava/util/Collection;Ljava/util/Collection;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Collection;
+	public final fun component3 ()Ljava/util/Collection;
+	public final fun copy (Ljava/lang/String;Ljava/util/Collection;Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Query$Relationship;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query$Relationship;Ljava/lang/String;Ljava/util/Collection;Ljava/util/Collection;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query$Relationship;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getSources ()Ljava/util/Collection;
+	public final fun getTargets ()Ljava/util/Collection;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Query$RemovedProperty : io/github/cfraser/graphguard/validate/Query$Owned {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun assign (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Query$RemovedProperty;
+	public synthetic fun assign (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Query$RemovedProperty;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Query$RemovedProperty;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Query$RemovedProperty;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getOwner ()Ljava/lang/String;
+	public final fun getProperty ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class io/github/cfraser/graphguard/validate/Rule {
 	public fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
 	public fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;

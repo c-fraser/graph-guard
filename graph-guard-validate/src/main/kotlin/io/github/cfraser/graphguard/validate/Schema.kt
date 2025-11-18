@@ -15,6 +15,7 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.validate
 
+import io.github.cfraser.graphguard.utils.Internal
 import java.time.Duration as JDuration
 import java.time.LocalDate as JLocalDate
 import java.time.LocalDate
@@ -47,6 +48,7 @@ import org.antlr.v4.runtime.tree.RuleNode
  */
 @JvmRecord
 @ConsistentCopyVisibility
+@OptIn(Internal::class)
 data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
 
   /**

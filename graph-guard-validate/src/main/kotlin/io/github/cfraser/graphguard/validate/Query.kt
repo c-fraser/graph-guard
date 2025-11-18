@@ -15,6 +15,7 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.validate
 
+import io.github.cfraser.graphguard.utils.Internal
 import kotlin.jvm.optionals.getOrNull
 import org.neo4j.cypherdsl.core.Expression
 import org.neo4j.cypherdsl.core.FunctionInvocation
@@ -53,7 +54,8 @@ import org.neo4j.cypherdsl.parser.PatternElementCreatedEventType
  * @property removedProperties the removed properties in the [Query]
  * @property entities a map of symbolic name to entity labels
  */
-internal data class Query(
+@Internal
+data class Query(
   val nodes: Set<String>,
   val relationships: Set<Relationship>,
   val properties: Set<Property>,
@@ -63,6 +65,7 @@ internal data class Query(
 ) {
 
   /** A [Relationship] with the [label] from the [sources] to the [targets]. */
+  @Internal
   data class Relationship(
     val label: String,
     val sources: Collection<String>?,
@@ -70,23 +73,26 @@ internal data class Query(
   )
 
   /** A [Property] of the [owner] with the [name] and [values]. */
+  @Internal
   data class Property(val owner: String?, val name: String, val values: Set<Type>) {
 
     /** A type of [Property] value. */
+    @Internal
     sealed interface Type {
 
       /** The [cypher] [value] of a [Property]. */
-      data class Value(val value: Any?, val cypher: String? = null) : Type
+      @Internal data class Value(val value: Any?, val cypher: String? = null) : Type
 
       /** The [values] in a [Property] [Container]. */
-      data class Container(val values: List<Any?>) : Type
+      @Internal data class Container(val values: List<Any?>) : Type
 
       /** A [Type] that is [Resolvable] via the [name]. */
-      data class Resolvable(val name: String) : Type
+      @Internal data class Resolvable(val name: String) : Type
     }
   }
 
   /** An [Owned] entity/operation/expression has an [owner]. */
+  @Internal
   sealed interface Owned<T> {
 
     /** The [owner] of the entity/operation/expression. */
@@ -97,6 +103,7 @@ internal data class Query(
   }
 
   /** A [MutatedProperty] of the [owner] with the [properties]. */
+  @Internal
   data class MutatedProperty(override val owner: String, val properties: String) :
     Owned<MutatedProperty> {
 
@@ -107,6 +114,7 @@ internal data class Query(
    * A [property] [REMOVE](https://neo4j.com/docs/cypher-manual/5/clauses/remove/)d from the
    * [owner].
    */
+  @Internal
   data class RemovedProperty(override val owner: String, val property: String) :
     Owned<RemovedProperty> {
 
@@ -114,6 +122,7 @@ internal data class Query(
   }
 
   @Suppress("TooManyFunctions")
+  @Internal
   companion object {
 
     /** Parse the [cypher] as a [Query]. */

@@ -13,13 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
-
-include(
-  "graph-guard",
-  "graph-guard-app",
-  "graph-guard-script",
-  "graph-guard-utils",
-  "graph-guard-validate",
-  "graph-guard-web",
-)
+plugins {
+  `java-library`
+  `maven-publish`
+  signing
+}

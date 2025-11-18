@@ -15,6 +15,7 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard.validate
 
+import io.github.cfraser.graphguard.utils.Internal
 import org.neo4j.cypherdsl.core.Literal
 import org.neo4j.cypherdsl.parser.CypherParser
 
@@ -22,6 +23,7 @@ import org.neo4j.cypherdsl.parser.CypherParser
  * [Rule] implementations enforcing or restricting certain
  * [patterns](https://neo4j.com/docs/cypher-manual/5/patterns/).
  */
+@OptIn(Internal::class)
 object Patterns {
 
   /** A [Rule] that prevents *Cypher* statements with an [UnlabeledEntity]. */

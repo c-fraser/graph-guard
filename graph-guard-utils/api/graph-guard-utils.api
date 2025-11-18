@@ -1,0 +1,3 @@
+public abstract interface annotation class io/github/cfraser/graphguard/utils/Internal : java/lang/annotation/Annotation {
+}
+

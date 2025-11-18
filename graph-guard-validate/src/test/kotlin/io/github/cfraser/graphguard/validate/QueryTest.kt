@@ -16,6 +16,7 @@ limitations under the License.
 package io.github.cfraser.graphguard.validate
 
 import io.github.cfraser.graphguard.MoviesGraph
+import io.github.cfraser.graphguard.utils.Internal
 import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.withData
@@ -26,6 +27,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldNotBe
 import kotlin.reflect.KClass
 
+@OptIn(Internal::class)
 class QueryTest : FunSpec() {
 
   init {
