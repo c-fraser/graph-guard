@@ -353,5 +353,7 @@ module:graph-guard-app
 io.github.cfraser.graphguard.app
 module:graph-guard-script
 io.github.cfraser.graphguard.plugin
+module:graph-guard-utils
+io.github.cfraser.graphguard.utils
 module:graph-guard-validate
 io.github.cfraser.graphguard.validate

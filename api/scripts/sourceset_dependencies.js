@@ -1,1 +1,1 @@
-sourceset_dependencies = '{":graph-guard-app:dokkaHtmlPartial/main":[],":graph-guard-validate:dokkaHtmlPartial/main":[],":graph-guard:dokkaHtmlPartial/main":[],":graph-guard-script:dokkaHtmlPartial/main":[]}'
+sourceset_dependencies = '{":graph-guard-app:dokkaHtmlPartial/main":[],":graph-guard-validate:dokkaHtmlPartial/main":[],":graph-guard:dokkaHtmlPartial/main":[],":graph-guard-utils:dokkaHtmlPartial/main":[],":graph-guard-script:dokkaHtmlPartial/main":[]}'
