@@ -62,7 +62,7 @@ apply<KnitPlugin>()
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "1.1.0"
+  version = "1.1.1"
 
   repositories { mavenCentral() }
 }
@@ -278,7 +278,7 @@ configure<JReleaserExtension> {
     authors.set(listOf("c-fraser"))
     license.set("Apache-2.0")
     inceptionYear.set("2023")
-    description.set("Graph query validation proxy server")
+    description.set("Neo4j schema and query validation")
     links { homepage.set("https://github.com/c-fraser/graph-guard") }
   }
 

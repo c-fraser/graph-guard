@@ -64,8 +64,7 @@ buildConfig {
 
 tasks {
   withType<Test> {
-    systemProperties =
-      System.getProperties().asIterable().associate { it.key.toString() to it.value }
+    systemProperties = mapOf("graph-guard.e2e.test" to System.getProperty("graph-guard.e2e.test"))
     testLogging { showStandardStreams = true }
   }
 

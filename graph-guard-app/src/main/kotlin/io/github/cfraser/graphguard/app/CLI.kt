@@ -163,7 +163,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
     }
   }
 
-  override fun help(context: Context) = "Graph query validation proxy server"
+  override fun help(context: Context) = "Neo4j schema and query validation"
 
   /** [Command] output options. */
   sealed interface Output
