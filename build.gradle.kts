@@ -62,7 +62,7 @@ apply<KnitPlugin>()
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "1.1.1"
+  version = "1.2.0"
 
   repositories { mavenCentral() }
 }
@@ -409,6 +409,7 @@ tasks {
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
   val spotlessJava by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessJava) }
+
   @Suppress("unused")
   val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
 
