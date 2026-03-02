@@ -1,22 +1,22 @@
 [versions]
 fritz2 = "1.0-RC21"
-knit = "0.5.0"
-kotest = "6.0.7"
-kotlin = "2.3.0"
+knit = "0.5.1"
+kotest = "6.1.4"
+kotlin = "2.3.10"
 kotlinx-coroutines = "1.10.2"
-kotlinx-rpc = "0.10.1"
-kotlinx-serialization = "1.9.0"
+kotlinx-rpc = "0.10.2"
+kotlinx-serialization = "1.10.0"
 ktfmt = "0.58"
-ktor = "3.3.3"
+ktor = "3.4.0"
 slf4j = "2.0.17"
 
 [libraries]
 antlr4 = { module = "org.antlr:antlr4", version = "4.13.2" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.3" }
-clikt = { module = "com.github.ajalt.clikt:clikt-jvm", version = "5.0.3" }
+clikt = { module = "com.github.ajalt.clikt:clikt-jvm", version = "5.1.0" }
 fritz2-core = { module = "dev.fritz2:core", version.ref = "fritz2" }
 fritz2-headless = { module = "dev.fritz2:headless", version.ref = "fritz2" }
-jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "2.20.1" }
+jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "2.21.1" }
 knit = { module = "org.jetbrains.kotlinx:kotlinx-knit", version.ref = "knit" }
 knit-test = { module = "org.jetbrains.kotlinx:kotlinx-knit-test", version.ref = "knit" }
 kotest-assertions = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }
@@ -38,28 +38,28 @@ ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "kto
 ktor-server-cors = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets-jvm", version.ref = "ktor" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.23" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.32" }
 logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "9.0" }
 neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2025.2.2" }
-neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "6.0.2" }
-neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "2025.11.2" }
+neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "6.0.3" }
+neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "2026.01.4" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.7.0" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.7" }
 compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.18.1" }
 dependency-versions = { id = "com.github.ben-manes.versions", version = "0.53.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 dokka = { id = "org.jetbrains.dokka", version = "1.9.20" }
-jib = { id = "com.google.cloud.tools.jib", version = "3.4.5" }
+jib = { id = "com.google.cloud.tools.jib", version = "3.5.3" }
 jreleaser = { id = "org.jreleaser", version = "1.20.0" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinx-rpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
-kover = { id = "org.jetbrains.kotlinx.kover", version = "0.9.3" }
+kover = { id = "org.jetbrains.kotlinx.kover", version = "0.9.7" }
 nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
-shadow = { id = "com.gradleup.shadow", version = "9.2.2" }
-spotless = { id = "com.diffplug.spotless", version = "8.1.0" }
+shadow = { id = "com.gradleup.shadow", version = "9.3.2" }
+spotless = { id = "com.diffplug.spotless", version = "8.2.1" }
