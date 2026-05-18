@@ -54,7 +54,7 @@ class ScriptTest : FunSpec() {
         Script.evaluate(
           """
           @file:DependsOn("io.arrow-kt:arrow-core:1.2.0")
-          
+
           import arrow.core.Either
           import arrow.core.raise.either
           import arrow.core.right

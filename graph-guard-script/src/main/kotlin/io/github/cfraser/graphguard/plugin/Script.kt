@@ -129,7 +129,7 @@ abstract class Script {
      * [Server.Plugin].
      */
     private fun evaluate(sourceCode: SourceCode): Server.Plugin {
-      val host = BasicJvmScriptingHost()
+      val host = BasicJvmScriptingHost.createLegacy()
       val context = Context()
       val result =
         host

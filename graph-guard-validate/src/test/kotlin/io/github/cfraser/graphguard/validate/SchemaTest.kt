@@ -70,7 +70,8 @@ class SchemaTest : FunSpec() {
           ),
         """
         |MATCH (:Person)-[produced:PRODUCED]->(:Movie {title:'The Matrix'})
-        |SET produced.company = 'Warner Bros.'"""
+        |SET produced.company = 'Warner Bros.'
+        """
           .trimMargin() with
           emptyMap() expect
           Schema.Violation.UnknownProperty(
@@ -507,7 +508,8 @@ class SchemaTest : FunSpec() {
         |      E(@f g: Any?, h: List<Any>, i: String?) -> J;
         |
         |  node J;
-        |}"""
+        |}
+        """
           .trimMargin()
     }
 
@@ -519,7 +521,8 @@ class SchemaTest : FunSpec() {
           |  node A: AB -> B, AC -> C;
           |  node B;
           |  node C;
-          |}"""
+          |}
+          """
             .trimMargin()
         )
       schema.validate("MATCH (a:A)-[r:AB|AC]->(n:B|C) RETURN a, r, n", emptyMap()) shouldBe null
