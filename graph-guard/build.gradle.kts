@@ -24,9 +24,9 @@ dependencies {
   api(project(":graph-guard-validate"))
   implementation(kotlin("reflect"))
   implementation(libs.kotlinx.coroutines)
+  implementation(libs.kotlinx.coroutines.reactor)
   implementation(libs.kotlinx.coroutines.slf4j)
-  implementation(libs.ktor.network)
-  implementation(libs.ktor.network.tls)
+  implementation(libs.reactor.netty.core)
   implementation(libs.caffeine)
   implementation(libs.slf4j.api)
 
@@ -41,3 +41,5 @@ dependencies {
   testFixturesCompileOnly(libs.neo4j.test.harness)
   testFixturesImplementation(libs.kotest.runner)
 }
+
+tasks { test { jvmArgs("-Dio.netty.leakDetection.level=paranoid") } }

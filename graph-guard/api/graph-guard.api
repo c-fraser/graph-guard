@@ -251,7 +251,8 @@ public final class io/github/cfraser/graphguard/Server : java/lang/AutoCloseable
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Lio/github/cfraser/graphguard/Server$Address;)V
 	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Lio/github/cfraser/graphguard/Server$Address;Ljavax/net/ssl/TrustManager;)V
-	public synthetic fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Lio/github/cfraser/graphguard/Server$Address;Ljavax/net/ssl/TrustManager;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Lio/github/cfraser/graphguard/Server$Address;Ljavax/net/ssl/TrustManager;Lio/netty/handler/ssl/SslContext;)V
+	public synthetic fun <init> (Ljava/net/URI;Lio/github/cfraser/graphguard/Server$Plugin;Lio/github/cfraser/graphguard/Server$Address;Ljavax/net/ssl/TrustManager;Lio/netty/handler/ssl/SslContext;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close ()V
 	public final fun getAddress ()Lio/github/cfraser/graphguard/Server$Address;
 	public final fun getGraph ()Ljava/net/URI;

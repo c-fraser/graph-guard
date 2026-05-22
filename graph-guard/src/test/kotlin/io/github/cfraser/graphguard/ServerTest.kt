@@ -15,35 +15,26 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
+import io.github.cfraser.graphguard.PackStreamTest.Companion.toByteArray
 import io.github.cfraser.graphguard.Server.Companion.readChunked
 import io.github.cfraser.graphguard.Server.Companion.writeChunked
 import io.github.cfraser.graphguard.knit.test
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.UnixSocketAddress
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.readFully
-import io.ktor.utils.io.writeByteArray
-import io.ktor.utils.io.writeShort
+import io.netty.buffer.Unpooled
 import java.net.URI
-import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
 import javax.net.ssl.X509TrustManager
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteExisting
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import org.neo4j.configuration.connectors.BoltConnector
 import org.neo4j.configuration.helpers.SocketAddress
 import org.neo4j.harness.Neo4jBuilders
@@ -98,70 +89,39 @@ class ServerTest : FunSpec() {
     }
 
     test("dechunk message") {
-      val socket = createTempFile(suffix = ".sock").also(Path::deleteExisting)
-      try {
-        val message =
-          SelectorManager(coroutineContext).use { selector ->
-            val address = UnixSocketAddress(socket.absolutePathString())
-            aSocket(selector).tcp().bind(address).use { serverSocket ->
-              val receiveJob = async {
-                serverSocket.accept().use { socket ->
-                  socket.openReadChannel().readChunked(3.seconds)
-                }
-              }
-              aSocket(selector).tcp().connect(address).use { socket ->
-                val writer = socket.openWriteChannel(autoFlush = true)
-                for (size in 1..3) {
-                  val data = PackStreamTest.byteArrayOfSize(size)
-                  writer.writeShort(size.toShort())
-                  writer.writeByteArray(data)
-                }
-                writer.writeByteArray(byteArrayOf(0x00, 0x00))
-              }
-              receiveJob.await()
+      val channel = Channel<ByteArray>(Channel.UNLIMITED)
+      Server.Reader(channel).use { reader ->
+        coroutineScope {
+          launch {
+            for (size in 1..3) {
+              channel.send(byteArrayOf(0x0, size.toByte()))
+              channel.send(PackStreamTest.byteArrayOfSize(size))
             }
+            channel.send(byteArrayOf(0x0, 0x0))
+            channel.close()
           }
-        message shouldBe
-          (PackStreamTest.byteArrayOfSize(1) +
-            PackStreamTest.byteArrayOfSize(2) +
-            PackStreamTest.byteArrayOfSize(3))
-      } finally {
-        socket.deleteExisting()
+          val message = reader.readChunked(3.seconds)
+          message.toByteArray() shouldBe
+            (PackStreamTest.byteArrayOfSize(1) +
+              PackStreamTest.byteArrayOfSize(2) +
+              PackStreamTest.byteArrayOfSize(3))
+        }
       }
     }
 
     test("chunk message") {
-      val socket = createTempFile(suffix = ".sock").also(Path::deleteExisting)
-      try {
-        val chunked =
-          SelectorManager(coroutineContext).use { selector ->
-            val address = UnixSocketAddress(socket.absolutePathString())
-            aSocket(selector).tcp().bind(address).use { serverSocket ->
-              val receiveJob = async {
-                val buffer = ByteBuffer.allocate(13)
-                serverSocket.accept().use { socket ->
-                  withTimeout(3.seconds) { socket.openReadChannel().readFully(buffer) }
-                }
-                buffer
-              }
-              aSocket(selector).tcp().connect(address).use { socket ->
-                socket
-                  .openWriteChannel(autoFlush = true)
-                  .writeChunked(PackStreamTest.byteArrayOfSize(5), 3)
-              }
-              receiveJob.await()
-            }
-          }
-        chunked.array() shouldBe
-          (byteArrayOf(0x0, 0x3) +
-            PackStreamTest.byteArrayOfSize(3) +
-            byteArrayOf(0x00, 0x00) +
-            byteArrayOf(0x0, 0x2) +
-            PackStreamTest.byteArrayOfSize(2) +
-            byteArrayOf(0x00, 0x00))
-      } finally {
-        socket.deleteExisting()
-      }
+      val writer = Server.Writer()
+      writer.writeChunked(Unpooled.wrappedBuffer(PackStreamTest.byteArrayOfSize(5)), 3)
+      writer.close()
+      val result =
+        buildList { for (buf in writer.channel) addAll(buf.toByteArray().toList()) }.toByteArray()
+      result shouldBe
+        (byteArrayOf(0x0, 0x3) +
+          PackStreamTest.byteArrayOfSize(3) +
+          byteArrayOf(0x00, 0x00) +
+          byteArrayOf(0x0, 0x2) +
+          PackStreamTest.byteArrayOfSize(2) +
+          byteArrayOf(0x00, 0x00))
     }
 
     test("encrypted connection to graph") {

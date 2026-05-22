@@ -308,11 +308,6 @@ the [releases](https://github.com/c-fraser/graph-guard/releases).
 
 > `graph-guard` requires Java 21+.
 
-> `Server` doesn't currently support TLS (because
-> of [ktor-network](https://youtrack.jetbrains.com/issue/KTOR-694) limitations).
-> Use [NGINX](https://docs.nginx.com/nginx/admin-guide/security-controls/terminating-ssl-tcp/) or a
-> cloud load balancer to decrypt *Bolt* traffic for the proxy server.
-
 ### Examples
 
 Refer to the snippets below to see how to initialize and run a `Server` with the `graph-guard`

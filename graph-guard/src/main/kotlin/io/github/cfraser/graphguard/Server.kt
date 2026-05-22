@@ -19,55 +19,45 @@ import io.github.cfraser.graphguard.Bolt.ID
 import io.github.cfraser.graphguard.Bolt.toMessage
 import io.github.cfraser.graphguard.Bolt.toStructure
 import io.github.cfraser.graphguard.PackStream.unpack
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.network.sockets.ServerSocket
-import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.UnixSocketAddress
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.network.sockets.toJavaAddress
-import io.ktor.network.tls.tls
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.readByte
-import io.ktor.utils.io.readByteArray
-import io.ktor.utils.io.readInt
-import io.ktor.utils.io.readShort
-import io.ktor.utils.io.writeByte
-import io.ktor.utils.io.writeByteArray
-import io.ktor.utils.io.writeInt
-import io.ktor.utils.io.writeShort
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.PooledByteBufAllocator
+import io.netty.handler.ssl.SslContext
+import io.netty.handler.ssl.SslContextBuilder
 import java.io.EOFException
+import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.net.URI
-import java.nio.ByteBuffer
+import java.net.UnixDomainSocketAddress
 import java.nio.file.Path
 import java.util.UUID
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
-import java.util.concurrent.TimeUnit
 import javax.net.ssl.TrustManager
-import kotlin.io.path.createFile
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.notExists
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactor.asFlux
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.slf4j.MDCContext
@@ -77,6 +67,13 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.slf4j.MDC.MDCCloseable
+import reactor.core.publisher.Mono
+import reactor.netty.Connection as ReactorNettyConnection
+import reactor.netty.DisposableServer
+import reactor.netty.NettyInbound
+import reactor.netty.NettyOutbound
+import reactor.netty.tcp.TcpClient
+import reactor.netty.tcp.TcpServer
 
 /**
  * [Server] proxies [Bolt](https://neo4j.com/docs/bolt/current/bolt/) data to a
@@ -87,6 +84,7 @@ import org.slf4j.MDC.MDCCloseable
  * @property graph the [URI] of the graph database to proxy data to/from
  * @property address the [Server.Address] to bind the [Server] to
  * @property trustManager the [TrustManager] to use for the TLS connection to the [graph]
+ * @property sslContext the [SslContext] to use for TLS connection to this [Server]
  */
 class Server
 @JvmOverloads
@@ -95,10 +93,11 @@ constructor(
   plugin: Plugin = Plugin.DSL.plugin {},
   val address: Address = Address.InetSocket("localhost", 8787),
   private val trustManager: TrustManager? = null,
+  private val sslContext: SslContext? = null,
 ) : AutoCloseable {
 
-  /** The [Job] with the [running] [Server]. */
-  private var running: Job? = null
+  /** The [running] [DisposableServer] accepting client connections. */
+  private lateinit var running: DisposableServer
 
   /**
    * The [Server.Plugin] used by the [Server].
@@ -129,139 +128,175 @@ constructor(
   @Synchronized
   @Suppress("TooGenericExceptionCaught")
   fun start() {
-    val ready = CountDownLatch(1)
-    check(running?.isActive?.not() ?: true) { "The proxy server is already running" }
-    if (address is Address.UnixDomainSocket) {
+    check(!::running.isInitialized) { "The proxy server has already been started" }
+    if (address is Address.UnixDomainSocket)
       check(address.path.notExists()) { "The unix domain socket file already exists" }
-      address.path.createFile()
-    }
     running =
-      @OptIn(DelicateCoroutinesApi::class)
-      GlobalScope.launch(MDCContext() + Dispatchers.IO) {
-        try {
-          run(ready)
-        } catch (thrown: Exception) {
-          LOGGER.error("Proxy server failed to run", thrown)
-        }
+      try {
+        run()
+      } catch (e: Exception) {
+        close()
+        LOGGER.error("Proxy server failed to start", e)
+        throw e
       }
-    ready.await(10, TimeUnit.SECONDS) || error("Proxy server failed to start within timeout")
+    LOGGER.info("Started proxy server on '{}'", running.address())
+    runBlocking(MDCContext() + Dispatchers.IO) { plugin.observe(Started) }
   }
 
   /** Stop the [Server]. */
   override fun close() {
-    runBlocking(MDCContext() + Dispatchers.IO) { running?.runCatching { cancelAndJoin() } }
-    running = null
-    if (address is Address.UnixDomainSocket) address.path.deleteExisting()
+    runBlocking(MDCContext() + Dispatchers.IO) {
+      runCatching { running.disposeNow(10.seconds.toJavaDuration()) }
+      LOGGER.info("Stopped proxy server")
+      plugin.observe(Stopped)
+      (address as? Address.UnixDomainSocket)?.let { uds ->
+        runCatching { uds.path.deleteExisting() }
+      }
+    }
+  }
+
+  /** Run the [DisposableServer] on the [address], proxying clients to the [graph]. */
+  private fun run(): DisposableServer {
+    return TcpServer.create()
+      .let { server ->
+        when (address) {
+          is Address.InetSocket -> server.host(address.hostname).port(address.port)
+          is Address.UnixDomainSocket ->
+            server.bindAddress { UnixDomainSocketAddress.of(address.path) }
+        }
+      }
+      .let { server ->
+        when (val sslContext = sslContext) {
+          null -> server
+          else -> server.secure { spec -> spec.sslContext(sslContext) }
+        }
+      }
+      .handle { inbound, outbound -> accept(inbound, outbound) }
+      .bindNow(10.seconds.toJavaDuration())
   }
 
   /**
-   * Run the [Server] on the [address], connecting to the [graph].
-   *
-   * [Server.run] loops indefinitely. To stop the server, [Job.cancel] the [running] [Job].
-   * [CancellationException] is **not** thrown after the server is stopped.
-   * > [CountDownLatch.countDown] when the [Server] is ready to accept client connections.
+   * Accept a client connection from the [inbound] channel and [launch] a coroutine to [proxy] the
+   * [Bolt.Session].
    */
   @Suppress("TooGenericExceptionCaught")
-  private suspend fun run(ready: CountDownLatch) {
-    try {
-      bind { selector, serverSocket ->
-        ready.countDown()
-        while (isActive) {
+  private fun accept(inbound: NettyInbound, outbound: NettyOutbound): Mono<Void> {
+    val channel = (inbound as? ReactorNettyConnection)?.channel()
+    val clientAddress = channel?.remoteAddress() ?: InetSocketAddress(0)
+    val clientConnection = Connection.Client(clientAddress)
+    return mono(Dispatchers.IO) {
+        withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graph") {
+          LOGGER.debug("Accepted connection from '{}'", clientConnection)
+          plugin.observe(Connected(clientConnection))
           try {
-            accept(serverSocket) { clientConnection, clientReader, clientWriter ->
-              connect(selector) { graphConnection, graphReader, graphWriter ->
-                proxy(
-                  clientConnection,
-                  clientReader,
-                  clientWriter,
-                  graphConnection,
-                  graphReader,
-                  graphWriter,
-                )
+            withLoggingContext("graph-guard.client" to "$clientConnection") {
+              val allocator = channel?.alloc() ?: PooledByteBufAllocator.DEFAULT
+              coroutineScope {
+                try {
+                  reader(inbound, allocator).use { clientReader ->
+                    writer(outbound, allocator).use { clientWriter ->
+                      connect { graphConnection, graphReader, graphWriter ->
+                        proxy(
+                          clientConnection,
+                          clientReader,
+                          clientWriter,
+                          graphConnection,
+                          graphReader,
+                          graphWriter,
+                        )
+                      }
+                    }
+                  }
+                } finally {
+                  coroutineContext.cancelChildren()
+                }
               }
             }
-          } catch (cancellation: CancellationException) {
-            LOGGER.debug("Proxy connection closed", cancellation)
-          } catch (exception: Exception) {
-            LOGGER.error("Proxy connection failure", exception)
+          } catch (e: CancellationException) {
+            LOGGER.debug("Proxy connection closed", e)
+          } catch (e: Exception) {
+            LOGGER.error("Proxy connection failure", e)
+          } finally {
+            LOGGER.debug("Closed connection from '{}'", clientConnection)
+            plugin.observe(Disconnected(clientConnection))
           }
         }
       }
-    } catch (_: CancellationException) {} finally {
-      ready.countDown()
-    }
+      .then()
   }
 
-  /** Bind the proxy [ServerSocket] to the [address] then run the [block]. */
-  private suspend fun bind(block: suspend CoroutineScope.(SelectorManager, ServerSocket) -> Unit) {
-    withLoggingContext("graph-guard.server" to "$address", "graph-guard.graph" to "$graph") {
+  /** Create a [Reader] for the [inbound] stream. */
+  private fun CoroutineScope.reader(inbound: NettyInbound, allocator: ByteBufAllocator): Reader {
+    val channel = Channel<ByteArray>(Channel.UNLIMITED)
+    launch {
       try {
-        SelectorManager(coroutineContext).use { selector ->
-          val localAddress =
-            when (address) {
-              is Address.InetSocket -> InetSocketAddress(address.hostname, address.port)
-              is Address.UnixDomainSocket -> UnixSocketAddress("${address.path}")
-            }
-          val socket = aSocket(selector).tcp().bind(localAddress)
-          LOGGER.info("Started proxy server on '{}'", socket.localAddress)
-          plugin.observe(Started)
-          socket.use { server -> block(selector, server) }
-        }
+        inbound
+          .receive()
+          .map { buf -> ByteArray(buf.readableBytes()).also(buf::readBytes) }
+          .asFlow()
+          .collect { bytes -> channel.send(bytes) }
       } finally {
-        LOGGER.info("Stopped proxy server")
-        plugin.observe(Stopped)
+        channel.close()
       }
     }
+    return Reader(channel, allocator)
+  }
+
+  /** Create a [Writer] for the [outbound] channel. */
+  private fun CoroutineScope.writer(outbound: NettyOutbound, allocator: ByteBufAllocator): Writer {
+    val writer = Writer(allocator)
+    launch {
+      outbound
+        .send(flow { for (buf in writer.channel) emit(buf) }.asFlux())
+        .then()
+        .awaitSingleOrNull()
+    }
+    return writer
   }
 
   /**
-   * Accept a client connection from the [serverSocket] then [launch] a coroutine to run the [block]
-   * with the [Socket] channels.
+   * Connect to the [graph] then run the [block] with the [Reader] and [Writer] for the
+   * [Connection].
    */
-  private suspend fun CoroutineScope.accept(
-    serverSocket: ServerSocket,
-    block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
-  ) {
-    val socket = serverSocket.accept()
-    val clientConnection = Connection.Client(socket.remoteAddress.toJavaAddress())
-    launch {
-      try {
-        socket.withChannels { reader, writer ->
-          LOGGER.debug("Accepted connection from '{}'", clientConnection)
-          plugin.observe(Connected(clientConnection))
-          withLoggingContext("graph-guard.client" to "$clientConnection") {
-            block(clientConnection, reader, writer)
-          }
-        }
-      } finally {
-        LOGGER.debug("Closed connection from '{}'", clientConnection)
-        plugin.observe(Disconnected(clientConnection))
-      }
-    }
-  }
-
-  /** Connect to the [graph] then run the [block] with the [Socket] channels. */
+  @Suppress("NestedBlockDepth")
   private suspend fun CoroutineScope.connect(
-    selector: SelectorManager,
-    block: suspend CoroutineScope.(Connection, ByteReadChannel, ByteWriteChannel) -> Unit,
+    block: suspend CoroutineScope.(Connection, Reader, Writer) -> Unit
   ) {
-    val remoteAddress =
-      if ("+unix" in graph.scheme) UnixSocketAddress(graph.path)
-      else InetSocketAddress(graph.host, graph.port)
-    var socket = aSocket(selector).tcp().connect(remoteAddress)
-    if ("+s" in graph.scheme)
-      socket =
-        socket.tls(coroutineContext = coroutineContext) { trustManager = this@Server.trustManager }
-    val graphConnection = Connection.Graph(socket.remoteAddress.toJavaAddress())
-    try {
-      socket.withChannels { reader, writer ->
+    val client =
+      TcpClient.create()
+        .remoteAddress {
+          if ("+unix" in graph.scheme) UnixDomainSocketAddress.of(graph.path)
+          else InetSocketAddress(graph.host, graph.port)
+        }
+        .let { client ->
+          if ("+s" in graph.scheme) {
+            val sslContext =
+              SslContextBuilder.forClient()
+                .let { builder ->
+                  when (val trustManager = trustManager) {
+                    null -> builder
+                    else -> builder.trustManager(trustManager)
+                  }
+                }
+                .build()
+            client.secure { spec -> spec.sslContext(sslContext) }
+          } else client
+        }
+    val connection = client.connect().awaitSingleOrNull() ?: error("Failed to connect to graph")
+    val channel = connection.channel()
+    val graphConnection = Connection.Graph(channel.remoteAddress())
+    reader(connection.inbound(), channel.alloc()).use { graphReader ->
+      writer(connection.outbound(), channel.alloc()).use { graphWriter ->
         LOGGER.debug("Connected to '{}'", graphConnection)
         plugin.observe(Connected(graphConnection))
-        block(graphConnection, reader, writer)
+        try {
+          block(graphConnection, graphReader, graphWriter)
+        } finally {
+          connection.dispose()
+          LOGGER.debug("Closed connection to '{}'", graphConnection)
+          plugin.observe(Disconnected(graphConnection))
+        }
       }
-    } finally {
-      LOGGER.debug("Closed connection to '{}'", graphConnection)
-      plugin.observe(Disconnected(graphConnection))
     }
   }
 
@@ -269,11 +304,11 @@ constructor(
   @Suppress("LongParameterList", "TooGenericExceptionCaught")
   private suspend fun CoroutineScope.proxy(
     clientConnection: Connection,
-    clientReader: ByteReadChannel,
-    clientWriter: ByteWriteChannel,
+    clientReader: Reader,
+    clientWriter: Writer,
     graphConnection: Connection,
-    graphReader: ByteReadChannel,
-    graphWriter: ByteWriteChannel,
+    graphReader: Reader,
+    graphWriter: Writer,
   ) {
     val handshake =
       flow { emit(clientReader.readHandshake()) }
@@ -293,20 +328,22 @@ constructor(
       LOGGER.debug("Read versions from {} '{}'", graphConnection, versions)
       var capabilities = graphReader.readByte()
       LOGGER.debug("Read capabilities from {} '{}'", graphConnection, capabilities)
-      clientWriter.writeVersion(Bolt.Version.NEGOTIATION_V2)
-      clientWriter.writeByte(versions.size.toByte())
-      versions.forEach { v -> clientWriter.writeVersion(v) }
-      LOGGER.debug("Wrote versions to {}", clientConnection)
-      clientWriter.writeByte(capabilities)
-      LOGGER.debug("Wrote capabilities to {}", clientConnection)
+      val manifest = clientWriter.allocator.buffer(4 + 1 + versions.size * 4 + 1)
+      manifest.writeInt(Bolt.Version.NEGOTIATION_V2.encode())
+      manifest.writeByte(versions.size)
+      for (v in versions) manifest.writeInt(v.encode())
+      manifest.writeByte(capabilities.toInt())
+      clientWriter.channel.send(manifest)
+      LOGGER.debug("Wrote manifest to {}", clientConnection)
       version = clientReader.readVersion()
       LOGGER.debug("Read negotiated version from {} '{}'", clientConnection, version)
       capabilities = clientReader.readByte()
       LOGGER.debug("Read negotiated capabilities from {} '{}'", clientConnection, capabilities)
-      graphWriter.writeVersion(version)
-      LOGGER.debug("Wrote negotiated version to {}", graphConnection)
-      graphWriter.writeByte(capabilities)
-      LOGGER.debug("Wrote negotiated capabilities to {}", graphConnection)
+      val negotiated = graphWriter.allocator.buffer(4 + 1)
+      negotiated.writeInt(version.encode())
+      negotiated.writeByte(capabilities.toInt())
+      graphWriter.channel.send(negotiated)
+      LOGGER.debug("Wrote negotiated version/capabilities to {}", graphConnection)
     }
     // complete legacy handshake
     else {
@@ -346,8 +383,8 @@ constructor(
   private fun CoroutineScope.proxy(
     session: Bolt.Session,
     source: Connection,
-    reader: ByteReadChannel,
-    resolver: (Bolt.Message) -> Pair<Connection, ByteWriteChannel>,
+    reader: Reader,
+    resolver: (Bolt.Message) -> Pair<Connection, Writer>,
   ): Job = launch {
     while (isActive) {
       val message =
@@ -379,16 +416,15 @@ constructor(
      *
      * @property hostname the hostname to bind to
      * @property port the port to bind to
-     * @see java.net.InetSocketAddress
+     * @see InetSocketAddress
      */
     @JvmRecord data class InetSocket(val hostname: String, val port: Int) : Address
 
     /**
      * A unix domain socket address.
-     * > The file at the [path] is created during [Server.start].
      *
      * @property path the [Path] to the unix domain socket file
-     * @see java.net.UnixDomainSocketAddress
+     * @see UnixDomainSocketAddress
      */
     @JvmInline value class UnixDomainSocket(val path: Path) : Address
   }
@@ -456,7 +492,7 @@ constructor(
 
       /**
        * [Server.Plugin.intercept] the [message].
-       * > [interceptBlocking] is run on the [executor] to prevent blocking [Server] coroutines.
+       * > [interceptBlocking] is run on the [Executor] to prevent blocking [Server] coroutines.
        *
        * @param session the [Bolt.Session]
        * @param message the intercepted
@@ -467,7 +503,7 @@ constructor(
 
       /**
        * [Server.Plugin.observe] the [event].
-       * > [observeBlocking] is run on the [executor] to prevent blocking [Server] coroutines.
+       * > [observeBlocking] is run on the [Executor] to prevent blocking [Server] coroutines.
        *
        * @param event the [Server.Event] that occurred
        */
@@ -619,6 +655,65 @@ constructor(
   /** The [Server] has stopped. */
   data object Stopped : Event
 
+  /** Utilities to read bytes from a [ReceiveChannel]. */
+  internal class Reader(
+    private val channel: ReceiveChannel<ByteArray>,
+    internal val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT,
+  ) : AutoCloseable {
+
+    private val buf: ByteBuf = allocator.buffer()
+
+    suspend fun readByte(): Byte {
+      receive(1)
+      return buf.readByte()
+    }
+
+    suspend fun readByteArray(size: Int): ByteArray {
+      if (size == 0) return ByteArray(0)
+      receive(size)
+      return ByteArray(size).also { buf.readBytes(it) }
+    }
+
+    suspend fun readShort(): Short {
+      receive(Short.SIZE_BYTES)
+      return buf.readShort()
+    }
+
+    suspend fun readInt(): Int {
+      receive(Int.SIZE_BYTES)
+      return buf.readInt()
+    }
+
+    override fun close() {
+      buf.release()
+      channel.cancel()
+    }
+
+    private suspend fun receive(size: Int) {
+      if (buf.readableBytes() < size) buf.discardReadBytes()
+      while (buf.readableBytes() < size) {
+        val next = channel.receiveCatching().getOrNull() ?: throw EOFException("Connection closed")
+        if (next.isNotEmpty()) buf.writeBytes(next)
+      }
+    }
+  }
+
+  /** Utilities to write bytes to a [Channel]. */
+  internal class Writer(val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT) :
+    AutoCloseable {
+
+    val channel = Channel<ByteBuf>(Channel.UNLIMITED)
+
+    suspend fun writeByteArray(bytes: ByteArray) =
+      channel.send(allocator.buffer(bytes.size).writeBytes(bytes))
+
+    suspend fun writeInt(i: Int) = channel.send(allocator.buffer(4).writeInt(i))
+
+    override fun close() {
+      channel.close()
+    }
+  }
+
   @VisibleForTesting
   @Suppress("TooManyFunctions")
   internal companion object {
@@ -636,44 +731,33 @@ constructor(
       result.getOrThrow()
     }
 
-    /** Use the opened [ByteReadChannel] and [ByteWriteChannel] for the [Socket]. */
-    private suspend fun Socket.withChannels(
-      block: suspend CoroutineScope.(ByteReadChannel, ByteWriteChannel) -> Unit
-    ) {
-      use { socket ->
-        val reader = socket.openReadChannel()
-        val writer = socket.openWriteChannel(autoFlush = true)
-        block(reader, writer)
-      }
-    }
-
-    /** Read and verify the [handshake](https://neo4j.com/docs/bolt/current/bolt/handshake/). */
-    private suspend fun ByteReadChannel.readHandshake(): ByteArray {
-
-      /**
-       * Verify the handshake [bytes] contains the [ID] and supports Bolt 5+.
-       *
-       * @throws IllegalStateException if the handshake is invalid/unsupported
-       */
-      fun verify(bytes: ByteArray) {
-        val buffer = ByteBuffer.wrap(bytes.copyOf())
-        val id = buffer.getInt()
-        check(id == ID) { "Unexpected identifier '0x${Integer.toHexString(id)}'" }
-        val versions = Array(4) { _ -> Bolt.Version.decode(buffer.getInt()) }
-        check(versions.any { version -> version.major >= 5 }) {
-          "None of the versions '$versions' are supported"
-        }
-      }
+    /**
+     * Read and verify the [handshake](https://neo4j.com/docs/bolt/current/bolt/handshake/).
+     *
+     * @throws IllegalStateException if the handshake is invalid/unsupported
+     */
+    private suspend fun Reader.readHandshake(): ByteArray {
       val bytes = readByteArray(Int.SIZE_BYTES * 5)
-      return bytes.also(::verify)
+      val buf = allocator.buffer(bytes.size)
+      try {
+        buf.writeBytes(bytes)
+        val id = buf.readInt()
+        check(id == ID) { "Unexpected identifier '0x${Integer.toHexString(id)}'" }
+        val versions = Array(4) { Bolt.Version.decode(buf.readInt()) }
+        check(versions.any { version -> version.major >= 5 }) {
+          "None of the versions '${versions.contentToString()}' are supported"
+        }
+      } finally {
+        buf.release()
+      }
+      return bytes
     }
 
     /** Read the [Bolt.Version]. */
-    private suspend inline fun ByteReadChannel.readVersion(): Bolt.Version =
-      Bolt.Version.decode(readInt())
+    private suspend inline fun Reader.readVersion(): Bolt.Version = Bolt.Version.decode(readInt())
 
     /** Read the [Bolt.Version]s supported by the graph. */
-    private suspend fun ByteReadChannel.readVersions(): Array<Bolt.Version> {
+    private suspend fun Reader.readVersions(): Array<Bolt.Version> {
       var size = 0L
       var position = 0.toByte()
       while (true) {
@@ -686,64 +770,73 @@ constructor(
     }
 
     /** Write the [version]. */
-    private suspend inline fun ByteWriteChannel.writeVersion(version: Bolt.Version) {
+    private suspend inline fun Writer.writeVersion(version: Bolt.Version) {
       writeInt(version.encode())
     }
 
-    /** Read a [Bolt.Message] from the [ByteReadChannel]. */
-    private suspend fun ByteReadChannel.readMessage(
-      timeout: Duration = Duration.INFINITE
-    ): Bolt.Message {
-      val structure = readChunked(timeout).unpack { structure() }
-      return structure.toMessage()
+    /** Read a [Bolt.Message] from the [Reader]. */
+    private suspend fun Reader.readMessage(timeout: Duration = Duration.INFINITE): Bolt.Message {
+      val buf = readChunked(timeout)
+      return try {
+        buf.unpack { structure() }.toMessage()
+      } finally {
+        buf.release()
+      }
     }
 
     /**
      * Read a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking) message from the
-     * [ByteReadChannel].
+     * [Reader].
      */
-    suspend fun ByteReadChannel.readChunked(timeout: Duration): ByteArray {
-      var bytes = ByteArray(0)
+    @VisibleForTesting
+    internal suspend fun Reader.readChunked(timeout: Duration): ByteBuf {
+      val buf = allocator.buffer()
       withTimeout(timeout) {
         while (true) {
           val size = readShort().toUShort().toInt()
           if (size == 0) {
             // NoOp chunk (connection keep-alive)
-            if (bytes.isEmpty()) continue
-            // Received all chunks, return the bytes
+            if (!buf.isReadable) continue
+            // Received all chunks
             break
           }
-          bytes += readByteArray(size)
+          buf.writeBytes(readByteArray(size))
         }
       }
-      return bytes
+      return buf
     }
 
-    /** Write a [Bolt.Message] to the [ByteWriteChannel]. */
-    private suspend fun ByteWriteChannel.writeMessage(
+    /** Write a [Bolt.Message] to the [Writer]. */
+    private suspend fun Writer.writeMessage(
       message: Bolt.Message,
       maxChunkSize: Int = UShort.MAX_VALUE.toInt(),
     ) {
       (if (message is Bolt.Messages) message.messages else listOf(message))
         .map { msg -> msg.toStructure() }
-        .map { structure -> PackStream.pack { structure(structure) } }
-        .forEach { bytes -> writeChunked(bytes, maxChunkSize) }
+        .map { structure -> PackStream.pack(allocator) { structure(structure) } }
+        .forEach { buf -> writeChunked(buf, maxChunkSize) }
     }
 
     /**
      * Write a [chunked](https://neo4j.com/docs/bolt/current/bolt/message/#chunking) [message] to
-     * the [ByteWriteChannel].
+     * the [Writer].
      */
-    suspend fun ByteWriteChannel.writeChunked(message: ByteArray, maxChunkSize: Int) {
-      message
-        .asSequence()
-        .chunked(maxChunkSize)
-        .map { bytes -> bytes.toByteArray() }
-        .forEach { chunk ->
-          writeShort(chunk.size.toShort())
-          writeByteArray(chunk)
-          writeByteArray(byteArrayOf(0x0, 0x0))
+    @VisibleForTesting
+    internal suspend fun Writer.writeChunked(message: ByteBuf, maxChunkSize: Int) {
+      try {
+        while (message.isReadable) {
+          val chunkSize = minOf(message.readableBytes(), maxChunkSize)
+          val buf =
+            allocator
+              .buffer(2 + chunkSize + 2)
+              .writeShort(chunkSize)
+              .writeBytes(message, chunkSize)
+              .writeShort(0)
+          channel.send(buf)
         }
+      } finally {
+        message.release()
+      }
     }
   }
 }

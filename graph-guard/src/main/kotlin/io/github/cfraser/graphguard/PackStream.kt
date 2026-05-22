@@ -15,8 +15,10 @@ limitations under the License.
 */
 package io.github.cfraser.graphguard
 
-import io.ktor.utils.io.core.toByteArray
-import java.nio.ByteBuffer
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.Unpooled
+import io.netty.buffer.UnpooledByteBufAllocator
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -166,9 +168,6 @@ internal object PackStream {
   /** The maximum size of an unsigned 16-bit integer. */
   private val MAX_16 = UShort.MAX_VALUE.toInt() + 1
 
-  /** The maximum size of an unsigned 32-bit integer. */
-  private val MAX_32 = MAX_16 * 2
-
   /**
    * The [Date](https://neo4j.com/docs/bolt/current/bolt/structure-semantics/#structure-date)
    * signature.
@@ -219,16 +218,23 @@ internal object PackStream {
   /** Pack bytes using a [Packer]. */
   @OptIn(ExperimentalContracts::class)
   fun pack(
-    buffer: ByteBuffer = ByteBuffer.allocate(MAX_32)!!,
+    allocator: ByteBufAllocator = UnpooledByteBufAllocator.DEFAULT,
     block: Packer.() -> Unit,
-  ): ByteArray {
+  ): ByteBuf {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    return Packer(buffer).apply(block).buffer.copyBytes()
+    return Packer(allocator.buffer()).apply(block).buf
   }
 
   /** Unpack the [ByteArray] using an [Unpacker]. */
   @OptIn(ExperimentalContracts::class)
   fun <T> ByteArray.unpack(block: Unpacker.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return Unpacker(Unpooled.wrappedBuffer(this)).run(block)
+  }
+
+  /** Unpack the [ByteBuf] using an [Unpacker]. */
+  @OptIn(ExperimentalContracts::class)
+  fun <T> ByteBuf.unpack(block: Unpacker.() -> T): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     return Unpacker(this).run(block)
   }
@@ -242,59 +248,69 @@ internal object PackStream {
   /**
    * [Packer] packs [PackStream] data.
    *
-   * @property buffer the [ByteBuffer] with the packed data
+   * @property buf the [ByteBuf] with the packed data
    */
-  class Packer(val buffer: ByteBuffer) {
+  class Packer(val buf: ByteBuf) {
 
     /** Pack [Null](https://neo4j.com/docs/bolt/current/packstream/#data-type-null). */
-    @Suppress("FunctionNaming") fun `null`(): Packer = apply { buffer.put(NULL) }
+    @Suppress("FunctionNaming") fun `null`(): Packer = apply { buf.writeByte(NULL.toInt()) }
 
     /** Pack the [Boolean](https://neo4j.com/docs/bolt/current/packstream/#data-type-boolean). */
-    fun boolean(value: Boolean): Packer = apply { buffer.put(if (value) TRUE else FALSE) }
+    fun boolean(value: Boolean): Packer = apply {
+      buf.writeByte((if (value) TRUE else FALSE).toInt())
+    }
 
     /** Pack the [Integer](https://neo4j.com/docs/bolt/current/packstream/#data-type-integer). */
     fun integer(value: Long): Packer = apply {
       when (value) {
-        in -16..Byte.MAX_VALUE -> buffer.put(value.toByte())
-        in Byte.MIN_VALUE..-16 -> buffer.put(byteArrayOf(INT_8, value.toByte()))
+        in -16..Byte.MAX_VALUE -> buf.writeByte(value.toInt())
+        in Byte.MIN_VALUE..-16 -> {
+          buf.writeByte(INT_8.toInt())
+          buf.writeByte(value.toInt())
+        }
+
         in Short.MIN_VALUE..Short.MAX_VALUE -> {
-          buffer.put(INT_16)
-          buffer.putShort(value.toShort())
+          buf.writeByte(INT_16.toInt())
+          buf.writeShort(value.toInt())
         }
+
         in Int.MIN_VALUE..Int.MAX_VALUE -> {
-          buffer.put(INT_32)
-          buffer.putInt(value.toInt())
+          buf.writeByte(INT_32.toInt())
+          buf.writeInt(value.toInt())
         }
+
         else -> {
-          buffer.put(INT_64)
-          buffer.putLong(value)
+          buf.writeByte(INT_64.toInt())
+          buf.writeLong(value)
         }
       }
     }
 
     /** Pack the [Float](https://neo4j.com/docs/bolt/current/packstream/#data-type-float). */
     fun float(value: Double): Packer = apply {
-      buffer.put(FLOAT_64)
-      buffer.putDouble(value)
+      buf.writeByte(FLOAT_64.toInt())
+      buf.writeDouble(value)
     }
 
     /** Pack the [Bytes](https://neo4j.com/docs/bolt/current/packstream/#data-type-bytes). */
     fun bytes(value: ByteArray): Packer = apply {
       when {
         value.size <= Byte.MAX_VALUE -> {
-          buffer.put(BYTES_8)
-          buffer.put(value.size.toByte())
+          buf.writeByte(BYTES_8.toInt())
+          buf.writeByte(value.size)
         }
+
         value.size < MAX_16 -> {
-          buffer.put(BYTES_16)
-          buffer.putShort(value.size.toShort())
+          buf.writeByte(BYTES_16.toInt())
+          buf.writeShort(value.size)
         }
+
         else -> {
-          buffer.put(BYTES_32)
-          buffer.putInt(value.size)
+          buf.writeByte(BYTES_32.toInt())
+          buf.writeInt(value.size)
         }
       }
-      buffer.put(value)
+      buf.writeBytes(value)
     }
 
     /** Pack the [String](https://neo4j.com/docs/bolt/current/packstream/#data-type-string). */
@@ -302,41 +318,47 @@ internal object PackStream {
       val bytes = value.toByteArray(Charsets.UTF_8)
       when {
         bytes.size < 0x10 -> {
-          buffer.put((TINY_STRING.toInt() or bytes.size).toByte())
+          buf.writeByte(TINY_STRING.toInt() or bytes.size)
         }
+
         bytes.size <= Byte.MAX_VALUE -> {
-          buffer.put(STRING_8)
-          buffer.put(bytes.size.toByte())
+          buf.writeByte(STRING_8.toInt())
+          buf.writeByte(bytes.size)
         }
+
         bytes.size < MAX_16 -> {
-          buffer.put(STRING_16)
-          buffer.putShort(bytes.size.toShort())
+          buf.writeByte(STRING_16.toInt())
+          buf.writeShort(bytes.size)
         }
+
         else -> {
-          buffer.put(STRING_32)
-          buffer.putInt(bytes.size)
+          buf.writeByte(STRING_32.toInt())
+          buf.writeInt(bytes.size)
         }
       }
-      buffer.put(bytes)
+      buf.writeBytes(bytes)
     }
 
     /** Pack the [List](https://neo4j.com/docs/bolt/current/packstream/#data-type-list). */
     fun list(value: List<*>): Packer = apply {
       when {
         value.size < 0x10 -> {
-          buffer.put((TINY_LIST.toInt() or value.size).toByte())
+          buf.writeByte(TINY_LIST.toInt() or value.size)
         }
+
         value.size <= Byte.MAX_VALUE -> {
-          buffer.put(LIST_8)
-          buffer.put(value.size.toByte())
+          buf.writeByte(LIST_8.toInt())
+          buf.writeByte(value.size)
         }
+
         value.size < MAX_16 -> {
-          buffer.put(LIST_16)
-          buffer.putShort(value.size.toShort())
+          buf.writeByte(LIST_16.toInt())
+          buf.writeShort(value.size)
         }
+
         else -> {
-          buffer.put(LIST_32)
-          buffer.putInt(value.size)
+          buf.writeByte(LIST_32.toInt())
+          buf.writeInt(value.size)
         }
       }
       value.forEach(::any)
@@ -348,19 +370,22 @@ internal object PackStream {
     fun dictionary(value: Map<*, *>): Packer = apply {
       when {
         value.size < 0x10 -> {
-          buffer.put((TINY_DICT.toInt() or value.size).toByte())
+          buf.writeByte(TINY_DICT.toInt() or value.size)
         }
+
         value.size <= Byte.MAX_VALUE -> {
-          buffer.put(DICT_8)
-          buffer.put(value.size.toByte())
+          buf.writeByte(DICT_8.toInt())
+          buf.writeByte(value.size)
         }
+
         value.size < MAX_16 -> {
-          buffer.put(DICT_16)
-          buffer.putShort(value.size.toShort())
+          buf.writeByte(DICT_16.toInt())
+          buf.writeShort(value.size)
         }
+
         else -> {
-          buffer.put(DICT_32)
-          buffer.putInt(value.size)
+          buf.writeByte(DICT_32.toInt())
+          buf.writeInt(value.size)
         }
       }
       value.forEach { (key, value) ->
@@ -375,19 +400,22 @@ internal object PackStream {
     fun structure(value: Structure): Packer = apply {
       when {
         value.fields.size < 0x10 -> {
-          buffer.put((TINY_STRUCT.toInt() or value.fields.size).toByte())
+          buf.writeByte(TINY_STRUCT.toInt() or value.fields.size)
         }
+
         value.fields.size <= Byte.MAX_VALUE -> {
-          buffer.put(STRUCT_8)
-          buffer.put(value.fields.size.toByte())
+          buf.writeByte(STRUCT_8.toInt())
+          buf.writeByte(value.fields.size)
         }
+
         value.fields.size < MAX_16 -> {
-          buffer.put(STRUCT_16)
-          buffer.putShort(value.fields.size.toShort())
+          buf.writeByte(STRUCT_16.toInt())
+          buf.writeShort(value.fields.size)
         }
+
         else -> error("Structure size '${value.fields.size}' is invalid")
       }
-      buffer.put(value.id)
+      buf.writeByte(value.id.toInt())
       value.fields.forEach(::any)
     }
 
@@ -430,6 +458,7 @@ internal object PackStream {
               listOf(zonedDateTime.toInstant().epochSecond, zonedDateTime.nano, zone.totalSeconds),
             )
           )
+
         else -> error("ZonedDateTime '$zonedDateTime' is invalid")
       }
 
@@ -503,24 +532,21 @@ internal object PackStream {
   /**
    * [Unpacker] unpacks [PackStream] data.
    *
-   * @param bytes the [ByteArray] to unpack
+   * @param buf the [ByteBuf] to unpack
    */
-  class Unpacker(bytes: ByteArray) {
-
-    /** A [ByteBuffer] with the data to unpack. */
-    private val buffer = ByteBuffer.wrap(bytes)!!
+  class Unpacker(private val buf: ByteBuf) {
 
     /** Unpack [Null](https://neo4j.com/docs/bolt/current/packstream/#data-type-null). */
     @Suppress("FunctionNaming")
     fun `null`(): Any? =
-      when (val marker = buffer.get()) {
+      when (val marker = buf.readByte()) {
         NULL -> null
         else -> marker.unexpected()
       }
 
     /** Unpack a [Boolean](https://neo4j.com/docs/bolt/current/packstream/#data-type-boolean). */
     fun boolean(): Boolean =
-      when (val marker = buffer.get()) {
+      when (val marker = buf.readByte()) {
         TRUE -> true
         FALSE -> false
         else -> marker.unexpected()
@@ -528,60 +554,60 @@ internal object PackStream {
 
     /** Unpack an [Integer](https://neo4j.com/docs/bolt/current/packstream/#data-type-integer). */
     fun integer(): Long {
-      val marker = buffer.get()
+      val marker = buf.readByte()
       if (marker >= -16) return marker.toLong()
       return when (marker) {
-        INT_8 -> buffer.get().toLong()
-        INT_16 -> buffer.getShort().toLong()
-        INT_32 -> buffer.getInt().toLong()
-        INT_64 -> buffer.getLong()
+        INT_8 -> buf.readByte().toLong()
+        INT_16 -> buf.readShort().toLong()
+        INT_32 -> buf.readInt().toLong()
+        INT_64 -> buf.readLong()
         else -> marker.unexpected()
       }
     }
 
     /** Unpack a [Float](https://neo4j.com/docs/bolt/current/packstream/#data-type-float). */
     fun float(): Double =
-      when (val marker = buffer.get()) {
-        FLOAT_64 -> buffer.getDouble()
+      when (val marker = buf.readByte()) {
+        FLOAT_64 -> buf.readDouble()
         else -> marker.unexpected()
       }
 
     /** Unpack [Bytes](https://neo4j.com/docs/bolt/current/packstream/#data-type-bytes). */
     fun bytes(): ByteArray {
       val size =
-        when (val marker = buffer.get()) {
-          BYTES_8 -> buffer.getUInt8()
-          BYTES_16 -> buffer.getUInt16()
-          BYTES_32 -> buffer.getUInt32()
+        when (val marker = buf.readByte()) {
+          BYTES_8 -> buf.readUnsignedByte().toInt()
+          BYTES_16 -> buf.readUnsignedShort()
+          BYTES_32 -> readUInt32()
           else -> marker.unexpected()
         }
-      return buffer.getBytes(size)
+      return ByteArray(size).also { buf.readBytes(it) }
     }
 
     /** Unpack a [String](https://neo4j.com/docs/bolt/current/packstream/#data-type-string). */
     fun string(): String {
-      val marker = buffer.get()
+      val marker = buf.readByte()
       if (marker == TINY_STRING) return ""
       val size =
         when {
           marker and 0xf0.toByte() == TINY_STRING -> marker.toInt() and 0x0f
-          marker == STRING_8 -> buffer.getUInt8()
-          marker == STRING_16 -> buffer.getUInt16()
-          marker == STRING_32 -> buffer.getUInt32()
+          marker == STRING_8 -> buf.readUnsignedByte().toInt()
+          marker == STRING_16 -> buf.readUnsignedShort()
+          marker == STRING_32 -> readUInt32()
           else -> marker.unexpected()
         }
-      return String(buffer.getBytes(size), Charsets.UTF_8)
+      return String(ByteArray(size).also { buf.readBytes(it) }, Charsets.UTF_8)
     }
 
     /** Unpack a [List](https://neo4j.com/docs/bolt/current/packstream/#data-type-list). */
     fun list(): List<Any?> {
-      val marker = buffer.get()
+      val marker = buf.readByte()
       val size =
         when {
           marker and 0xf0.toByte() == TINY_LIST -> marker.toInt() and 0x0f
-          marker == LIST_8 -> buffer.getUInt8()
-          marker == LIST_16 -> buffer.getUInt16()
-          marker == LIST_32 -> buffer.getUInt32()
+          marker == LIST_8 -> buf.readUnsignedByte().toInt()
+          marker == LIST_16 -> buf.readUnsignedShort()
+          marker == LIST_32 -> readUInt32()
           else -> marker.unexpected()
         }
       return List(size) { _ -> any() }
@@ -591,13 +617,13 @@ internal object PackStream {
      * Unpack a [Dictionary](https://neo4j.com/docs/bolt/current/packstream/#data-type-dictionary).
      */
     fun dictionary(): Map<String, Any?> {
-      val marker = buffer.get()
+      val marker = buf.readByte()
       val size =
         when {
           marker and 0xf0.toByte() == TINY_DICT -> marker.toInt() and 0x0f
-          marker == DICT_8 -> buffer.getUInt8()
-          marker == DICT_16 -> buffer.getUInt16()
-          marker == DICT_32 -> buffer.getUInt32()
+          marker == DICT_8 -> buf.readUnsignedByte().toInt()
+          marker == DICT_16 -> buf.readUnsignedShort()
+          marker == DICT_32 -> readUInt32()
           else -> marker.unexpected()
         }
       return buildMap(size) {
@@ -613,22 +639,22 @@ internal object PackStream {
      * Unpack a [Structure](https://neo4j.com/docs/bolt/current/packstream/#data-type-structure).
      */
     fun structure(): Structure {
-      val marker = buffer.get()
+      val marker = buf.readByte()
       val size =
         when {
           marker and 0xf0.toByte() == TINY_STRUCT -> marker.toInt() and 0x0f
-          marker == STRUCT_8 -> buffer.getUInt8()
-          marker == STRUCT_16 -> buffer.getUInt16()
+          marker == STRUCT_8 -> buf.readUnsignedByte().toInt()
+          marker == STRUCT_16 -> buf.readUnsignedShort()
           else -> marker.unexpected()
         }
-      val tag = buffer.get()
+      val tag = buf.readByte()
       val fields = List(size) { _ -> any() }
       return Structure(tag, fields)
     }
 
     @Suppress("CyclomaticComplexMethod")
     internal fun any(): Any? {
-      val marker = buffer.run { mark().get().also { _ -> reset() } }
+      val marker = buf.getByte(buf.readerIndex())
       return when (marker and 0xf0.toByte()) {
         TINY_STRING -> string()
         TINY_LIST -> list()
@@ -639,23 +665,29 @@ internal object PackStream {
             NULL -> `null`()
             TRUE,
             FALSE -> boolean()
+
             INT_8,
             INT_16,
             INT_32,
             INT_64 -> integer()
+
             FLOAT_64 -> float()
             BYTES_8,
             BYTES_16,
             BYTES_32 -> bytes()
+
             STRING_8,
             STRING_16,
             STRING_32 -> string()
+
             LIST_8,
             LIST_16,
             LIST_32 -> list()
+
             DICT_8,
             DICT_16,
             DICT_32 -> dictionary()
+
             STRUCT_8,
             STRUCT_16 -> structure().toType()
             // TINY_INT
@@ -678,6 +710,7 @@ internal object PackStream {
             val epochDay = fields[0] as Long
             LocalDate.ofEpochDay(epochDay)
           }
+
           TIME -> {
             check(fields.size == 2)
             val nanoOfDayLocal = fields[0] as Long
@@ -686,11 +719,13 @@ internal object PackStream {
             val offset = ZoneOffset.ofTotalSeconds(offsetSeconds)
             OffsetTime.of(localTime, offset)
           }
+
           LOCAL_TIME -> {
             check(fields.size == 1)
             val nanoOfDayLocal = fields[0] as Long
             LocalTime.ofNanoOfDay(nanoOfDayLocal)
           }
+
           DATE_TIME,
           DATE_TIME_ZONE_ID -> {
             check(fields.size == 3)
@@ -708,18 +743,21 @@ internal object PackStream {
             val localDateTime = LocalDateTime.ofInstant(instant, zoneId)
             ZonedDateTime.of(localDateTime, zoneId)
           }
+
           LOCAL_DATE_TIME -> {
             check(fields.size == 2)
             val epochSecondUtc = fields[0] as Long
             val nano = Math.toIntExact(fields[1] as Long)
             LocalDateTime.ofEpochSecond(epochSecondUtc, nano, ZoneOffset.UTC)
           }
+
           DURATION -> {
             check(fields.size == 4)
             val seconds = fields[2] as Long
             val nanoseconds = fields[3] as Long
             Duration.ofSeconds(seconds, nanoseconds)
           }
+
           else -> this
         }
       } catch (_: Exception) {
@@ -727,40 +765,18 @@ internal object PackStream {
       }
     }
 
+    private fun readUInt32(): Int {
+      val v = buf.readUnsignedInt()
+      check(v <= Int.MAX_VALUE) { "Size '$v' is too big" }
+      return v.toInt()
+    }
+
     private companion object {
-
-      /** Get an unsigned 8-bit [Int] from the [ByteBuffer]. */
-      fun ByteBuffer.getUInt8(): Int = get().toUByte().toInt()
-
-      /** Get an unsigned 16-bit [Int] from the [ByteBuffer]. */
-      fun ByteBuffer.getUInt16(): Int = getShort().toUShort().toInt()
-
-      /**
-       * Get an unsigned 32-bit [Int] from the [ByteBuffer].
-       *
-       * @throws IllegalStateException if the unsigned 32-bit value is greater than [Int.MAX_VALUE]
-       */
-      fun ByteBuffer.getUInt32(): Int {
-        val uint32 = getInt().toUInt().toLong()
-        check(uint32 <= Int.MAX_VALUE) { "Size '$uint32' is too big" }
-        return uint32.toInt()
-      }
-
-      /** Get a [ByteArray] of the [size] from the [ByteBuffer]. */
-      fun ByteBuffer.getBytes(size: Int): ByteArray {
-        val bytes = ByteArray(size)
-        if (size == 0) return bytes
-        get(bytes, 0, bytes.size)
-        return bytes
-      }
 
       /** Throw an [IllegalStateException] because the marker [Byte] is unexpected. */
       fun Byte.unexpected(): Nothing = error("Unexpected marker '${toHex()}'")
     }
   }
-
-  /** Copy the *used* bytes from the [ByteBuffer] to a [ByteArray]. */
-  private fun ByteBuffer.copyBytes(): ByteArray = array().sliceArray(0 until position())
 
   /** Convert the [Byte] to an unsigned *base16* [String]. */
   private fun Byte.toHex(): String = "0x${Integer.toHexString(toInt() and 0xff)}"
