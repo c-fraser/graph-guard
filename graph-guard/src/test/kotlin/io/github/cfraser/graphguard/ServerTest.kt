@@ -22,6 +22,8 @@ import io.github.cfraser.graphguard.knit.test
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.netty.buffer.Unpooled
+import io.netty.handler.ssl.SslContextBuilder
+import io.netty.pkitesting.CertificateBuilder
 import java.net.URI
 import java.nio.file.Path
 import java.security.cert.X509Certificate
@@ -134,6 +136,21 @@ class ServerTest : FunSpec() {
           val server = Server(boltURI, trustManager = InsecureTrustManager)
           server.test { server.driver.use { driver -> runMoviesQueries(driver) } }
         }
+    }
+
+    test("encrypted connection from client") {
+      withNeo4j {
+        val bundle =
+          CertificateBuilder()
+            .subject("CN=localhost")
+            .setIsCertificateAuthority(true)
+            .buildSelfSigned()
+        val sslContext =
+          SslContextBuilder.forServer(bundle.toTempCertChainPem(), bundle.toTempPrivateKeyPem())
+            .build()
+        val server = Server(boltURI(), sslContext = sslContext)
+        server.test { server.driver.use { driver -> runMoviesQueries(driver) } }
+      }
     }
 
     xtest("measure proxy server latency").config(tags = setOf(LOCAL)) {

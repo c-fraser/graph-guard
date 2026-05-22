@@ -8,6 +8,7 @@ kotlinx-rpc = "0.10.2"
 kotlinx-serialization = "1.11.0"
 ktfmt = "0.61"
 ktor = "3.4.3"
+netty = "4.2.14.Final"
 reactor-netty = "1.3.5"
 slf4j = "2.0.17"
 
@@ -43,6 +44,7 @@ logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", ve
 neo4j-cypher-parser = { module = "org.neo4j:neo4j-cypher-dsl-parser", version = "2025.2.2" }
 neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version = "6.0.5" }
 neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version = "2026.04.0" }
+netty-pki-testing = { module = "io.netty:netty-pkitesting", version.ref = "netty" }
 reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core", version.ref = "reactor-netty" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }

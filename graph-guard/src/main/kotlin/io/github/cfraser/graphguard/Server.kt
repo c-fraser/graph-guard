@@ -93,7 +93,7 @@ constructor(
   plugin: Plugin = Plugin.DSL.plugin {},
   val address: Address = Address.InetSocket("localhost", 8787),
   private val trustManager: TrustManager? = null,
-  private val sslContext: SslContext? = null,
+  @VisibleForTesting internal val sslContext: SslContext? = null,
 ) : AutoCloseable {
 
   /** The [running] [DisposableServer] accepting client connections. */

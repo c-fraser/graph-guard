@@ -67,7 +67,9 @@ val Server.driver: Driver
   get() {
     val bolt =
       when (address) {
-        is Server.Address.InetSocket -> "bolt://${address.hostname}:${address.port}"
+        is Server.Address.InetSocket ->
+          if (sslContext == null) "bolt://${address.hostname}:${address.port}"
+          else "bolt+ssc://${address.hostname}:${address.port}"
         is Server.Address.UnixDomainSocket -> "bolt+unix:///${address.path}"
       }
     return GraphDatabase.driver(URI(bolt), Config.builder().withoutEncryption().build())
