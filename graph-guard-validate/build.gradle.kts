@@ -28,7 +28,6 @@ dependencies {
   antlr(libs.antlr4)
   implementation(kotlin("reflect"))
   implementation(libs.kotlinx.coroutines)
-  implementation(libs.caffeine)
   implementation(libs.neo4j.cypher.parser)
   implementation(libs.slf4j.api)
   implementation(project(":graph-guard-utils"))

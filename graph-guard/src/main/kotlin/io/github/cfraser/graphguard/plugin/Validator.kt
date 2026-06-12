@@ -76,8 +76,9 @@ class Validator @JvmOverloads constructor(private val rule: Rule, cacheSize: Lon
         return Bolt.Messages(emptyList())
       }
       is Bolt.Pull -> {
-        val failure = failures[session] ?: return message
-        failures -= session
+        val failure = lock.withLock {
+          failures[session]?.also { _ -> failures -= session } ?: return message
+        }
         return failure and Bolt.Ignored
       }
       else -> return message

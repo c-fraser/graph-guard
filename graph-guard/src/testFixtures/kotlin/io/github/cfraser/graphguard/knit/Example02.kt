@@ -27,7 +27,7 @@ import org.neo4j.driver.GraphDatabase
 fun runExample02() {
   withNeo4j {
 
-Server(boltURI(), Validator(Schema(MOVIES_SCHEMA)), Server.Address.InetSocket("localhost", 8787)).use {
+Server(boltURI(), Validator(Schema.init(MOVIES_SCHEMA)), Server.Address.InetSocket("localhost", 8787)).use {
     server ->
   server.start()
   GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())

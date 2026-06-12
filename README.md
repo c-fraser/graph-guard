@@ -21,6 +21,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Graph](#graph)
     * [Nodes](#nodes)
     * [Relationships](#relationships)
+    * [Cardinality](#cardinality)
     * [Properties](#properties)
     * [Metadata](#metadata)
     * [Violations](#violations)
@@ -116,7 +117,7 @@ fun runExample02() {
 
 [//]: # (@formatter:off)
 ```kotlin
-Server(boltURI(), Validator(Schema(MOVIES_SCHEMA)), Server.Address.InetSocket("localhost", 8787)).use {
+Server(boltURI(), Validator(Schema.init(MOVIES_SCHEMA)), Server.Address.InetSocket("localhost", 8787)).use {
     server ->
   server.start()
   GraphDatabase.driver("bolt://localhost:8787", Config.builder().withoutEncryption().build())
@@ -201,6 +202,34 @@ have [properties](#properties) and/or [relationship definitions](#relationships)
 Relationships are defined relative to the *source* [node](#nodes). A relationship definition must
 have a name, direction (`->` for directed, or `--` for undirected), and target node. A relationship
 must have a unique `(source)-[name]-(target)`, and may also have [properties](#properties).
+
+#### Cardinality
+
+A [relationship](#relationships) may include
+a [cardinality](https://neo4j.com/docs/graphql/current/relationships/cardinality/) constraint,
+written as `[<one>..<many>]` between the name and [properties](#properties). Each side independently
+constrains the source [node](#nodes)'s outgoing count or the target [node](#nodes)'s incoming count.
+
+| Symbol | Min | Max |
+|--------|-----|-----|
+| `1`    | 1   | 1   |
+| `1?`   | 0   | 1   |
+| `M`    | 1   | >=1 |
+| `M?`   | 0   | >=0 |
+
+For example, the following expresses that a `Movie` requires at least one actor while a `Person`
+may act in any number of movies.
+
+[//]: # (@formatter:off)
+```elm
+graph Movies {
+  node Person(name: String):
+      ACTED_IN [M?..M] -> Movie;
+
+  node Movie(title: String);
+}
+```
+[//]: # (@formatter:on)
 
 #### Properties
 

@@ -127,7 +127,8 @@ internal class Command : CliktCommand(name = "graph-guard") {
 
   override fun run() {
     val plugin by lazy {
-      listOfNotNull(script?.let(Script::evaluate), schema?.let(::Schema)?.let(::Validator)).chain()
+      listOfNotNull(script?.let(Script::evaluate), schema?.let(Schema::init)?.let(::Validator))
+        .chain()
     }
     if (debug) logger("io.github.cfraser.graphguard").level = Level.DEBUG
     val output =
@@ -153,7 +154,7 @@ internal class Command : CliktCommand(name = "graph-guard") {
 
           Web.PluginLoader.run {
             script?.also { script -> runBlocking(Dispatchers.IO) { load(script) } }
-            schema?.let(::Schema)?.let(::Validator)?.let { plugin -> this then plugin } ?: this
+            schema?.let(Schema::init)?.let(::Validator)?.let { plugin -> this then plugin } ?: this
           } then output
         }
       }

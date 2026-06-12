@@ -172,15 +172,24 @@ public final class io/github/cfraser/graphguard/validate/Rule$Violation {
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema : java/lang/Record, io/github/cfraser/graphguard/validate/Rule {
-	public fun <init> (Ljava/lang/String;)V
+	public static final field Companion Lio/github/cfraser/graphguard/validate/Schema$Companion;
 	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Ljava/util/Map;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun excludes (Ljava/util/Collection;)Lio/github/cfraser/graphguard/validate/Rule;
 	public final fun graphs ()Ljava/util/List;
 	public fun hashCode ()I
+	public static final fun init (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Schema;
+	public final fun nodes ()Ljava/util/Map;
+	public final fun relationships ()Ljava/util/Map;
 	public fun then (Lio/github/cfraser/graphguard/validate/Rule;)Lio/github/cfraser/graphguard/validate/Rule;
 	public fun toString ()Ljava/lang/String;
 	public fun validate-uxJLViw (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Companion {
+	public final fun init (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Schema;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Graph : java/lang/Record {
@@ -447,12 +456,14 @@ public final class io/github/cfraser/graphguard/validate/Schema$Property$Type$Un
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Relationship : java/lang/Record {
+	public final fun cardinality ()Lio/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality;
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Z
-	public final fun component5 ()Ljava/util/List;
+	public final fun component5 ()Lio/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality;
 	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/util/List;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public final fun isDirected ()Z
@@ -462,5 +473,94 @@ public final class io/github/cfraser/graphguard/validate/Schema$Relationship : j
 	public final fun source ()Ljava/lang/String;
 	public final fun target ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality : java/lang/Record {
+	public final fun component1 ()Lio/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality$Range;
+	public final fun component2 ()Lio/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality$Range;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun source ()Lio/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality$Range;
+	public final fun target ()Lio/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality$Range;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Relationship$Cardinality$Range : java/lang/Record {
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/Integer;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun max ()Ljava/lang/Integer;
+	public final fun min ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Relationship$Id : java/lang/Record {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Schema$Relationship$Id;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/validate/Schema$Relationship$Id;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/validate/Schema$Relationship$Id;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun name ()Ljava/lang/String;
+	public final fun source ()Ljava/lang/String;
+	public final fun target ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class io/github/cfraser/graphguard/validate/Schema$Violation {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getViolation-Z5Kgo0c ()Ljava/lang/String;
+}
+
+public abstract class io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getName ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$Entity$Node : io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$Entity$Relationship : io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
+	public fun <init> (Ljava/lang/String;Ljava/util/Collection;Ljava/util/Collection;)V
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality : io/github/cfraser/graphguard/validate/Schema$Violation {
+	public fun <init> (Ljava/lang/String;Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;ILio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;I)V
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit : java/lang/Enum {
+	public static final field MAX Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;
+	public static final field MIN Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;
+	public static fun values ()[Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side : java/lang/Enum {
+	public static final field SOURCE Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
+	public static final field TARGET Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
+	public static fun values ()[Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidProperty : io/github/cfraser/graphguard/validate/Schema$Violation {
+	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;Lio/github/cfraser/graphguard/validate/Schema$Property;Ljava/util/List;)V
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$MissingProperty : io/github/cfraser/graphguard/validate/Schema$Violation {
+	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;Ljava/lang/String;)V
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$Unknown : io/github/cfraser/graphguard/validate/Schema$Violation {
+	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;)V
+}
+
+public final class io/github/cfraser/graphguard/validate/Schema$Violation$UnknownProperty : io/github/cfraser/graphguard/validate/Schema$Violation {
+	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;Ljava/lang/String;)V
 }
 

@@ -197,17 +197,16 @@ data class Query(
           ?.toSet()
           .orEmpty()
           .toMutableSet()
-      fun add(vararg labelExpressions: Labels) =
-        labelExpressions.forEach { labelExpression ->
-          if (labelExpression.type == Labels.Type.LEAF)
-            labels +=
-              labelExpression.value
-                ?.map { value ->
-                  // TODO: inspect value.visitable?
-                  value.cypher()
-                }
-                .orEmpty()
-        }
+      fun add(vararg labelExpressions: Labels) = labelExpressions.forEach { labelExpression ->
+        if (labelExpression.type == Labels.Type.LEAF)
+          labels +=
+            labelExpression.value
+              ?.map { value ->
+                // TODO: inspect value.visitable?
+                value.cypher()
+              }
+              .orEmpty()
+      }
       val labelTypes =
         setOf(
           Labels.Type.CONJUNCTION,

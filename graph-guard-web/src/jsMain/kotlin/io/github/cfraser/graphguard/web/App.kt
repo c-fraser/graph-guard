@@ -96,7 +96,7 @@ private fun RenderContext.app() {
       service?.getSchema()?.also { schema -> schemaStore.update(schema) }
 
       // Load plugin from server
-      service?.getPlugin()?.let { plugin -> pluginEditorStore.update(plugin.orEmpty()) }
+      service?.getPlugin()?.let { plugin -> pluginEditorStore.update(plugin) }
 
       // Collect proxied messages
       service
@@ -316,15 +316,14 @@ private fun getQueries(messages: List<Message>): List<RunQuery> = buildList {
       if (message !is Message.ReceivedFromClient) return@forEachIndexed
       val run = message.bolt as? Message.Bolt.Run ?: return@forEachIndexed
       val nextMessages = sessionMessages.take(index + 1).reversed()
-      val response =
-        nextMessages.firstNotNullOfOrNull { nextMessage ->
-          if (nextMessage !is Message.SentToClient) return@firstNotNullOfOrNull null
-          when (val bolt = nextMessage.bolt) {
-            is Message.Bolt.Success,
-            is Message.Bolt.Failure -> bolt
-            else -> null
-          }
+      val response = nextMessages.firstNotNullOfOrNull { nextMessage ->
+        if (nextMessage !is Message.SentToClient) return@firstNotNullOfOrNull null
+        when (val bolt = nextMessage.bolt) {
+          is Message.Bolt.Success,
+          is Message.Bolt.Failure -> bolt
+          else -> null
         }
+      }
       this += RunQuery(session, run.query, run.parameters, response, message.address)
     }
   }

@@ -24,8 +24,6 @@ plugins {
   alias(libs.plugins.kotlinx.rpc)
 }
 
-kotlin { compilerOptions.freeCompilerArgs.add("-Xnested-type-aliases") }
-
 application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
 
 jib { from { image = "eclipse-temurin:21" } }

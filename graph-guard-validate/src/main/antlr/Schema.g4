@@ -32,7 +32,15 @@ node
    ;
 
 relationship
-   : metadata? name properties? (UNDIRECTED | DIRECTED) target
+   : metadata? name cardinality? properties? (UNDIRECTED | DIRECTED) target
+   ;
+
+cardinality
+   : LB cardinalityValue DOTDOT cardinalityValue RB
+   ;
+
+cardinalityValue
+   : (ONE | NAME) QM?
    ;
 
 properties
@@ -130,6 +138,22 @@ QM
 
 DOT
    : '.'
+   ;
+
+DOTDOT
+   : '..'
+   ;
+
+LB
+   : '['
+   ;
+
+RB
+   : ']'
+   ;
+
+ONE
+   : '1'
    ;
 
 PIPE

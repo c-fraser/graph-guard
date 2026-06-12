@@ -45,65 +45,25 @@ import org.antlr.v4.runtime.tree.RuleNode
  * adheres to the *nodes* and *relationships* defined in the [graphs].
  *
  * @property graphs the [Schema.Graph]s defining the [Schema.Node]s and [Schema.Relationship]s
+ * @property nodes the [Node]s in the [graphs] indexed by [Node.name]
+ * @property relationships the [Relationship]s in the [graphs] indexed by [Relationship.Id]
  */
 @JvmRecord
 @ConsistentCopyVisibility
 @OptIn(Internal::class)
-data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
-
-  /**
-   * Initialize a [Schema] from the [schemaText].
-   *
-   * @throws IllegalArgumentException if the [schemaText] or [Schema] is invalid
-   */
-  constructor(
-    schemaText: KString
-  ) : this(
-    CharStreams.fromString(schemaText)
-      .let(::SchemaLexer)
-      .let(::CommonTokenStream)
-      .let(::SchemaParser)
-      .let { parser ->
-        Collector()
-          .also { collector -> ParseTreeWalker.DEFAULT.walk(collector, parser.start()) }
-          .graphs
-      }
-  )
-
-  init {
-    // Initialize/validate graph entities
-    val (_, _) = nodes.value to relationships.value
-  }
-
-  /** The [Node]s in the [graphs] indexed by [Node.name]. */
-  private val nodes: Lazy<Map<KString, Node>>
-    get() = lazy { graphs.flatMap(Graph::nodes).associateBy(Node::name) }
-
-  /** The [Relationship]s in the [graphs] indexed by [Relationship.Id]. */
-  private val relationships: Lazy<Map<Relationship.Id, Relationship>>
-    get() = lazy {
-      buildMap {
-        graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
-          val key =
-            Relationship.Id(
-              relationship.name,
-              relationship.source.validate(),
-              relationship.target.validate(),
-            )
-          require(key !in this) {
-            "Duplicate relationship ${key.name} from ${key.source} to ${key.target}"
-          }
-          this[key] = relationship
-        }
-      }
-    }
+data class Schema
+internal constructor(
+  val graphs: KList<Graph>,
+  @Internal val nodes: Map<KString, Node>,
+  @Internal val relationships: Map<Relationship.Id, Relationship>,
+) : Rule {
 
   @Suppress("CyclomaticComplexMethod", "ReturnCount", "DuplicatedCode")
   override fun validate(cypher: KString, parameters: Map<KString, KAny?>): Rule.Violation? {
     val query = Query.parse(cypher) ?: return null
     for (queryNode in query.nodes) {
       val entity = Violation.Entity.Node(queryNode)
-      val schemaNode = nodes.value[queryNode] ?: return Violation.Unknown(entity).violation
+      val schemaNode = nodes[queryNode] ?: return Violation.Unknown(entity).violation
       for (queryProperty in
         query.properties(queryNode) + query.mutatedProperties(queryNode, parameters)) {
         val schemaProperty =
@@ -121,7 +81,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
         sources
           .flatMap { source -> targets.map { target -> source to target } }
           .firstNotNullOfOrNull { (source, target) ->
-            relationships.value[Relationship.Id(label, source, target)]
+            relationships[Relationship.Id(label, source, target)]
           } ?: return Violation.Unknown(entity).violation
       for (queryProperty in query.properties(label) + query.mutatedProperties(label, parameters)) {
         val schemaProperty =
@@ -132,19 +92,6 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       }
     }
     return null
-  }
-
-  /** Validate the entity label and return the unqualified reference. */
-  private fun KString.validate(): KString {
-    return if ("." in this) {
-      val (graph, label) =
-        requireNotNull(split(".").takeIf { it.size == 2 }) { "Invalid node reference '$this'" }
-      val node =
-        requireNotNull(graphs.find { it.name == graph }?.nodes?.find { it.name == label }) {
-          "Invalid graph reference '$graph.$label'"
-        }
-      node.name
-    } else apply { require(this in nodes.value) { "Invalid node reference '$this'" } }
   }
 
   override fun toString(): String =
@@ -224,6 +171,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
    * @property source the name of the node the relationship comes from
    * @property target the name of the node the relationship goes to
    * @property isDirected whether the relationship is directed
+   * @property cardinality the cardinality constraint on this relationship
    * @property properties the relationship properties
    * @property metadata the relationship metadata
    */
@@ -235,6 +183,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     val source: KString,
     val target: KString,
     val isDirected: KBoolean,
+    val cardinality: Cardinality?,
     val properties: KList<Property>,
     val metadata: KList<Metadata>,
   ) {
@@ -246,18 +195,55 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
      * @property source the name of the node the relationship comes from
      * @property target the name of the node the relationship goes to
      */
-    @JvmRecord internal data class Id(val name: KString, val source: KString, val target: KString)
+    @JvmRecord @Internal data class Id(val name: KString, val source: KString, val target: KString)
+
+    /**
+     * The cardinality of a [Relationship].
+     *
+     * @property source the source node's outgoing [Relationship.Cardinality.Range]
+     * @property target the target node's incoming [Relationship.Cardinality.Range]
+     */
+    @JvmRecord
+    @ConsistentCopyVisibility
+    data class Cardinality internal constructor(val source: Range?, val target: Range?) {
+
+      /**
+       * The [Relationship.Cardinality] range.
+       *
+       * @property min the minimum number of relationships (`0` = optional, `1` = required)
+       * @property max the maximum number of relationships (`null` = unbounded)
+       */
+      @JvmRecord
+      @ConsistentCopyVisibility
+      data class Range internal constructor(val min: Int, val max: Int?) {
+
+        override fun toString(): KString {
+          return when {
+            max == null -> if (min == 0) "M?" else "M"
+            min == 0 -> "1?"
+            else -> "1"
+          }
+        }
+      }
+    }
 
     override fun toString(): KString {
       return buildString {
         append("      ")
         this += metadata
         append(name)
+        cardinality?.let { c ->
+          append(" [")
+          c.source?.let { r -> append("$r") }
+          append("..")
+          c.target?.let { r -> append("$r") }
+          append("]")
+        }
         append(properties.parenthesize("        "))
         append(" ")
         append(if (isDirected) "->" else "--")
         append(" ")
-        append(this@Relationship.target)
+        append(target)
       }
     }
   }
@@ -380,8 +366,9 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
   @ConsistentCopyVisibility
   data class Metadata internal constructor(val name: KString, val value: KString?)
 
-  /** An [Violation] describes a *Cypher* query with a [Schema] [violation]. */
-  internal sealed class Violation(val violation: Rule.Violation) {
+  /** A [Schema] [Violation] caused by a *Cypher* query or entities in the *Neo4j* graph. */
+  @Internal
+  sealed class Violation(val violation: Rule.Violation) {
 
     sealed class Entity(val name: KString) {
 
@@ -399,6 +386,9 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     class UnknownProperty(entity: Entity, property: KString) :
       Violation(Rule.Violation("Unknown property '$property' for ${entity.name}"))
 
+    class MissingProperty(entity: Entity, property: KString) :
+      Violation(Rule.Violation("Missing required property '$property' for ${entity.name}"))
+
     class InvalidProperty(entity: Entity, property: Property, values: KList<KAny?>) :
       Violation(
         Rule.Violation(
@@ -406,6 +396,32 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
           "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.name}"
         )
       )
+
+    class InvalidCardinality(
+      relationship: KString,
+      side: Side,
+      count: Int,
+      type: Limit,
+      limit: Int,
+    ) :
+      Violation(
+        Rule.Violation(
+          "Cardinality violation: $relationship $side has $count instances ($type $limit)"
+        )
+      ) {
+
+      enum class Side {
+
+        SOURCE,
+        TARGET,
+      }
+
+      enum class Limit {
+
+        MIN,
+        MAX,
+      }
+    }
 
     private companion object {
 
@@ -417,7 +433,55 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     }
   }
 
-  private companion object {
+  companion object {
+
+    /**
+     * Initialize a [Schema] from the [schemaText].
+     *
+     * @param schemaText the [schema](https://github.com/c-fraser/graph-guard#schema) text
+     * @throws IllegalArgumentException if the [schemaText] or [Schema] is invalid
+     */
+    @JvmStatic
+    fun init(schemaText: String): Schema {
+      val graphs =
+        CharStreams.fromString(schemaText)
+          .let(::SchemaLexer)
+          .let(::CommonTokenStream)
+          .let(::SchemaParser)
+          .let { parser ->
+            Collector()
+              .also { collector -> ParseTreeWalker.DEFAULT.walk(collector, parser.start()) }
+              .graphs
+          }
+      val nodes = graphs.flatMap(Graph::nodes).associateBy(Node::name)
+      /** Validate the entity label and return the unqualified reference. */
+      fun KString.validate(): KString {
+        return if ("." in this) {
+          val (graph, label) =
+            requireNotNull(split(".").takeIf { it.size == 2 }) { "Invalid node reference '$this'" }
+          val node =
+            requireNotNull(graphs.find { it.name == graph }?.nodes?.find { it.name == label }) {
+              "Invalid graph reference '$graph.$label'"
+            }
+          node.name
+        } else apply { require(this in nodes) { "Invalid node reference '$this'" } }
+      }
+      val relationships = buildMap {
+        graphs.flatMap(Graph::nodes).flatMap(Node::relationships).forEach { relationship ->
+          val key =
+            Relationship.Id(
+              relationship.name,
+              relationship.source.validate(),
+              relationship.target.validate(),
+            )
+          require(key !in this) {
+            "Duplicate relationship ${key.name} from ${key.source} to ${key.target}"
+          }
+          this[key] = relationship
+        }
+      }
+      return Schema(graphs, nodes, relationships)
+    }
 
     @Suppress("MaxLineLength")
     /**
@@ -427,7 +491,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
      * > [string](https://neo4j.com/docs/cypher-manual/current/functions/string/), and
      * > [temporal](https://neo4j.com/docs/cypher-manual/current/functions/temporal/) functions.
      */
-    val RESOLVABLE_FUNCTIONS: Map<KString, Any> = buildMap {
+    private val RESOLVABLE_FUNCTIONS: Map<KString, Any> = buildMap {
       val boolean = false
       val integer = 0L
       val float = 0.0
@@ -506,7 +570,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     }
 
     /** Parenthesize the [KList] of properties. */
-    fun KList<Property>.parenthesize(indent: String): KString {
+    private fun KList<Property>.parenthesize(indent: String): KString {
       if (isEmpty()) return ""
       val formatted = buildString {
         append("(")
@@ -523,7 +587,7 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     }
 
     /** Append the [metadata] to the [StringBuilder]. */
-    operator fun StringBuilder.plusAssign(metadata: KList<Metadata>) {
+    private operator fun StringBuilder.plusAssign(metadata: KList<Metadata>) {
       metadata.forEach { (name, value) ->
         append("@$name")
         if (value.isNullOrBlank()) append(" ")
@@ -536,14 +600,15 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     }
 
     /** Filter the properties in the [Query] with the [label]. */
-    fun Query.properties(label: KString): Collection<Query.Property> =
-      properties.filter { label == it.owner }
+    private fun Query.properties(label: KString): Collection<Query.Property> = properties.filter {
+      label == it.owner
+    }
 
     /**
      * Filter the mutated properties in the [Query] with the [label], and use the resolved
      * [parameters] to transform each into a [Query.Property].
      */
-    fun Query.mutatedProperties(
+    private fun Query.mutatedProperties(
       label: KString,
       parameters: Map<KString, KAny?>,
     ): Collection<Query.Property> {
@@ -579,18 +644,18 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
     }
 
     /** Find the [Property] that matches the [Query.Property]. */
-    fun KList<Property>.matches(property: Query.Property): Property? = find {
+    private fun KList<Property>.matches(property: Query.Property): Property? = find {
       property.name == it.name
     }
 
     /** Check if the [Query.Property] is within the [removedProperties]. */
-    fun Query.Property.isRemoved(removedProperties: Set<Query.RemovedProperty>): KBoolean =
+    private fun Query.Property.isRemoved(removedProperties: Set<Query.RemovedProperty>): KBoolean =
       removedProperties.find { removedProperty ->
         owner == removedProperty.owner && name == removedProperty.property
       } != null
 
     /** Validate the [property] of the [entity] per the schema [Property] and [parameters]. */
-    fun Property.validate(
+    private fun Property.validate(
       entity: Violation.Entity,
       property: Query.Property,
       parameters: Map<KString, KAny?>,
@@ -627,14 +692,14 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
      * [resolvable] map.
      * > [Unit] is returned if `this` property isn't [resolvable].
      */
-    fun KString.resolve(resolvable: Map<KString, KAny?>): KAny? =
+    private fun KString.resolve(resolvable: Map<KString, KAny?>): KAny? =
       split(".").foldRight<KString, KAny?>(resolvable) { name, parameter ->
         if (parameter is Map<*, *> && name in parameter) parameter[name] else Unit
       }
 
     /** Determine if `this` [KList] of [property] value(s) is valid. */
     @Suppress("CyclomaticComplexMethod")
-    fun KList<KAny?>.isValid(property: Property): KBoolean {
+    private fun KList<KAny?>.isValid(property: Property): KBoolean {
       fun KList<KAny?>.filterNullIf(exclude: KBoolean) = if (exclude) filterNotNull() else this
       val isAny = property.type is Property.Type.Any || property.type is Property.Type.Nullable.Any
       val isList =
@@ -693,12 +758,14 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       val source = node.name
       val target = ctx.target().get()
       val directed = ctx.DIRECTED() != null
+      val cardinality = ctx.cardinality().get()
       val properties = ctx.properties().get()
       val metadata = ctx.metadata().get()
       node =
         node.copy(
           relationships =
-            node.relationships + Relationship(name, source, target, directed, properties, metadata)
+            node.relationships +
+              Relationship(name, source, target, directed, cardinality, properties, metadata)
         )
     }
 
@@ -789,6 +856,32 @@ data class Schema internal constructor(val graphs: KList<Graph>) : Rule {
       fun SchemaParser.UnionContext.get(): Property.Type.Union {
         val types = type().map { type -> type.get() }
         return Property.Type.Union(types)
+      }
+
+      /** Get the [Relationship.Cardinality] from the [SchemaParser.CardinalityContext]. */
+      fun SchemaParser.CardinalityContext?.get(): Relationship.Cardinality? {
+        this ?: return null
+        val values = cardinalityValue()
+        return when (values.size) {
+          2 -> Relationship.Cardinality(values[0].toRange(), values[1].toRange())
+          else -> error("Cardinality '$text' must specify both source and target")
+        }
+      }
+
+      /** Convert a [SchemaParser.CardinalityValueContext] to a [Relationship.Cardinality.Range]. */
+      fun SchemaParser.CardinalityValueContext.toRange(): Relationship.Cardinality.Range {
+        val nameToken = NAME()
+        require(nameToken == null || nameToken.text == "M") {
+          "Invalid cardinality symbol '${text}'; expected '1', '1?', 'M', or 'M?'"
+        }
+        val isMany = nameToken != null
+        val isOptional = QM() != null
+        return when {
+          isMany && isOptional -> Relationship.Cardinality.Range(0, null)
+          isMany -> Relationship.Cardinality.Range(1, null)
+          isOptional -> Relationship.Cardinality.Range(0, 1)
+          else -> Relationship.Cardinality.Range(1, 1)
+        }
       }
     }
   }

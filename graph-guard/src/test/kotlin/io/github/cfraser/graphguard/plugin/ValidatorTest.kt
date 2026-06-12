@@ -63,7 +63,7 @@ class ValidatorTest : FunSpec() {
         }
       }
       withNeo4j {
-        withServer(plugin = Validator(Schema(MOVIES_SCHEMA)) then observer) { driver ->
+        withServer(plugin = Validator(Schema.init(MOVIES_SCHEMA)) then observer) { driver ->
           driver.session().use { session ->
             session.run(MoviesGraph.MATCH_TOM_HANKS).list().shouldBeEmpty()
             session.runCatching { run("MATCH (n:N) RETURN n") }
