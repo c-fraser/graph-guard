@@ -1,0 +1,37 @@
+public final class io/github/cfraser/graphguard/verify/Verifier {
+	public fun <init> (Lorg/neo4j/driver/Driver;Lio/github/cfraser/graphguard/validate/Schema;)V
+	public fun <init> (Lorg/neo4j/driver/Driver;Lio/github/cfraser/graphguard/validate/Schema;Lio/github/cfraser/graphguard/verify/Verifier$Config;)V
+	public synthetic fun <init> (Lorg/neo4j/driver/Driver;Lio/github/cfraser/graphguard/validate/Schema;Lio/github/cfraser/graphguard/verify/Verifier$Config;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun verify (Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/cfraser/graphguard/verify/Verifier$Config : java/lang/Record {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lkotlin/text/Regex;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/text/Regex;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlin/text/Regex;
+	public final fun copy (Ljava/lang/String;Lkotlin/text/Regex;)Lio/github/cfraser/graphguard/verify/Verifier$Config;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/verify/Verifier$Config;Ljava/lang/String;Lkotlin/text/Regex;ILjava/lang/Object;)Lio/github/cfraser/graphguard/verify/Verifier$Config;
+	public final fun database ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun ignore ()Lkotlin/text/Regex;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/cfraser/graphguard/verify/Verifier$Violation : java/lang/Record {
+	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;)V
+	public synthetic fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/cfraser/graphguard/validate/Schema$Violation;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;)Lio/github/cfraser/graphguard/verify/Verifier$Violation;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/verify/Verifier$Violation;Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/verify/Verifier$Violation;
+	public final fun elementId ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun violation ()Lio/github/cfraser/graphguard/validate/Schema$Violation;
+}
+

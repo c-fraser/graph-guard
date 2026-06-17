@@ -55,7 +55,8 @@ fun interface Rule {
   }
 
   /**
-   * A [Violation] describes why a *Cypher* query violates a [Rule].
+   * A [Violation] describes why a *Cypher* query, or entities in the *Neo4j* graph, violates a
+   * [Rule].
    *
    * @property message the description of the [Rule] violation
    */

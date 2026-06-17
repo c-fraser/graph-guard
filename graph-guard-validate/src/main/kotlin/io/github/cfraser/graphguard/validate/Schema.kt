@@ -366,7 +366,7 @@ internal constructor(
   @ConsistentCopyVisibility
   data class Metadata internal constructor(val name: KString, val value: KString?)
 
-  /** A [Schema] [Violation] caused by a *Cypher* query or entities in the *Neo4j* graph. */
+  /** A [Schema] [Violation] caused by a *Cypher* query, or entities in the *Neo4j* graph. */
   @Internal
   sealed class Violation(val violation: Rule.Violation) {
 
@@ -862,10 +862,9 @@ internal constructor(
       fun SchemaParser.CardinalityContext?.get(): Relationship.Cardinality? {
         this ?: return null
         val values = cardinalityValue()
-        return when (values.size) {
-          2 -> Relationship.Cardinality(values[0].toRange(), values[1].toRange())
-          else -> error("Cardinality '$text' must specify both source and target")
-        }
+        return if (values.size == 2)
+          Relationship.Cardinality(values[0].toRange(), values[1].toRange())
+        else error("Cardinality '$text' must specify both source and target")
       }
 
       /** Convert a [SchemaParser.CardinalityValueContext] to a [Relationship.Cardinality.Range]. */

@@ -13,14 +13,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
+plugins {
+  `java-library`
+  `maven-publish`
+  signing
+}
 
-include(
-  "graph-guard",
-  "graph-guard-app",
-  "graph-guard-script",
-  "graph-guard-utils",
-  "graph-guard-validate",
-  "graph-guard-verify",
-  "graph-guard-web",
-)
+dependencies {
+  api(project(":graph-guard-validate"))
+  api(libs.neo4j.java.driver)
+  implementation(project(":graph-guard-utils"))
+  implementation(libs.kotlinx.coroutines)
+  implementation(libs.slf4j.api)
+
+  testImplementation(libs.kotest.assertions)
+  testImplementation(libs.kotest.runner)
+  testImplementation(testFixtures(project(":graph-guard")))
+  testImplementation(libs.neo4j.test.harness) { exclude(module = "neo4j-slf4j-provider") }
+}

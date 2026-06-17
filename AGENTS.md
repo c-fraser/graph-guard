@@ -6,14 +6,15 @@ This file provides guidance to AI agents working with code in this repository.
 
 Multi-module Gradle project.
 
-| Module                 | Purpose                                                                                  |
-|------------------------|------------------------------------------------------------------------------------------|
-| `graph-guard`          | Core library: `Server` (Bolt proxy), `Bolt` (protocol), `PackStream`, `plugin/Validator` |
-| `graph-guard-validate` | Schema DSL and Cypher validation: `Schema`, `Rule`, `Query`, `Patterns`                  |
-| `graph-guard-script`   | `Script` plugin - loads `Server.Plugin` implementations at runtime from scripts          |
-| `graph-guard-app`      | CLI application (`CLI` - `@file:JvmName("Main")`, `Inspect`, `Web`) built with Clikt     |
-| `graph-guard-utils`    | Internal shared utilities (`Internal.kt`)                                                |
-| `graph-guard-web`      | Kotlin/JS frontend (multiplatform - not JVM)                                             |
+| Module                 | Purpose                                                                                       |
+|------------------------|-----------------------------------------------------------------------------------------------|
+| `graph-guard`          | Core library: `Server` (Bolt proxy), `Bolt` (protocol), `PackStream`, `plugin/Validator`      |
+| `graph-guard-validate` | Schema DSL and Cypher validation: `Schema`, `Rule`, `Query`, `Patterns`                       |
+| `graph-guard-script`   | `Script` plugin - loads `Server.Plugin` implementations at runtime from scripts               |
+| `graph-guard-app`      | CLI application (`CLI` - `@file:JvmName("Main")`, `Inspect`, `Web`) built with Clikt          |
+| `graph-guard-utils`    | Internal shared utilities (`Internal.kt`)                                                     |
+| `graph-guard-verify`   | Verifies stored graph data against a `Schema` (nodes, relationships, cardinality): `Verifier` |
+| `graph-guard-web`      | Kotlin/JS frontend (multiplatform - not JVM)                                                  |
 
 ## Build Commands
 
