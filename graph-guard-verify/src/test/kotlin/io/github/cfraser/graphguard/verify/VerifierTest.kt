@@ -16,6 +16,7 @@ limitations under the License.
 package io.github.cfraser.graphguard.verify
 
 import io.github.cfraser.graphguard.driver
+import io.github.cfraser.graphguard.neo4jBuilder
 import io.github.cfraser.graphguard.utils.Internal
 import io.github.cfraser.graphguard.validate.Schema
 import io.kotest.core.spec.style.FunSpec
@@ -24,13 +25,12 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.neo4j.harness.Neo4j
-import org.neo4j.harness.Neo4jBuilders
 
 @OptIn(Internal::class)
 class VerifierTest : FunSpec() {
 
   init {
-    val neo4j = Neo4jBuilders.newInProcessBuilder().build()
+    val neo4j = neo4jBuilder.build()
 
     beforeTest {
       neo4j.driver.use { d ->

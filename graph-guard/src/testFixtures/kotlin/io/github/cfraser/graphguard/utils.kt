@@ -24,6 +24,9 @@ import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteExisting
+import org.neo4j.configuration.GraphDatabaseSettings
+import org.neo4j.configuration.connectors.HttpConnector
+import org.neo4j.configuration.connectors.HttpsConnector
 import org.neo4j.driver.AuthToken
 import org.neo4j.driver.Config
 import org.neo4j.driver.Driver
@@ -39,9 +42,19 @@ val LOCAL = NamedTag("Local")
 val isE2eTest: Boolean
   get() = System.getProperty("graph-guard.e2e.test")?.toBooleanStrictOrNull() == true
 
+/** An in-process [Neo4jBuilder] with some configurations to optimize startup time. */
+val neo4jBuilder: Neo4jBuilder
+  get() =
+    Neo4jBuilders.newInProcessBuilder()
+      .withConfig(HttpConnector.enabled, false)
+      .withConfig(HttpsConnector.enabled, false)
+      .withConfig(GraphDatabaseSettings.pagecache_memory, 8L * 1024 * 1024)
+
 /** Use a running [Neo4j] with the test [block]. */
 fun <T> withNeo4j(customize: Neo4jBuilder.() -> Neo4jBuilder = { this }, block: Neo4j.() -> T): T {
-  return Neo4jBuilders.newInProcessBuilder().run(customize).build().use { neo4j -> neo4j.block() }
+  return neo4jBuilder.run(customize).build().use { neo4j ->
+    neo4j.block()
+  }
 }
 
 /** Run the [block] using a [Server] initialized with the [plugin]. */

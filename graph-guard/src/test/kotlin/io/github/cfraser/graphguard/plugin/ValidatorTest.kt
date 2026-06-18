@@ -25,7 +25,6 @@ import io.github.cfraser.graphguard.withNeo4j
 import io.github.cfraser.graphguard.withServer
 import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.inspectors.forExactly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldBeOneOf
 import io.kotest.matchers.collections.shouldContainAll
@@ -71,7 +70,7 @@ class ValidatorTest : FunSpec() {
         }
       }
       lock.isLocked shouldBe false
-      events.forExactly(1) { it shouldBe Server.Started }
+      events.count { it == Server.Started } shouldBe 1
       events.filterIsInstance<Server.Connected>() shouldContainInOrder
         clientConnections.flatMap {
           listOf(Server.Connected(it), Server.Connected(graphConnection))
@@ -118,7 +117,7 @@ class ValidatorTest : FunSpec() {
         clientConnections.flatMap {
           listOf(Server.Disconnected(graphConnection), Server.Disconnected(it))
         }
-      events.forExactly(1) { it shouldBe Server.Stopped }
+      events.count { it == Server.Stopped } shouldBe 1
     }
   }
 }

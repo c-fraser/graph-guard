@@ -275,7 +275,8 @@ constructor(
                 .let { builder ->
                   when (val trustManager = trustManager) {
                     null -> builder
-                    else -> builder.trustManager(trustManager)
+                    // disable endpoint identification so the trust manager handles all validation
+                    else -> builder.trustManager(trustManager).endpointIdentificationAlgorithm(null)
                   }
                 }
                 .build()
