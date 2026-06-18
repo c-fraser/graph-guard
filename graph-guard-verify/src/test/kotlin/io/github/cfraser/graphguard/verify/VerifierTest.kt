@@ -188,6 +188,6 @@ class VerifierTest : FunSpec() {
 
     /** The [io.github.cfraser.graphguard.validate.Rule.Violation] message. */
     val Verifier.Violation.message: String
-      get() = violation.violation.message
+      get() = schemaViolation.ruleViolation.message
   }
 }

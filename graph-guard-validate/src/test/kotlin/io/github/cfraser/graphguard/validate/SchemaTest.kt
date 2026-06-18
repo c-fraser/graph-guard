@@ -185,7 +185,7 @@ class SchemaTest : FunSpec() {
           mapOf("properties" to mapOf("times" to emptyList<Long>(), "capacity" to 100)) expect
           Violation.UnknownProperty(SHOWING, "capacity"),
       ) { (query, parameters, expected) ->
-        MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
+        MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.ruleViolation
       }
     }
 
@@ -209,7 +209,7 @@ class SchemaTest : FunSpec() {
           emptyMap() expect
           Violation.UnknownProperty(SHOWING, "price"),
       ) { (query, parameters, expected) ->
-        MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
+        MOVIES_AND_PLACES_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.ruleViolation
       }
     }
 
@@ -231,7 +231,7 @@ class SchemaTest : FunSpec() {
         "CREATE (:N {p: 'TRUE'})" with emptyMap() expect invalidProperty("TRUE"),
         $$"CREATE (:N {p: $p})" with mapOf("p" to "FALSE") expect invalidProperty("FALSE"),
       ) { (query, parameters, expected) ->
-        UNION_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.violation
+        UNION_GRAPH_SCHEMA.validate(query, parameters) shouldBe expected?.ruleViolation
       }
     }
 
@@ -266,7 +266,7 @@ class SchemaTest : FunSpec() {
           mapOf("b" to null) expect
           Violation.InvalidProperty(B, B_B, listOf(null)),
       ) { (query, parameters, expected) ->
-        schema.validate(query, parameters) shouldBe expected?.violation
+        schema.validate(query, parameters) shouldBe expected?.ruleViolation
       }
     }
 
@@ -349,7 +349,7 @@ class SchemaTest : FunSpec() {
           }
           .toTypedArray(),
       ) { (query, parameters, expected) ->
-        schema.validate(query, parameters) shouldBe expected?.violation
+        schema.validate(query, parameters) shouldBe expected?.ruleViolation
       }
     }
 
@@ -450,7 +450,7 @@ class SchemaTest : FunSpec() {
         "CREATE (:J {j: ['']})" with emptyMap() expect null,
         "CREATE (:J {j: null})" with emptyMap() expect null,
       ) { (query, parameters, expected) ->
-        schema.validate(query, parameters) shouldBe expected?.violation
+        schema.validate(query, parameters) shouldBe expected?.ruleViolation
       }
     }
 

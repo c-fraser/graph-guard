@@ -35,6 +35,7 @@ for [Neo4j](https://neo4j.com/) 5+ (compatible databases).
     * [Demo](#demo)
 * [Libraries](#libraries)
   * [graph-guard-validate](#graph-guard-validate)
+  * [graph-guard-verify](#graph-guard-verify)
   * [graph-guard-script](#graph-guard-script)
 * [License](#license)
 
@@ -454,6 +455,16 @@ to [Patterns](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io
 for additional
 Cypher [Rule](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html)
 implementations.
+
+### graph-guard-verify
+
+`graph-guard-verify`
+provides [Verifier](https://c-fraser.github.io/graph-guard/api/graph-guard-verify/io.github.cfraser.graphguard.verify/-verifier/index.html),
+which verifies that the nodes and relationships in a [Neo4j](https://neo4j.com/) graph conform to
+a [Schema](https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-schema/index.html).
+Unlike [Validator](#graph-guard-validate), which validates Cypher queries in
+realtime, [Verifier](https://c-fraser.github.io/graph-guard/api/graph-guard-verify/io.github.cfraser.graphguard.verify/-verifier/index.html)
+introspects data already stored in the graph and reports violations for non-compliant entities.
 
 ### graph-guard-script
 

@@ -35,6 +35,7 @@ import org.neo4j.driver.Record
 import org.neo4j.driver.SessionConfig
 import org.neo4j.driver.Value
 import org.neo4j.driver.async.AsyncSession
+import org.slf4j.LoggerFactory
 
 /**
  * [Verifier] uses the [driver] and [config] to verify that the entities in a
@@ -65,6 +66,7 @@ constructor(
    * @return the [Violation]s found, empty when the graph is [schema] compliant
    */
   suspend fun verify(labels: Collection<String>): Collection<Violation> {
+    LOGGER.debug("Verifying labels: {}", labels)
     val session =
       driver.session(
         AsyncSession::class.java,
@@ -82,9 +84,12 @@ constructor(
             session.verifyRelationships(label, TARGET)
         }
         .filterNot { violation ->
-          config.ignore?.containsMatchIn(violation.violation.violation.message) == true
+          config.ignore?.containsMatchIn(violation.schemaViolation.ruleViolation.message) == true
         }
-        .distinctBy { it.violation.violation }
+        .distinctBy { violation -> violation.schemaViolation.ruleViolation }
+        .also { violations ->
+          LOGGER.info("Found violations: {}", violations)
+        }
     } finally {
       session.closeAsync().await()
     }
@@ -92,7 +97,7 @@ constructor(
 
   /** Check for [Violation]s on the nodes with the [label]. */
   private suspend fun AsyncSession.verifyNodes(label: String): Collection<Violation> =
-    read(
+    run(
         """
         MATCH (n:${label.quoted()})
         RETURN elementId(n) AS id, labels(n) AS labels, keys(n) AS properties
@@ -102,17 +107,18 @@ constructor(
       .flatMap { record ->
         val id = record["id"].asString()
         val properties = record["properties"].asList(Value::asString).toSet()
-        val schemaLabels = record["labels"].asList(Value::asString).filter { it in schema.nodes }
-        val missing = schemaLabels.flatMap { schemaLabel ->
+        val nodeLabels =
+          record["labels"].asList(Value::asString).filter { nodeLabel -> nodeLabel in schema.nodes }
+        val missing = nodeLabels.flatMap { nodeLabel ->
           schema.nodes
-            .getValue(schemaLabel)
+            .getValue(nodeLabel)
             .properties
-            .filterNot { it.type is Type.Nullable }
-            .filterNot { it.name in properties }
+            .filterNot { property -> property.type is Type.Nullable }
+            .filterNot { property -> property.name in properties }
             .map { property ->
               Violation(
                 MissingProperty(
-                  Node(schemaLabel),
+                  Node(nodeLabel),
                   property.name,
                 ),
                 id,
@@ -120,12 +126,12 @@ constructor(
             }
         }
         val known =
-          schemaLabels.flatMapTo(mutableSetOf()) { schemaLabel ->
+          nodeLabels.flatMapTo(mutableSetOf()) { schemaLabel ->
             schema.nodes.getValue(schemaLabel).properties.map(Schema.Property::name)
           }
         val unknown =
           properties
-            .filterNot { it in known }
+            .filterNot { property -> property in known }
             .map { property ->
               Violation(
                 UnknownProperty(Node(label), property),
@@ -144,7 +150,7 @@ constructor(
     side: Side,
   ): Collection<Violation> {
     val records =
-      read(
+      run(
         when (side) {
           SOURCE ->
             $$"""
@@ -171,7 +177,7 @@ constructor(
         }
       )
     return records
-      .filterNot { it["id"].isNull }
+      .filterNot { record -> record["id"].isNull }
       .flatMap { record ->
         verifyRelationship(label, side, record)
       } + verifyRelationships(label, side, records)
@@ -202,23 +208,23 @@ constructor(
     val entity =
       VRelationship(
         type,
-        schemaRelationship?.let { listOf(it.source) } ?: sources,
-        schemaRelationship?.let { listOf(it.target) } ?: targets,
+        schemaRelationship?.let { relationship -> listOf(relationship.source) } ?: sources,
+        schemaRelationship?.let { relationship -> listOf(relationship.target) } ?: targets,
       )
     if (schemaRelationship == null) {
       return listOf(Violation(Unknown(entity), id))
     }
     val missing =
       schemaRelationship.properties
-        .filterNot { it.type is Type.Nullable }
-        .filterNot { it.name in properties }
+        .filterNot { property -> property.type is Type.Nullable }
+        .filterNot { property -> property.name in properties }
         .map { property ->
           Violation(MissingProperty(entity, property.name), id)
         }
     val known = schemaRelationship.properties.mapTo(mutableSetOf(), Schema.Property::name)
     val unknown =
       properties
-        .filterNot { it in known }
+        .filterNot { property -> property in known }
         .map { property ->
           Violation(UnknownProperty(entity, property), id)
         }
@@ -234,7 +240,7 @@ constructor(
     fun Relationship.range() = if (side == SOURCE) cardinality?.source else cardinality?.target
     fun Relationship.sideLabel() = if (side == SOURCE) source else target
     fun Relationship.otherLabel() = if (side == SOURCE) target else source
-    val byNode = records.groupBy { it["node"].asString() }
+    val byNode = records.groupBy { record -> record["node"].asString() }
     return schema.relationships.values
       .filter { relationship ->
         relationship.sideLabel() == label && relationship.range() != null
@@ -267,8 +273,8 @@ constructor(
    *
    * @property database if not `null`, the database to verify, otherwise, the default database for
    *   the authenticated user
-   * @property ignore if not `null`, [Verifier.verify] ignores [Violation.violation]s that match the
-   *   [Regex]
+   * @property ignore if not `null`, [Verifier.verify] ignores [Violation.schemaViolation]s that
+   *   match the [Regex]
    */
   @JvmRecord
   data class Config
@@ -279,26 +285,38 @@ constructor(
   )
 
   /**
-   * A [Schema] [violation] found for a specific node or relationship in the graph.
+   * A [schemaViolation] found for a specific node or relationship in the graph.
    *
-   * @property violation the [Schema.Violation]
+   * @property schemaViolation the [Schema.Violation]
    * @property elementId the
    *   [element id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-elementid)
    *   of the offending node or relationship
    */
-  @JvmRecord data class Violation(val violation: Schema.Violation, val elementId: String? = null)
+  @JvmRecord
+  data class Violation(val schemaViolation: Schema.Violation, val elementId: String? = null)
 
   private companion object {
 
+    val LOGGER = LoggerFactory.getLogger(Verifier::class.java)!!
+
     /** Run the [cypher] with the [parameters] in a read transaction then collect the [Record]s. */
-    suspend fun AsyncSession.read(
+    suspend fun AsyncSession.run(
       cypher: String,
       parameters: Map<String, Any?> = emptyMap(),
-    ): Collection<Record> =
-      executeReadAsync { tx -> tx.runAsync(cypher, parameters).thenCompose { it.listAsync() } }
-        .await()
+    ): Collection<Record> {
+      LOGGER.debug("Running query: {} {}", parameters, cypher)
+      return try {
+        executeReadAsync { tx ->
+            tx.runAsync(cypher, parameters).thenCompose { cursor -> cursor.listAsync() }
+          }
+          .await()
+      } catch (e: Exception) {
+        LOGGER.error("Failed to run query: {} {}", parameters, cypher, e)
+        emptyList()
+      }
+    }
 
-    /** Backtick-quote `this` label/type, escaping any backtick it contains. */
+    /** Backtick-quote `this` label/type, escaping any backticks it contains. */
     fun String.quoted(): String = "`${replace("`", "``")}`"
   }
 }

@@ -512,7 +512,7 @@ public final class io/github/cfraser/graphguard/validate/Schema$Relationship$Id 
 
 public abstract class io/github/cfraser/graphguard/validate/Schema$Violation {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getViolation-Z5Kgo0c ()Ljava/lang/String;
+	public final fun getRuleViolation-Z5Kgo0c ()Ljava/lang/String;
 }
 
 public abstract class io/github/cfraser/graphguard/validate/Schema$Violation$Entity {

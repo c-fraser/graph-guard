@@ -63,14 +63,14 @@ internal constructor(
     val query = Query.parse(cypher) ?: return null
     for (queryNode in query.nodes) {
       val entity = Violation.Entity.Node(queryNode)
-      val schemaNode = nodes[queryNode] ?: return Violation.Unknown(entity).violation
+      val schemaNode = nodes[queryNode] ?: return Violation.Unknown(entity).ruleViolation
       for (queryProperty in
         query.properties(queryNode) + query.mutatedProperties(queryNode, parameters)) {
         val schemaProperty =
           schemaNode.properties.matches(queryProperty)
             ?: if (queryProperty.isRemoved(query.removedProperties)) continue
-            else return Violation.UnknownProperty(entity, queryProperty.name).violation
-        return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
+            else return Violation.UnknownProperty(entity, queryProperty.name).ruleViolation
+        return schemaProperty.validate(entity, queryProperty, parameters)?.ruleViolation ?: continue
       }
     }
     for (queryRelationship in query.relationships) {
@@ -82,13 +82,13 @@ internal constructor(
           .flatMap { source -> targets.map { target -> source to target } }
           .firstNotNullOfOrNull { (source, target) ->
             relationships[Relationship.Id(label, source, target)]
-          } ?: return Violation.Unknown(entity).violation
+          } ?: return Violation.Unknown(entity).ruleViolation
       for (queryProperty in query.properties(label) + query.mutatedProperties(label, parameters)) {
         val schemaProperty =
           schemaRelationship.properties.matches(queryProperty)
             ?: if (queryProperty.isRemoved(query.removedProperties)) continue
-            else return Violation.UnknownProperty(entity, queryProperty.name).violation
-        return schemaProperty.validate(entity, queryProperty, parameters)?.violation ?: continue
+            else return Violation.UnknownProperty(entity, queryProperty.name).ruleViolation
+        return schemaProperty.validate(entity, queryProperty, parameters)?.ruleViolation ?: continue
       }
     }
     return null
@@ -368,7 +368,7 @@ internal constructor(
 
   /** A [Schema] [Violation] caused by a *Cypher* query, or entities in the *Neo4j* graph. */
   @Internal
-  sealed class Violation(val violation: Rule.Violation) {
+  sealed class Violation(val ruleViolation: Rule.Violation) {
 
     sealed class Entity(val name: KString) {
 
