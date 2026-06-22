@@ -310,7 +310,7 @@ constructor(
             tx.runAsync(cypher, parameters).thenCompose { cursor -> cursor.listAsync() }
           }
           .await()
-      } catch (e: Exception) {
+      } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
         LOGGER.error("Failed to run query: {} {}", parameters, cypher, e)
         emptyList()
       }

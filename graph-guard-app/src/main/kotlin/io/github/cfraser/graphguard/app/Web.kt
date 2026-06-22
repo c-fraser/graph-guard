@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+@file:OptIn(Internal::class)
+
 package io.github.cfraser.graphguard.app
 
 import io.github.cfraser.graphguard.Bolt
@@ -21,15 +23,27 @@ import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.app.Command.Output
 import io.github.cfraser.graphguard.app.Web.PluginLoader.mutex
 import io.github.cfraser.graphguard.plugin.Script
+import io.github.cfraser.graphguard.utils.Internal
+import io.github.cfraser.graphguard.validate.Query
+import io.github.cfraser.graphguard.validate.Schema
+import io.github.cfraser.graphguard.verify.Verifier
 import io.github.cfraser.graphguard.web.rpc.Message
 import io.github.cfraser.graphguard.web.rpc.Service
+import io.github.cfraser.graphguard.web.rpc.Violation
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -42,15 +56,24 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.Driver
+import org.neo4j.driver.GraphDatabase
 
 /**
  * Start the [Web] application.
  *
  * @property port the port number to bind the [Web.server] to
- * @property schema the schema text used to validate queries
+ * @property schemaText the schema text used to validate queries
+ * @property graphUri the Bolt URI of the graph being proxied
+ * @property verifyOptions the [Command.VerifyOptions] for the [Verifier]
  */
-internal class Web(val port: Int, private val schema: Lazy<String?>) :
-  Output, Server.Plugin, Service {
+internal class Web(
+  val port: Int,
+  private val schemaText: Lazy<String?>,
+  private val graphUri: Lazy<String>,
+  private val verifyOptions: Lazy<Command.VerifyOptions?>,
+) : Output, Server.Plugin, Service {
 
   val server =
     embeddedServer(Netty, port) {
@@ -62,11 +85,60 @@ internal class Web(val port: Int, private val schema: Lazy<String?>) :
           registerService<Service> { this@Web }
         }
       }
+      // after application startup, begin the periodic verification according to the interval
+      monitor.subscribe(ApplicationStarted) handler@{
+        val options = verifyOptions.value ?: return@handler
+        verifyScope.launch {
+          while (true) {
+            delay(options.interval)
+            verify()
+          }
+        }
+      }
+      // close the driver after the application is stopped
+      monitor.subscribe(ApplicationStopped) {
+        verifyScope.cancel()
+        driver?.runCatching { close() }
+      }
     }
 
   private val messages = MutableSharedFlow<Message>(replay = 2048)
+  private val violations = MutableSharedFlow<Violation>(replay = 2048)
 
-  override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) = message
+  private val schema: Schema? by lazy { schemaText.value?.let(Schema::init) }
+
+  /** A [Mutex] to isolate [Verifier.verify] execution. */
+  private val verifyMutex = Mutex()
+
+  /**
+   * The [CoroutineScope] running the [kotlinx.coroutines.Job] to [Verifier.verify] the graph
+   * periodically.
+   */
+  private val verifyScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+  /** The [Driver] to use to [Verifier.verify] the graph. */
+  private val driver: Driver? by lazy driver@{
+    val options = verifyOptions.value ?: return@driver null
+    GraphDatabase.driver(graphUri.value, AuthTokens.basic(options.user, options.password))
+  }
+
+  /** A [Mutex] synchronizing access to [recentLabels]. */
+  private val labelsMutex = Mutex()
+
+  /**
+   * The recent node labels from [intercept]ed [Bolt.Run] messages.
+   *
+   * > Used to incrementally [Verifier.verify] the graph.
+   */
+  private val recentLabels = mutableSetOf<String>()
+
+  override suspend fun intercept(session: Bolt.Session, message: Bolt.Message): Bolt.Message {
+    if (message is Bolt.Run) {
+      val labels = Query.parse(message.query)?.nodes.orEmpty()
+      if (labels.isNotEmpty()) labelsMutex.withLock { recentLabels += labels }
+    }
+    return message
+  }
 
   override suspend fun observe(event: Server.Event) {
     if (event !is Server.Proxied) return
@@ -98,11 +170,30 @@ internal class Web(val port: Int, private val schema: Lazy<String?>) :
 
   override fun getMessages() = messages
 
-  override suspend fun getSchema() = schema.value
+  override fun getViolations() = violations
+
+  override suspend fun getSchema() = schemaText.value
 
   override suspend fun getPlugin() = PluginLoader.getPlugin()
 
   override suspend fun load(script: String?) = PluginLoader.load(script)
+
+  override suspend fun verify() {
+    val driver = driver ?: return
+    val schema = schema ?: return
+    val verifier = Verifier(driver, schema)
+    if (!verifyMutex.tryLock()) return
+    try {
+      val labels = labelsMutex.withLock { recentLabels.toSet().also { recentLabels.clear() } }
+      verifier.verify(labels).forEach { violation ->
+        violations.emit(
+          Violation(violation.schemaViolation.ruleViolation.message, violation.elementId)
+        )
+      }
+    } finally {
+      verifyMutex.unlock()
+    }
+  }
 
   /**
    * A [Server.Plugin] that dynamically loads [io.github.cfraser.graphguard.plugin.Script] plugins.

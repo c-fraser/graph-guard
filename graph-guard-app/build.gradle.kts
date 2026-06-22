@@ -31,6 +31,8 @@ jib { from { image = "eclipse-temurin:21" } }
 dependencies {
   implementation(project(":graph-guard"))
   implementation(project(":graph-guard-script"))
+  implementation(project(":graph-guard-utils"))
+  implementation(project(":graph-guard-verify"))
   implementation(project(":graph-guard-web"))
   implementation(libs.caffeine)
   implementation(libs.clikt)

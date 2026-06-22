@@ -22,12 +22,15 @@ import ch.qos.logback.classic.Logger
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.parameters.groups.OptionGroup
+import com.github.ajalt.clikt.parameters.groups.cooccurring
 import com.github.ajalt.clikt.parameters.groups.default
 import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
@@ -45,6 +48,7 @@ import io.github.cfraser.graphguard.plugin.Validator
 import io.github.cfraser.graphguard.validate.Schema
 import java.net.URI
 import kotlin.io.path.exists
+import kotlin.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
@@ -117,11 +121,13 @@ internal class Command : CliktCommand(name = "graph-guard") {
 
   private val debug by option("--debug", help = "Enable debug logging").flag()
 
+  private val verify by VerifyOptions().cooccurring()
+
   private val output by
     mutuallyExclusiveOptions<Output>(
       option("--inspect", help = "Inspect proxied Bolt messages").flag().convert { Inspect },
       option("--web", help = "Run the web application").int().convert { port ->
-        Web(port, lazy { schema })
+        Web(port, lazy { schema }, lazy { graph }, lazy { verify })
       },
     )
 
@@ -151,7 +157,6 @@ internal class Command : CliktCommand(name = "graph-guard") {
                 .styled(TextColors.brightCyan, TextStyles.underline.style) +
               System.lineSeparator()
           )
-
           Web.PluginLoader.run {
             script?.also { script -> runBlocking(Dispatchers.IO) { load(script) } }
             schema?.let(Schema::init)?.let(::Validator)?.let { plugin -> this then plugin } ?: this
@@ -168,6 +173,20 @@ internal class Command : CliktCommand(name = "graph-guard") {
 
   /** [Command] output options. */
   sealed interface Output
+
+  /** An [OptionGroup] for the [io.github.cfraser.graphguard.verify.Verifier]. */
+  class VerifyOptions : OptionGroup("Verifier options") {
+
+    val user: String by option("--user", help = "Neo4j username for the verifier").required()
+
+    val password: String by
+      option("--password", help = "Neo4j password for the verifier").required()
+
+    val interval: Duration by
+      option("--interval", help = "How often to verify Neo4j (e.g. 1m, 1h)")
+        .convert { interval -> Duration.parse(interval) }
+        .required()
+  }
 
   private companion object {
 

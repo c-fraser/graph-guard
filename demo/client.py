@@ -506,12 +506,64 @@ def main(
                 "Invalid Cypher syntax test (should fail)",
             )
 
+            # ===== CARDINALITY VIOLATION TESTS =====
+            print("\n" + "=" * 80)
+            print("SECTION 8: Cardinality Violation Queries (Verifier Violations)")
+            print("=" * 80)
+
+            run_query(
+                session,
+                """CREATE (m:Movie {title: 'Orphan Film', released: 2024, tagline: 'No crew'})
+                   RETURN m""",
+                "Movie with no ACTED_IN, DIRECTED, PRODUCED, or WROTE (4 violations)",
+                expected_count=1,
+            )
+
+            run_query(
+                session,
+                """MATCH (p:Person {name: 'Tom Hanks'})
+                   CREATE (m:Movie {title: 'Actorless Film', released: 2024, tagline: 'Director only'})
+                   CREATE (p)-[:DIRECTED]->(m)
+                   CREATE (p)-[:PRODUCED]->(m)
+                   CREATE (p)-[:WROTE]->(m)
+                   RETURN m""",
+                "Movie with DIRECTED/PRODUCED/WROTE but no ACTED_IN (1 violation)",
+                expected_count=1,
+            )
+
+            run_query(
+                session,
+                """MATCH (p:Person {name: 'Tom Hanks'})
+                   CREATE (m:Movie {title: 'Directorless Film', released: 2024, tagline: 'Actor only'})
+                   CREATE (p)-[:ACTED_IN {roles: ['Himself']}]->(m)
+                   CREATE (p)-[:PRODUCED]->(m)
+                   CREATE (p)-[:WROTE]->(m)
+                   RETURN m""",
+                "Movie with ACTED_IN/PRODUCED/WROTE but no DIRECTED (1 violation)",
+                expected_count=1,
+            )
+
+            run_query(
+                session,
+                """MATCH (p:Person {name: 'Tom Hanks'})
+                   CREATE (m:Movie {title: 'Unproduced Film', released: 2024, tagline: 'No producer or writer'})
+                   CREATE (p)-[:ACTED_IN {roles: ['Himself']}]->(m)
+                   CREATE (p)-[:DIRECTED]->(m)
+                   RETURN m""",
+                "Movie with ACTED_IN/DIRECTED but no PRODUCED or WROTE (2 violations)",
+                expected_count=1,
+            )
+
             # ===== CLEANUP =====
             print("\n" + "=" * 80)
             print("Cleanup")
             print("=" * 80)
             session.run("MATCH (n:Person {name: 'Test Actor'}) DETACH DELETE n")
             session.run("MATCH (n:Movie {title: 'Test Movie'}) DETACH DELETE n")
+            session.run("MATCH (n:Movie {title: 'Orphan Film'}) DETACH DELETE n")
+            session.run("MATCH (n:Movie {title: 'Actorless Film'}) DETACH DELETE n")
+            session.run("MATCH (n:Movie {title: 'Directorless Film'}) DETACH DELETE n")
+            session.run("MATCH (n:Movie {title: 'Unproduced Film'}) DETACH DELETE n")
             print("✓ Test data cleaned up")
 
         print("✓ Completed tests!")

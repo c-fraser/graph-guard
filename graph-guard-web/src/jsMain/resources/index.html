@@ -1127,6 +1127,83 @@
       .plugin-code-editor::-webkit-scrollbar-thumb:hover {
         background: var(--scrollbar-thumb-hover);
       }
+      .header-schema-icon.verify-running {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.3);
+        cursor: default;
+        pointer-events: none;
+        opacity: 0.8;
+      }
+      .violation-container {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .violation-list {
+        padding: 20px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+      }
+      .violation-list::-webkit-scrollbar {
+        width: 8px;
+      }
+      .violation-list::-webkit-scrollbar-track {
+        background: var(--scrollbar-track);
+        border-radius: 4px;
+      }
+      .violation-list::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 4px;
+      }
+      .violation-list::-webkit-scrollbar-thumb:hover {
+        background: var(--scrollbar-thumb-hover);
+      }
+      .violation-card {
+        margin-bottom: 8px;
+        border-radius: 6px;
+        padding: 12px 16px;
+        background-color: rgba(239, 68, 68, 0.1);
+        border-left: 4px solid var(--accent-error);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-left-width: 4px;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .violation-card:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+      .violation-icon {
+        color: var(--accent-error);
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .violation-body {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+      .violation-message {
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        word-break: break-word;
+      }
+      .violation-element-id {
+        font-family: 'Courier New', monospace;
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
     </style>
   </head>
   <body>

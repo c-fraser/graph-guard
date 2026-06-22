@@ -32,6 +32,12 @@ interface Service {
   fun getMessages(): Flow<Message>
 
   /**
+   * Get a [Flow] of [Violation]s reported by the
+   * [Verifier](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-verify/src/main/kotlin/io/github/cfraser/graphguard/verify/Verifier.kt).
+   */
+  fun getViolations(): Flow<Violation>
+
+  /**
    * Get the [schema text](https://github.com/c-fraser/graph-guard?tab=readme-ov-file#schema) being
    * used by *graph-guard* to validate queries.
    */
@@ -42,6 +48,9 @@ interface Service {
 
   /** Evaluate the [script] then load the *graph-guard* plugin. */
   suspend fun load(script: String?)
+
+  /** Initiate ad-hoc graph verification, emitting violations to the [getViolations] [Flow]. */
+  suspend fun verify()
 }
 
 /**
@@ -138,3 +147,8 @@ sealed interface Message {
     @Serializable data class Failure(val metadata: JsonObject) : Response
   }
 }
+
+/**
+ * > Refer to [Verifier.Violation](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-verify/src/main/kotlin/io/github/cfraser/graphguard/verify/Verifier.kt).
+ */
+@Serializable data class Violation(val message: String, val elementId: String?)

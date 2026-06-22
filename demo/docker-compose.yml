@@ -32,6 +32,12 @@ services:
       - '--script'
       - '/app/plugin.gg.kts'
       - '--debug'
+      - '--user'
+      - 'neo4j'
+      - '--password'
+      - 'password'
+      - '--interval'
+      - '1m'
     healthcheck:
       test: ['CMD-SHELL', 'exit 0']
       # wait 30 seconds for graph-guard to compile the plugin script before starting the server

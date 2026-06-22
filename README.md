@@ -158,11 +158,11 @@ const val MOVIES_SCHEMA =
 ```kotlin
 graph Movies {
   node Person(name: String, born: Integer):
-      ACTED_IN(roles: List<String>) -> Movie,
-      DIRECTED -> Movie,
-      PRODUCED -> Movie,
-      WROTE -> Movie,
-      REVIEWED(summary: String, rating: Integer) -> Movie;
+      ACTED_IN [M?..M](roles: List<String>) -> Movie,
+      DIRECTED [M?..M] -> Movie,
+      PRODUCED [M?..M] -> Movie,
+      WROTE [M?..M] -> Movie,
+      REVIEWED [M?..M?](summary: String, rating: Integer) -> Movie;
 
   node Movie(title: String, released: Integer, tagline: String);
 }
@@ -218,19 +218,20 @@ constrains the source [node](#nodes)'s outgoing count or the target [node](#node
 | `M`    | 1   | >=1 |
 | `M?`   | 0   | >=0 |
 
-For example, the following expresses that a `Movie` requires at least one actor while a `Person`
-may act in any number of movies.
+For example, the following explains the cardinality constraints in the [movies schema](#schema).
 
-[//]: # (@formatter:off)
-```elm
-graph Movies {
-  node Person(name: String):
-      ACTED_IN [M?..M] -> Movie;
+| Relationship | `Person` | `Movie` | Description                                                                        |
+|--------------|----------|---------|------------------------------------------------------------------------------------|
+| `ACTED_IN`   | `M?`     | `M`     | a person may act in any number of movies; a movie must have at least one actor     |
+| `DIRECTED`   | `M?`     | `M`     | a person may direct any number of movies; a movie must have at least one director  |
+| `PRODUCED`   | `M?`     | `M`     | a person may produce any number of movies; a movie must have at least one producer |
+| `WROTE`      | `M?`     | `M`     | a person may write any number of movies; a movie must have at least one writer     |
+| `REVIEWED`   | `M?`     | `M?`    | a person may review any number of movies; reviews are optional on a movie          |
 
-  node Movie(title: String);
-}
-```
-[//]: # (@formatter:on)
+> Cardinality violations can't be detected from a query alone. Whether a node satisfies its
+> constraints depends on the existing graph state, which the [Validator](#design) isn't aware of
+> when the message is intercepted. The [Verifier](#graph-guard-verify) addresses this by inspecting
+> the graph directly.
 
 #### Properties
 

@@ -23,11 +23,11 @@ const val MOVIES_SCHEMA =
 
 graph Movies {
   node Person(name: String, born: Integer):
-      ACTED_IN(roles: List<String>) -> Movie,
-      DIRECTED -> Movie,
-      PRODUCED -> Movie,
-      WROTE -> Movie,
-      REVIEWED(summary: String, rating: Integer) -> Movie;
+      ACTED_IN [M?..M](roles: List<String>) -> Movie,
+      DIRECTED [M?..M] -> Movie,
+      PRODUCED [M?..M] -> Movie,
+      WROTE [M?..M] -> Movie,
+      REVIEWED [M?..M?](summary: String, rating: Integer) -> Movie;
 
   node Movie(title: String, released: Integer, tagline: String);
 }

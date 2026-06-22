@@ -25,6 +25,7 @@ import dev.fritz2.headless.foundation.portalRoot
 import dev.fritz2.routing.routerOf
 import io.github.cfraser.graphguard.web.rpc.Message
 import io.github.cfraser.graphguard.web.rpc.Service
+import io.github.cfraser.graphguard.web.rpc.Violation
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.js.Js
 import kotlinx.browser.document
@@ -62,11 +63,14 @@ private enum class Page(
 
   MESSAGE_STREAM("Messages", "Bolt Messages", "fas fa-stream", "messages"),
   QUERY_LOG("Queries", "Query Log", "fas fa-list", "queries"),
+  VIOLATIONS("Violations", "Schema Violations", "fas fa-shield-alt", "violations"),
   PLUGINS("Plugins", "Plugin Editor", "fas fa-plug", "plugins"),
 }
 
 private val router = routerOf(Page.MESSAGE_STREAM.route)
 private val messagesStore = storeOf(emptyList<Message>(), Job())
+private val violationsStore = storeOf(emptyList<Violation>(), Job())
+private val verifyingStore = storeOf(false, Job())
 private val schemaStore = storeOf<String?>(null, Job())
 private val errorStore = storeOf<String?>(null, Job())
 private val schemaModalStore = storeOf(false, Job())
@@ -102,11 +106,19 @@ private fun RenderContext.app() {
       service
         ?.getMessages()
         ?.catch { exception -> errorStore.update("Error: ${exception.message}") }
-        ?.map { data ->
-          // Prepend latest messages
-          (listOf(data) + messagesStore.current).take(2048)
-        }
+        ?.map { data -> (listOf(data) + messagesStore.current).take(2048) }
         ?.collect { messages -> messagesStore.update(messages) }
+    } catch (ex: Exception) {
+      errorStore.update("Error: ${ex.message}")
+    }
+  }
+  CoroutineScope(job).launch {
+    try {
+      service
+        ?.getViolations()
+        ?.catch { exception -> errorStore.update("Error: ${exception.message}") }
+        ?.map { data -> (listOf(data) + violationsStore.current).take(2048) }
+        ?.collect { vs -> violationsStore.update(vs) }
     } catch (ex: Exception) {
       errorStore.update("Error: ${ex.message}")
     }
@@ -124,15 +136,10 @@ private fun RenderContext.app() {
             }
             val page = Page.entries.find { it.route == route } ?: Page.MESSAGE_STREAM
             when (page) {
-              Page.MESSAGE_STREAM -> {
-                messageStreamPage()
-              }
-              Page.QUERY_LOG -> {
-                queryLogPage()
-              }
-              Page.PLUGINS -> {
-                pluginsPage()
-              }
+              Page.MESSAGE_STREAM -> messageStreamPage()
+              Page.QUERY_LOG -> queryLogPage()
+              Page.VIOLATIONS -> violationsPage()
+              Page.PLUGINS -> pluginsPage()
             }
           }
         }
@@ -177,6 +184,35 @@ private fun RenderContext.header() {
                 clicks.map { true } handledBy schemaModalStore.update
                 i("fas fa-file-code") {}
                 span { +"Schema" }
+              }
+            }
+          }
+        }
+        Page.VIOLATIONS -> {
+          verifyingStore.data.render { verifying ->
+            div("header-schema-icon${if (verifying) " verify-running" else ""}") {
+              attr("title", if (verifying) "Verification in progress" else "Run verification now")
+              if (!verifying) {
+                clicks handledBy
+                  {
+                    CoroutineScope(job).launch {
+                      verifyingStore.update(true)
+                      try {
+                        service?.verify()
+                      } catch (ex: Exception) {
+                        errorStore.update("Verify failed: ${ex.message}")
+                      } finally {
+                        verifyingStore.update(false)
+                      }
+                    }
+                  }
+              }
+              if (verifying) {
+                i("fas fa-spinner fa-spin") {}
+                span { +"Verifying..." }
+              } else {
+                i("fas fa-shield-alt") {}
+                span { +"Verify" }
               }
             }
           }
@@ -403,6 +439,34 @@ private fun RenderContext.queryLogCard(query: RunQuery) {
             +" Parameters"
           }
           pre { +"${query.parameters}" }
+        }
+      }
+    }
+  }
+}
+
+private fun RenderContext.violationsPage() {
+  div("violation-container") {
+    violationsStore.data.render { violations -> violationList(violations) }
+  }
+}
+
+private fun RenderContext.violationList(violations: List<Violation>) {
+  div("violation-list") {
+    if (violations.isEmpty()) div("empty-state") { p { +"No violations found..." } }
+    else violations.forEach(::violationCard)
+  }
+}
+
+private fun RenderContext.violationCard(violation: Violation) {
+  div("violation-card") {
+    i("fas fa-exclamation-triangle violation-icon") {}
+    div("violation-body") {
+      span("violation-message") { +violation.message }
+      violation.elementId?.let { id ->
+        span("violation-element-id") {
+          i("fas fa-fingerprint") {}
+          +" $id"
         }
       }
     }
