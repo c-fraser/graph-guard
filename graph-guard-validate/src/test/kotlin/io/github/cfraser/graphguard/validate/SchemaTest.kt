@@ -575,7 +575,8 @@ class SchemaTest : FunSpec() {
                     source = "Person",
                     target = "Movie",
                     isDirected = true,
-                    cardinality = null,
+                    cardinality =
+                      Cardinality(Cardinality.Range(0, null), Cardinality.Range(1, null)),
                     properties = listOf(Property("roles", Type.List(Type.String), emptyList())),
                     metadata = emptyList(),
                   ),
@@ -584,7 +585,8 @@ class SchemaTest : FunSpec() {
                     source = "Person",
                     target = "Movie",
                     isDirected = true,
-                    cardinality = null,
+                    cardinality =
+                      Cardinality(Cardinality.Range(0, null), Cardinality.Range(1, null)),
                     properties = emptyList(),
                     metadata = emptyList(),
                   ),
@@ -593,7 +595,8 @@ class SchemaTest : FunSpec() {
                     source = "Person",
                     target = "Movie",
                     isDirected = true,
-                    cardinality = null,
+                    cardinality =
+                      Cardinality(Cardinality.Range(0, null), Cardinality.Range(1, null)),
                     properties = emptyList(),
                     metadata = emptyList(),
                   ),
@@ -602,7 +605,8 @@ class SchemaTest : FunSpec() {
                     source = "Person",
                     target = "Movie",
                     isDirected = true,
-                    cardinality = null,
+                    cardinality =
+                      Cardinality(Cardinality.Range(0, null), Cardinality.Range(1, null)),
                     properties = emptyList(),
                     metadata = emptyList(),
                   ),
@@ -611,7 +615,8 @@ class SchemaTest : FunSpec() {
                     source = "Person",
                     target = "Movie",
                     isDirected = true,
-                    cardinality = null,
+                    cardinality =
+                      Cardinality(Cardinality.Range(0, null), Cardinality.Range(0, null)),
                     properties =
                       listOf(
                         Property("summary", Type.String, emptyList()),
