@@ -22,13 +22,15 @@ public final class io/github/cfraser/graphguard/verify/Verifier$Config : java/la
 }
 
 public final class io/github/cfraser/graphguard/verify/Verifier$Violation : java/lang/Record {
-	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;)V
-	public synthetic fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;)V
+	public synthetic fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lio/github/cfraser/graphguard/validate/Schema$Violation;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;)Lio/github/cfraser/graphguard/verify/Verifier$Violation;
-	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/verify/Verifier$Violation;Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;ILjava/lang/Object;)Lio/github/cfraser/graphguard/verify/Verifier$Violation;
+	public final fun component3 ()Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;
+	public final fun copy (Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;)Lio/github/cfraser/graphguard/verify/Verifier$Violation;
+	public static synthetic fun copy$default (Lio/github/cfraser/graphguard/verify/Verifier$Violation;Lio/github/cfraser/graphguard/validate/Schema$Violation;Ljava/lang/String;Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;ILjava/lang/Object;)Lio/github/cfraser/graphguard/verify/Verifier$Violation;
 	public final fun elementId ()Ljava/lang/String;
+	public final fun entity ()Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public final fun schemaViolation ()Lio/github/cfraser/graphguard/validate/Schema$Violation;

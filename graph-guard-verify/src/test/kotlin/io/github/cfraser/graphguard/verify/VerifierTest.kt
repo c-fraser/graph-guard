@@ -83,8 +83,8 @@ class VerifierTest : FunSpec() {
           .map { it.message }
           .toSet() shouldBe
           setOf(
-            "Cardinality violation: R SOURCE has 0 instances (MIN 1)",
-            "Cardinality violation: R SOURCE has 2 instances (MAX 1)",
+            "Invalid cardinality; there's 0 'R' relationships from 'S1' to 'S1T' but at least 1 is expected",
+            "Invalid cardinality; there's 2 'R' relationships from 'S1' to 'S1T' but at most 1 is expected",
           )
       }
 
@@ -97,7 +97,9 @@ class VerifierTest : FunSpec() {
             labels = listOf("S1Q"),
           )
           .map { it.message } shouldBe
-          listOf("Cardinality violation: R SOURCE has 2 instances (MAX 1)")
+          listOf(
+            "Invalid cardinality; there's 2 'R' relationships from 'S1Q' to 'S1QT' but at most 1 is expected"
+          )
       }
 
       test("source side many (M) reports only MIN violation") {
@@ -109,7 +111,9 @@ class VerifierTest : FunSpec() {
             labels = listOf("SM"),
           )
           .map { it.message } shouldBe
-          listOf("Cardinality violation: R SOURCE has 0 instances (MIN 1)")
+          listOf(
+            "Invalid cardinality; there's 0 'R' relationships from 'SM' to 'SMT' but at least 1 is expected"
+          )
       }
 
       test("target side required (1) reports MIN and MAX violations") {
@@ -123,8 +127,8 @@ class VerifierTest : FunSpec() {
           .map { it.message }
           .toSet() shouldBe
           setOf(
-            "Cardinality violation: R TARGET has 0 instances (MIN 1)",
-            "Cardinality violation: R TARGET has 2 instances (MAX 1)",
+            "Invalid cardinality; there's 0 'R' relationships from 'T1' to 'T1T' but at least 1 is expected",
+            "Invalid cardinality; there's 2 'R' relationships from 'T1' to 'T1T' but at most 1 is expected",
           )
       }
 
@@ -137,7 +141,9 @@ class VerifierTest : FunSpec() {
             labels = listOf("T1QT"),
           )
           .map { it.message } shouldBe
-          listOf("Cardinality violation: R TARGET has 2 instances (MAX 1)")
+          listOf(
+            "Invalid cardinality; there's 2 'R' relationships from 'T1Q' to 'T1QT' but at most 1 is expected"
+          )
       }
 
       test("target side many (M) reports only MIN violation") {
@@ -149,7 +155,9 @@ class VerifierTest : FunSpec() {
             labels = listOf("TMT"),
           )
           .map { it.message } shouldBe
-          listOf("Cardinality violation: R TARGET has 0 instances (MIN 1)")
+          listOf(
+            "Invalid cardinality; there's 0 'R' relationships from 'TM' to 'TMT' but at least 1 is expected"
+          )
       }
     }
   }

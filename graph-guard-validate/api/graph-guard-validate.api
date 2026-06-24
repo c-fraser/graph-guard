@@ -517,19 +517,24 @@ public abstract class io/github/cfraser/graphguard/validate/Schema$Violation {
 
 public abstract class io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public abstract fun getLabel ()Ljava/lang/String;
 	public final fun getName ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$Entity$Node : io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
 	public fun <init> (Ljava/lang/String;)V
+	public fun getLabel ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$Entity$Relationship : io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
 	public fun <init> (Ljava/lang/String;Ljava/util/Collection;Ljava/util/Collection;)V
+	public fun getLabel ()Ljava/lang/String;
+	public final fun getSources ()Ljava/util/Collection;
+	public final fun getTargets ()Ljava/util/Collection;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality : io/github/cfraser/graphguard/validate/Schema$Violation {
-	public fun <init> (Ljava/lang/String;Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;ILio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;I)V
+	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity$Relationship;ILio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;I)V
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit : java/lang/Enum {
@@ -538,14 +543,6 @@ public final class io/github/cfraser/graphguard/validate/Schema$Violation$Invali
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;
 	public static fun values ()[Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Limit;
-}
-
-public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side : java/lang/Enum {
-	public static final field SOURCE Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
-	public static final field TARGET Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
-	public static fun values ()[Lio/github/cfraser/graphguard/validate/Schema$Violation$InvalidCardinality$Side;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$InvalidProperty : io/github/cfraser/graphguard/validate/Schema$Violation {

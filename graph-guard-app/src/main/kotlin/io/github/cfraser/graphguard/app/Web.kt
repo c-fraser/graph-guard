@@ -90,8 +90,8 @@ internal class Web(
         val options = verifyOptions.value ?: return@handler
         verifyScope.launch {
           while (true) {
-            delay(options.interval)
             verify()
+            delay(options.interval)
           }
         }
       }
@@ -178,7 +178,7 @@ internal class Web(
 
   override suspend fun load(script: String?) = PluginLoader.load(script)
 
-  override suspend fun verify() {
+  private suspend fun verify() {
     val driver = driver ?: return
     val schema = schema ?: return
     val verifier = Verifier(driver, schema)
@@ -187,7 +187,12 @@ internal class Web(
       val labels = labelsMutex.withLock { recentLabels.toSet().also { recentLabels.clear() } }
       verifier.verify(labels).forEach { violation ->
         violations.emit(
-          Violation(violation.schemaViolation.ruleViolation.message, violation.elementId)
+          Violation(
+            violation.schemaViolation.ruleViolation.message,
+            violation.elementId,
+            violation.entity?.name,
+            violation.entity !is Schema.Violation.Entity.Relationship,
+          )
         )
       }
     } finally {

@@ -48,9 +48,6 @@ interface Service {
 
   /** Evaluate the [script] then load the *graph-guard* plugin. */
   suspend fun load(script: String?)
-
-  /** Initiate ad-hoc graph verification, emitting violations to the [getViolations] [Flow]. */
-  suspend fun verify()
 }
 
 /**
@@ -151,4 +148,10 @@ sealed interface Message {
 /**
  * > Refer to [Verifier.Violation](https://github.com/c-fraser/graph-guard/blob/main/graph-guard-verify/src/main/kotlin/io/github/cfraser/graphguard/verify/Verifier.kt).
  */
-@Serializable data class Violation(val message: String, val elementId: String?)
+@Serializable
+data class Violation(
+  val message: String,
+  val elementId: String?,
+  val name: String? = null,
+  val isNode: Boolean = true,
+)

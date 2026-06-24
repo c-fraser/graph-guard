@@ -20,18 +20,18 @@ import dev.fritz2.core.alt
 import dev.fritz2.core.render
 import dev.fritz2.core.src
 import dev.fritz2.core.storeOf
-import dev.fritz2.headless.components.modal
-import dev.fritz2.headless.foundation.portalRoot
 import dev.fritz2.routing.routerOf
 import io.github.cfraser.graphguard.web.rpc.Message
 import io.github.cfraser.graphguard.web.rpc.Service
 import io.github.cfraser.graphguard.web.rpc.Violation
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.js.Js
+import kotlin.js.Date
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -64,16 +64,15 @@ private enum class Page(
   MESSAGE_STREAM("Messages", "Bolt Messages", "fas fa-stream", "messages"),
   QUERY_LOG("Queries", "Query Log", "fas fa-list", "queries"),
   VIOLATIONS("Violations", "Schema Violations", "fas fa-shield-alt", "violations"),
+  SCHEMA("Schema", "Graph Schema", "fas fa-file-code", "schema"),
   PLUGINS("Plugins", "Plugin Editor", "fas fa-plug", "plugins"),
 }
 
 private val router = routerOf(Page.MESSAGE_STREAM.route)
 private val messagesStore = storeOf(emptyList<Message>(), Job())
-private val violationsStore = storeOf(emptyList<Violation>(), Job())
-private val verifyingStore = storeOf(false, Job())
+private val violationsStore = storeOf(emptyList<TimestampedViolation>(), Job())
 private val schemaStore = storeOf<String?>(null, Job())
 private val errorStore = storeOf<String?>(null, Job())
-private val schemaModalStore = storeOf(false, Job())
 private val pluginEditorStore = storeOf("", Job())
 
 private val service =
@@ -81,7 +80,6 @@ private val service =
     HttpClient(Js) { installKrpc() }
       .rpc(
         run {
-          // Build WebSocket URL from current page location
           val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
           "$protocol//${window.location.host}/rpc"
         }
@@ -98,11 +96,7 @@ private fun RenderContext.app() {
   CoroutineScope(job).launch {
     try {
       service?.getSchema()?.also { schema -> schemaStore.update(schema) }
-
-      // Load plugin from server
       service?.getPlugin()?.let { plugin -> pluginEditorStore.update(plugin) }
-
-      // Collect proxied messages
       service
         ?.getMessages()
         ?.catch { exception -> errorStore.update("Error: ${exception.message}") }
@@ -117,8 +111,18 @@ private fun RenderContext.app() {
       service
         ?.getViolations()
         ?.catch { exception -> errorStore.update("Error: ${exception.message}") }
-        ?.map { data -> (listOf(data) + violationsStore.current).take(2048) }
-        ?.collect { vs -> violationsStore.update(vs) }
+        ?.collect { violation ->
+          val current = violationsStore.current
+          val existingIdx = current.indexOfFirst { it.violation == violation }
+          val updated =
+            if (existingIdx >= 0) {
+              val refreshed = current[existingIdx].copy(lastSeen = Date.now())
+              listOf(refreshed) + current.filterIndexed { i, _ -> i != existingIdx }
+            } else {
+              (listOf(TimestampedViolation(violation, Date.now())) + current).take(2048)
+            }
+          violationsStore.update(updated)
+        }
     } catch (ex: Exception) {
       errorStore.update("Error: ${ex.message}")
     }
@@ -127,7 +131,6 @@ private fun RenderContext.app() {
     div("main-card") {
       sidebar()
       div("main-content") {
-        header()
         router.data.render { route ->
           errorStore.data.render { error ->
             if (error != null) {
@@ -139,6 +142,7 @@ private fun RenderContext.app() {
               Page.MESSAGE_STREAM -> messageStreamPage()
               Page.QUERY_LOG -> queryLogPage()
               Page.VIOLATIONS -> violationsPage()
+              Page.SCHEMA -> schemaPage()
               Page.PLUGINS -> pluginsPage()
             }
           }
@@ -146,8 +150,6 @@ private fun RenderContext.app() {
       }
     }
   }
-  schemaModal()
-  portalRoot()
 }
 
 private fun RenderContext.sidebar() {
@@ -170,106 +172,47 @@ private fun RenderContext.sidebar() {
   }
 }
 
-private fun RenderContext.header() {
+/**
+ * Renders a page header then the [content] body. The [subtitle] and [action] slots are optional.
+ */
+private fun RenderContext.page(
+  title: String,
+  subtitle: (RenderContext.() -> Unit)? = null,
+  action: (RenderContext.() -> Unit)? = null,
+  content: RenderContext.() -> Unit,
+) {
   header("header") {
-    router.data.render { route ->
-      val page = Page.entries.find { it.route == route } ?: Page.MESSAGE_STREAM
-      h1 { +page.header }
-      when (page) {
-        Page.QUERY_LOG -> {
-          schemaStore.data.render { schema ->
-            if (schema != null) {
-              div("header-schema-icon") {
-                attr("title", "View graph schema")
-                clicks.map { true } handledBy schemaModalStore.update
-                i("fas fa-file-code") {}
-                span { +"Schema" }
-              }
-            }
-          }
-        }
-        Page.VIOLATIONS -> {
-          verifyingStore.data.render { verifying ->
-            div("header-schema-icon${if (verifying) " verify-running" else ""}") {
-              attr("title", if (verifying) "Verification in progress" else "Run verification now")
-              if (!verifying) {
-                clicks handledBy
-                  {
-                    CoroutineScope(job).launch {
-                      verifyingStore.update(true)
-                      try {
-                        service?.verify()
-                      } catch (ex: Exception) {
-                        errorStore.update("Verify failed: ${ex.message}")
-                      } finally {
-                        verifyingStore.update(false)
-                      }
-                    }
-                  }
-              }
-              if (verifying) {
-                i("fas fa-spinner fa-spin") {}
-                span { +"Verifying..." }
-              } else {
-                i("fas fa-shield-alt") {}
-                span { +"Verify" }
-              }
-            }
-          }
-        }
-        Page.PLUGINS -> {
-          div("header-schema-icon plugin-save") {
-            attr("title", "Save plugin")
-            clicks handledBy
-              {
-                CoroutineScope(job).launch {
-                  try {
-                    // Get content from the editor element
-                    val editorElement = document.getElementById("plugin-code-editor-element")
-                    val script = editorElement?.textContent?.takeIf(String::isNotBlank)
+    if (subtitle != null) {
+      div("header-title-group") {
+        h1 { +title }
+        subtitle()
+      }
+    } else {
+      h1 { +title }
+    }
+    action?.invoke(this)
+  }
+  content()
+}
 
-                    // Load the script on the server
-                    service!!.load(script)
-
-                    // Refresh the editor with the latest content from server
-                    val refreshedPlugin = service.getPlugin()
-                    pluginEditorStore.update(refreshedPlugin.orEmpty())
-
-                    // Update the editor element with the refreshed content
-                    editorElement?.textContent = refreshedPlugin.orEmpty()
-                    editorElement?.let { element ->
-                      (element as? HTMLElement)?.let { htmlElement ->
-                        // Remove previous highlighting marker
-                        htmlElement.removeAttribute("data-highlighted")
-                        htmlElement.className = "language-kotlin plugin-code-editor"
-                        hljs.highlightElement(htmlElement)
-                      }
-                    }
-                  } catch (ex: Exception) {
-                    errorStore.update("Failed to save plugin: ${ex.message}")
-                  }
-                }
-              }
-            i("fas fa-save") {}
-            span { +"Save" }
-          }
-        }
-        else -> {}
+/** Renders a scrollable list of [items] from [data], showing [emptyText] when empty. */
+private fun <T> RenderContext.flowPage(
+  data: Flow<List<T>>,
+  emptyText: String,
+  card: RenderContext.(T) -> Unit,
+) {
+  div("flow-container") {
+    data.render { items ->
+      div("flow-list") {
+        if (items.isEmpty()) div("empty-state") { p { +emptyText } } else items.forEach { card(it) }
       }
     }
   }
 }
 
 private fun RenderContext.messageStreamPage() {
-  div("message-stream-container") {
-    messagesStore.data.render { messages -> messageList(messages) }
-  }
-}
-
-private fun RenderContext.messageList(messages: List<Message>) {
-  div("message-list") {
-    if (messages.isEmpty()) div("empty-state") { p { +"No Bolt messages intercepted yet..." } }
-    else messages.forEach(::messageCard)
+  page(Page.MESSAGE_STREAM.header) {
+    flowPage(messagesStore.data, "No Bolt messages intercepted yet...", RenderContext::messageCard)
   }
 }
 
@@ -327,16 +270,16 @@ private fun RenderContext.messageCard(message: Message) {
 }
 
 private fun RenderContext.queryLogPage() {
-  div("query-log-container") { messagesStore.data.render { messages -> queryLogList(messages) } }
-}
-
-private fun RenderContext.queryLogList(messages: List<Message>) {
-  val queries = getQueries(messages)
-  div("query-log-list") {
-    if (queries.isEmpty()) div("empty-state") { p { +"No queries intercepted yet..." } }
-    else queries.forEach(::queryLogCard)
+  page(Page.QUERY_LOG.header) {
+    flowPage(
+      messagesStore.data.map { getQueries(it) },
+      "No queries intercepted yet...",
+      RenderContext::queryLogCard,
+    )
   }
 }
+
+private data class TimestampedViolation(val violation: Violation, val lastSeen: Double)
 
 private data class RunQuery(
   val session: String,
@@ -423,7 +366,7 @@ private fun RenderContext.queryLogCard(query: RunQuery) {
                   if (schema != null) {
                     i("schema-icon fas fa-file-code") {
                       attr("title", "View schema")
-                      clicks.map { true } handledBy schemaModalStore.update
+                      clicks.map { Page.SCHEMA.route } handledBy router.navTo
                     }
                   }
                 }
@@ -446,19 +389,29 @@ private fun RenderContext.queryLogCard(query: RunQuery) {
 }
 
 private fun RenderContext.violationsPage() {
-  div("violation-container") {
-    violationsStore.data.render { violations -> violationList(violations) }
+  page(
+    Page.VIOLATIONS.header,
+    subtitle = {
+      p("header-subtitle") {
+        +"Violations reported by the "
+        a {
+          attr(
+            "href",
+            "https://c-fraser.github.io/graph-guard/api/graph-guard-verify/io.github.cfraser.graphguard.verify/-verifier/index.html",
+          )
+          attr("target", "_blank")
+          attr("rel", "noreferrer")
+          +"Verifier"
+        }
+      }
+    },
+  ) {
+    flowPage(violationsStore.data, "No violations found...", RenderContext::violationCard)
   }
 }
 
-private fun RenderContext.violationList(violations: List<Violation>) {
-  div("violation-list") {
-    if (violations.isEmpty()) div("empty-state") { p { +"No violations found..." } }
-    else violations.forEach(::violationCard)
-  }
-}
-
-private fun RenderContext.violationCard(violation: Violation) {
+private fun RenderContext.violationCard(tv: TimestampedViolation) {
+  val violation = tv.violation
   div("violation-card") {
     i("fas fa-exclamation-triangle violation-icon") {}
     div("violation-body") {
@@ -466,11 +419,36 @@ private fun RenderContext.violationCard(violation: Violation) {
       violation.elementId?.let { id ->
         span("violation-element-id") {
           i("fas fa-fingerprint") {}
-          +" $id"
+          +" Element ID: $id"
+          button("violation-copy-btn") {
+            attr("title", "Copy MATCH query to clipboard")
+            i("fas fa-copy") {}
+            clicks handledBy
+              {
+                val quotedLabel = violation.name?.let { "`${it.replace("`", "``")}`" }
+                val query =
+                  if (violation.isNode) {
+                    val label = if (quotedLabel != null) ":$quotedLabel" else ""
+                    "MATCH (n$label) WHERE elementId(n) = '$id' RETURN n"
+                  } else {
+                    val type = if (quotedLabel != null) ":$quotedLabel" else ""
+                    "MATCH ()-[r$type]->() WHERE elementId(r) = '$id' RETURN r"
+                  }
+                copyToClipboard(query)
+              }
+          }
         }
+      }
+      span("violation-timestamp") {
+        i("fas fa-clock") {}
+        +" Last seen: ${Date(tv.lastSeen).toLocaleString()}"
       }
     }
   }
+}
+
+private fun copyToClipboard(text: String) {
+  window.navigator.asDynamic().clipboard.writeText(text)
 }
 
 private fun RenderContext.errorDisplay(message: String) {
@@ -480,8 +458,62 @@ private fun RenderContext.errorDisplay(message: String) {
   }
 }
 
+private fun RenderContext.schemaPage() {
+  page(Page.SCHEMA.header) {
+    div("plugins-container") {
+      schemaStore.data.render { schema ->
+        if (schema != null) {
+          div("plugin-editor-container") {
+            pre("plugin-code-wrapper") {
+              code("plugin-code-editor") {
+                +schema
+                domNode.also(hljs::highlightElement)
+              }
+            }
+          }
+        } else {
+          div("empty-state") { p { +"No schema configured..." } }
+        }
+      }
+    }
+  }
+}
+
 private fun RenderContext.pluginsPage() {
-  div("plugins-container") { pluginEditor() }
+  page(
+    Page.PLUGINS.header,
+    action = {
+      div("header-schema-icon plugin-save") {
+        attr("title", "Save plugin")
+        clicks handledBy
+          {
+            CoroutineScope(job).launch {
+              try {
+                val editorElement = document.getElementById("plugin-code-editor-element")
+                val script = editorElement?.textContent?.takeIf(String::isNotBlank)
+                service!!.load(script)
+                val refreshedPlugin = service.getPlugin()
+                pluginEditorStore.update(refreshedPlugin.orEmpty())
+                editorElement?.textContent = refreshedPlugin.orEmpty()
+                editorElement?.let { element ->
+                  (element as? HTMLElement)?.let { htmlElement ->
+                    htmlElement.removeAttribute("data-highlighted")
+                    htmlElement.className = "language-kotlin plugin-code-editor"
+                    hljs.highlightElement(htmlElement)
+                  }
+                }
+              } catch (ex: Exception) {
+                errorStore.update("Failed to save plugin: ${ex.message}")
+              }
+            }
+          }
+        i("fas fa-save") {}
+        span { +"Save" }
+      }
+    },
+  ) {
+    div("plugins-container") { pluginEditor() }
+  }
 }
 
 private fun RenderContext.pluginEditor() {
@@ -495,43 +527,8 @@ private fun RenderContext.pluginEditor() {
           attr("autocorrect", "off")
           attr("autocapitalize", "off")
           attr("id", "plugin-code-editor-element")
-
-          // Set content from store
           domNode.textContent = code
-
-          // Apply syntax highlighting
           domNode.also(hljs::highlightElement)
-        }
-      }
-    }
-  }
-}
-
-private fun schemaModal() {
-  modal {
-    openState(schemaModalStore)
-    modalPanel("schema-modal-panel") {
-      modalOverlay("schema-modal-overlay") { clicks handledBy close }
-      div("schema-modal-content") {
-        div("schema-modal-header") {
-          modalTitle("schema-modal-title") { +"Graph Schema" }
-          button("schema-modal-close") {
-            attr("aria-label", "Close")
-            i("fas fa-times") {}
-            clicks handledBy close
-          }
-        }
-        div("schema-modal-body") {
-          schemaStore.data.render { schema ->
-            if (schema != null) {
-              pre("schema-text") {
-                code {
-                  +schema
-                  domNode.also(hljs::highlightElement)
-                }
-              }
-            }
-          }
         }
       }
     }

@@ -19,13 +19,11 @@ import io.github.cfraser.graphguard.utils.Internal
 import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.validate.Schema.Property.Type
 import io.github.cfraser.graphguard.validate.Schema.Relationship
+import io.github.cfraser.graphguard.validate.Schema.Violation.Entity
 import io.github.cfraser.graphguard.validate.Schema.Violation.Entity.Node
 import io.github.cfraser.graphguard.validate.Schema.Violation.Entity.Relationship as VRelationship
 import io.github.cfraser.graphguard.validate.Schema.Violation.InvalidCardinality
 import io.github.cfraser.graphguard.validate.Schema.Violation.InvalidCardinality.Limit
-import io.github.cfraser.graphguard.validate.Schema.Violation.InvalidCardinality.Side
-import io.github.cfraser.graphguard.validate.Schema.Violation.InvalidCardinality.Side.SOURCE
-import io.github.cfraser.graphguard.validate.Schema.Violation.InvalidCardinality.Side.TARGET
 import io.github.cfraser.graphguard.validate.Schema.Violation.MissingProperty
 import io.github.cfraser.graphguard.validate.Schema.Violation.Unknown
 import io.github.cfraser.graphguard.validate.Schema.Violation.UnknownProperty
@@ -79,9 +77,7 @@ constructor(
           if (label !in schema.nodes) {
             return@violations listOf(Violation(Unknown(Node(label))))
           }
-          session.verifyNodes(label) +
-            session.verifyRelationships(label, SOURCE) +
-            session.verifyRelationships(label, TARGET)
+          session.verifyNodes(label) + session.verifyRelationships(label)
         }
         .filterNot { violation ->
           config.ignore?.containsMatchIn(violation.schemaViolation.ruleViolation.message) == true
@@ -96,8 +92,8 @@ constructor(
   }
 
   /** Check for [Violation]s on the nodes with the [label]. */
-  private suspend fun AsyncSession.verifyNodes(label: String): Collection<Violation> =
-    run(
+  private suspend fun AsyncSession.verifyNodes(label: String): Collection<Violation> {
+    return run(
         """
         MATCH (n:${label.quoted()})
         RETURN elementId(n) AS id, labels(n) AS labels, keys(n) AS properties
@@ -122,6 +118,7 @@ constructor(
                   property.name,
                 ),
                 id,
+                Node(nodeLabel),
               )
             }
         }
@@ -136,136 +133,134 @@ constructor(
               Violation(
                 UnknownProperty(Node(label), property),
                 id,
+                Node(label),
               )
             }
         missing + unknown
       }
-
-  /**
-   * Check for [Violation]s on the [SOURCE] or [TARGET] relationships, on the nodes with the
-   * [label].
-   */
-  private suspend fun AsyncSession.verifyRelationships(
-    label: String,
-    side: Side,
-  ): Collection<Violation> {
-    val records =
-      run(
-        when (side) {
-          SOURCE ->
-            $$"""
-        MATCH (s:$${label.quoted()})
-        OPTIONAL MATCH (s)-[r]->(t)
-        RETURN elementId(s) AS node,
-          elementId(r) AS id,
-          type(r) AS type,
-          keys(r) AS properties,
-          labels(t) AS other
-        """
-              .trimIndent()
-          TARGET ->
-            $$"""
-        MATCH (t:$${label.quoted()})
-        OPTIONAL MATCH (s)-[r]->(t)
-        RETURN elementId(t) AS node,
-          elementId(r) AS id,
-          type(r) AS type,
-          keys(r) AS properties,
-          labels(s) AS other
-        """
-              .trimIndent()
-        }
-      )
-    return records
-      .filterNot { record -> record["id"].isNull }
-      .flatMap { record ->
-        verifyRelationship(label, side, record)
-      } + verifyRelationships(label, side, records)
   }
 
-  /** Check the [record] for [VRelationship] [Violation]s. */
-  private fun verifyRelationship(label: String, side: Side, record: Record): Collection<Violation> {
-    val type = record["type"].asString()
-    val other = record["other"].asList(Value::asString)
+  /** Check for [Violation]s on the relationships of the nodes with the [label]. */
+  private suspend fun AsyncSession.verifyRelationships(label: String): Collection<Violation> {
+    return run(
+        $$"""
+        MATCH (n:$${label.quoted()})
+        OPTIONAL MATCH (n)-[out]->(ot)
+        WITH n,
+          collect(CASE WHEN out IS NOT NULL
+            THEN {id: elementId(out), type: type(out), props: keys(out), other: labels(ot)}
+            END) AS outgoing
+        OPTIONAL MATCH (os)-[inc]->(n)
+        WITH n, outgoing,
+          collect(CASE WHEN inc IS NOT NULL
+            THEN {id: elementId(inc), type: type(inc), props: keys(inc), other: labels(os)}
+            END) AS incoming
+        RETURN elementId(n) AS node, outgoing, incoming
+        """
+          .trimIndent()
+      )
+      .flatMap { record ->
+        val nodeId = record["node"].asString()
+        val outgoing = record["outgoing"].asList { value -> value }
+        val incoming = record["incoming"].asList { value -> value }
+        outgoing.flatMap { relationship -> verifyRelationship(label, relationship, true) } +
+          incoming.flatMap { relationship -> verifyRelationship(label, relationship, false) } +
+          verifyCardinality(label, nodeId, outgoing, incoming)
+      }
+  }
+
+  /** Check the relationship [rel] for [VRelationship] [Violation]s. */
+  private fun verifyRelationship(
+    label: String,
+    rel: Value,
+    source: Boolean,
+  ): Collection<Violation> {
+    val type = rel["type"].asString()
+    val other = rel["other"].asList(Value::asString)
+    val id = rel["id"].asString()
     val schemaRelationship =
-      when (side) {
-        SOURCE ->
-          other.firstNotNullOfOrNull { target ->
-            schema.relationships[Relationship.Id(type, label, target)]
-          }
-        TARGET ->
-          other.firstNotNullOfOrNull { source ->
-            schema.relationships[Relationship.Id(type, source, label)]
-          }
+      if (source) {
+        other.firstNotNullOfOrNull { target ->
+          schema.relationships[Relationship.Id(type, label, target)]
+        }
+      } else {
+        other.firstNotNullOfOrNull { src ->
+          schema.relationships[Relationship.Id(type, src, label)]
+        }
       }
-    val (sources, targets) =
-      when (side) {
-        SOURCE -> listOf(label) to other
-        TARGET -> other to listOf(label)
-      }
-    val id = record["id"].asString()
-    val properties = record["properties"].asList(Value::asString).toSet()
+    val (sources, targets) = if (source) listOf(label) to other else other to listOf(label)
     val entity =
       VRelationship(
         type,
         schemaRelationship?.let { relationship -> listOf(relationship.source) } ?: sources,
         schemaRelationship?.let { relationship -> listOf(relationship.target) } ?: targets,
       )
-    if (schemaRelationship == null) {
-      return listOf(Violation(Unknown(entity), id))
-    }
+    if (schemaRelationship == null) return listOf(Violation(Unknown(entity), id, entity))
+    val properties = rel["props"].asList(Value::asString).toSet()
     val missing =
       schemaRelationship.properties
         .filterNot { property -> property.type is Type.Nullable }
         .filterNot { property -> property.name in properties }
-        .map { property ->
-          Violation(MissingProperty(entity, property.name), id)
-        }
+        .map { property -> Violation(MissingProperty(entity, property.name), id, entity) }
     val known = schemaRelationship.properties.mapTo(mutableSetOf(), Schema.Property::name)
     val unknown =
       properties
         .filterNot { property -> property in known }
-        .map { property ->
-          Violation(UnknownProperty(entity, property), id)
-        }
+        .map { property -> Violation(UnknownProperty(entity, property), id, entity) }
     return missing + unknown
   }
 
-  /** Check the [records] for [InvalidCardinality]. */
-  private fun verifyRelationships(
+  /** Check [outgoing] and [incoming] relationships for [InvalidCardinality] on the [label] node. */
+  private fun verifyCardinality(
     label: String,
-    side: Side,
-    records: Collection<Record>,
+    nodeId: String,
+    outgoing: List<Value>,
+    incoming: List<Value>,
   ): Collection<Violation> {
-    fun Relationship.range() = if (side == SOURCE) cardinality?.source else cardinality?.target
-    fun Relationship.sideLabel() = if (side == SOURCE) source else target
-    fun Relationship.otherLabel() = if (side == SOURCE) target else source
-    val byNode = records.groupBy { record -> record["node"].asString() }
-    return schema.relationships.values
-      .filter { relationship ->
-        relationship.sideLabel() == label && relationship.range() != null
+    fun Relationship.verify(
+      range: Relationship.Cardinality.Range?,
+      nLabel: String,
+      otherLabel: String,
+      relationships: List<Value>,
+    ): Violation? {
+      if (range == null || nLabel != label) return null
+      val count = relationships.count { rel ->
+        rel["type"].asString() == name && otherLabel in rel["other"].asList(Value::asString)
       }
-      .flatMap { relationship ->
-        val range = relationship.range()!!
-        byNode.mapNotNull violation@{ (node, rows) ->
-          val count = rows.count { row ->
-            !row["id"].isNull &&
-              row["type"].asString() == relationship.name &&
-              relationship.otherLabel() in row["other"].asList(Value::asString)
-          }
-          val max = range.max
-          val (limit, bound) =
-            when {
-              count < range.min -> Limit.MIN to range.min
-              max != null && count > max -> Limit.MAX to max
-              else -> return@violation null
-            }
-          Violation(
-            InvalidCardinality(relationship.name, side, count, limit, bound),
-            node,
-          )
+      val max = range.max
+      val (limit, bound) =
+        when {
+          count < range.min -> Limit.MIN to range.min
+          max != null && count > max -> Limit.MAX to max
+          else -> return null
         }
-      }
+      return Violation(
+        InvalidCardinality(
+          VRelationship(name, listOf(source), listOf(target)),
+          count,
+          limit,
+          bound,
+        ),
+        nodeId,
+        Node(nLabel),
+      )
+    }
+    return schema.relationships.values.flatMap { relationship ->
+      listOfNotNull(
+        relationship.verify(
+          relationship.cardinality?.source,
+          relationship.source,
+          relationship.target,
+          outgoing,
+        ),
+        relationship.verify(
+          relationship.cardinality?.target,
+          relationship.target,
+          relationship.source,
+          incoming,
+        ),
+      )
+    }
   }
 
   /**
@@ -291,9 +286,14 @@ constructor(
    * @property elementId the
    *   [element id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-elementid)
    *   of the offending node or relationship
+   * @property entity the [Entity] the [schemaViolation] corresponds to
    */
   @JvmRecord
-  data class Violation(val schemaViolation: Schema.Violation, val elementId: String? = null)
+  data class Violation(
+    val schemaViolation: Schema.Violation,
+    val elementId: String? = null,
+    val entity: Entity? = null,
+  )
 
   private companion object {
 

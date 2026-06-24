@@ -122,11 +122,11 @@
         flex-direction: column;
         overflow: hidden;
       }
-      .message-stream-container {
-        display: flex;
-        flex-direction: row;
+      .flow-container {
         flex: 1;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
       .session-selector {
         width: 200px;
@@ -281,25 +281,25 @@
       .header-status span {
         margin-right: 10px;
       }
-      .message-list {
+      .flow-list {
         padding: 20px;
         max-height: calc(100vh - 200px);
         overflow-y: auto;
         overflow-x: hidden;
         scroll-behavior: smooth;
       }
-      .message-list::-webkit-scrollbar {
+      .flow-list::-webkit-scrollbar {
         width: 8px;
       }
-      .message-list::-webkit-scrollbar-track {
+      .flow-list::-webkit-scrollbar-track {
         background: var(--scrollbar-track);
         border-radius: 4px;
       }
-      .message-list::-webkit-scrollbar-thumb {
+      .flow-list::-webkit-scrollbar-thumb {
         background: var(--scrollbar-thumb);
         border-radius: 4px;
       }
-      .message-list::-webkit-scrollbar-thumb:hover {
+      .flow-list::-webkit-scrollbar-thumb:hover {
         background: var(--scrollbar-thumb-hover);
       }
       .message-header {
@@ -523,33 +523,6 @@
         text-align: center;
         max-width: 500px;
       }
-      .query-log-container {
-        flex: 1;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-      }
-      .query-log-list {
-        padding: 20px;
-        max-height: calc(100vh - 200px);
-        overflow-y: auto;
-        overflow-x: hidden;
-        scroll-behavior: smooth;
-      }
-      .query-log-list::-webkit-scrollbar {
-        width: 8px;
-      }
-      .query-log-list::-webkit-scrollbar-track {
-        background: var(--scrollbar-track);
-        border-radius: 4px;
-      }
-      .query-log-list::-webkit-scrollbar-thumb {
-        background: var(--scrollbar-thumb);
-        border-radius: 4px;
-      }
-      .query-log-list::-webkit-scrollbar-thumb:hover {
-        background: var(--scrollbar-thumb-hover);
-      }
       .query-log-card {
         margin-bottom: 16px;
         border-radius: 8px;
@@ -757,129 +730,6 @@
       .schema-icon:hover {
         color: var(--accent-success);
         transform: scale(1.1);
-      }
-      .schema-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.75);
-        z-index: 1000;
-        pointer-events: auto;
-      }
-      .schema-modal-panel {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1001;
-        padding: 20px;
-        pointer-events: none;
-      }
-      .schema-modal-content {
-        background-color: var(--card-bg);
-        border-radius: 12px;
-        box-shadow: var(--shadow-lg);
-        max-width: 800px;
-        width: 100%;
-        max-height: 90vh;
-        display: flex;
-        flex-direction: column;
-        border: 1px solid var(--border-color);
-        position: relative;
-        z-index: 1002;
-        pointer-events: auto;
-      }
-      .schema-modal-header {
-        padding: 20px 24px;
-        border-bottom: 2px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
-      }
-      .schema-modal-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--header-text);
-        margin: 0;
-      }
-      .schema-modal-close {
-        background: none;
-        border: none;
-        color: var(--header-text);
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 6px;
-        transition: background-color 0.2s;
-      }
-      .schema-modal-close:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-      }
-      .schema-modal-body {
-        padding: 24px;
-        overflow-y: auto;
-        flex: 1;
-      }
-      .schema-modal-body::-webkit-scrollbar {
-        width: 8px;
-      }
-      .schema-modal-body::-webkit-scrollbar-track {
-        background: var(--scrollbar-track);
-        border-radius: 4px;
-      }
-      .schema-modal-body::-webkit-scrollbar-thumb {
-        background: var(--scrollbar-thumb);
-        border-radius: 4px;
-      }
-      .schema-modal-body::-webkit-scrollbar-thumb:hover {
-        background: var(--scrollbar-thumb-hover);
-      }
-      .schema-text {
-        margin: 0;
-        padding: 16px;
-        background-color: var(--section-bg);
-        border-radius: 8px;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        color: var(--text-primary);
-        overflow-x: auto;
-        white-space: pre;
-        line-height: 1.6;
-        border: 1px solid var(--border-color);
-      }
-      .schema-modal-footer {
-        padding: 16px 24px;
-        border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: flex-end;
-      }
-      .schema-modal-button {
-        background: var(--accent-primary);
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.2s, transform 0.1s;
-      }
-      .schema-modal-button:hover {
-        background: rgb(37, 99, 235);
-        transform: translateY(-1px);
-      }
-      .schema-modal-button:active {
-        transform: translateY(0);
       }
       .plugins-container {
         flex: 1;
@@ -1127,39 +977,23 @@
       .plugin-code-editor::-webkit-scrollbar-thumb:hover {
         background: var(--scrollbar-thumb-hover);
       }
-      .header-schema-icon.verify-running {
-        background: rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.3);
-        cursor: default;
-        pointer-events: none;
-        opacity: 0.8;
-      }
-      .violation-container {
-        flex: 1;
-        overflow: hidden;
+      .header-title-group {
         display: flex;
         flex-direction: column;
+        gap: 4px;
       }
-      .violation-list {
-        padding: 20px;
-        max-height: calc(100vh - 200px);
-        overflow-y: auto;
-        overflow-x: hidden;
-        scroll-behavior: smooth;
+      .header-subtitle {
+        font-size: 0.85rem;
+        color: rgba(243, 244, 246, 0.7);
+        margin: 0;
+        font-weight: 400;
       }
-      .violation-list::-webkit-scrollbar {
-        width: 8px;
+      .header-subtitle a {
+        color: rgba(147, 197, 253, 0.9);
+        text-decoration: underline;
       }
-      .violation-list::-webkit-scrollbar-track {
-        background: var(--scrollbar-track);
-        border-radius: 4px;
-      }
-      .violation-list::-webkit-scrollbar-thumb {
-        background: var(--scrollbar-thumb);
-        border-radius: 4px;
-      }
-      .violation-list::-webkit-scrollbar-thumb:hover {
-        background: var(--scrollbar-thumb-hover);
+      .header-subtitle a:hover {
+        color: rgb(147, 197, 253);
       }
       .violation-card {
         margin-bottom: 8px;
@@ -1203,6 +1037,31 @@
         display: flex;
         align-items: center;
         gap: 5px;
+      }
+      .violation-copy-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        padding: 2px 5px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        transition: color 0.2s, background-color 0.2s;
+      }
+      .violation-copy-btn:hover {
+        color: var(--accent-primary);
+        background-color: rgba(59, 130, 246, 0.1);
+      }
+      .violation-timestamp {
+        font-family: 'Courier New', monospace;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 4px;
       }
     </style>
   </head>

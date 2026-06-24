@@ -370,51 +370,47 @@ internal constructor(
   @Internal
   sealed class Violation(val ruleViolation: Rule.Violation) {
 
-    sealed class Entity(val name: KString) {
+    sealed class Entity(val description: KString) {
 
-      class Node(label: KString) : Entity("node $label")
+      abstract val name: KString
+
+      class Node(override val name: KString) : Entity("node $name")
 
       class Relationship(
-        label: KString,
-        sources: Collection<KString>?,
-        targets: Collection<KString>?,
-      ) : Entity("relationship $label from ${sources.asString()} to ${targets.asString()}")
+        override val name: KString,
+        val sources: Collection<KString>?,
+        val targets: Collection<KString>?,
+      ) : Entity("relationship $name from ${sources.asString()} to ${targets.asString()}")
     }
 
-    class Unknown(entity: Entity) : Violation(Rule.Violation("Unknown ${entity.name}"))
+    class Unknown(entity: Entity) : Violation(Rule.Violation("Unknown ${entity.description}"))
 
     class UnknownProperty(entity: Entity, property: KString) :
-      Violation(Rule.Violation("Unknown property '$property' for ${entity.name}"))
+      Violation(Rule.Violation("Unknown property '$property' for ${entity.description}"))
 
     class MissingProperty(entity: Entity, property: KString) :
-      Violation(Rule.Violation("Missing required property '$property' for ${entity.name}"))
+      Violation(Rule.Violation("Missing required property '$property' for ${entity.description}"))
 
     class InvalidProperty(entity: Entity, property: Property, values: KList<KAny?>) :
       Violation(
         Rule.Violation(
           @Suppress("MaxLineLength")
-          "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.name}"
+          "Invalid query value(s) '${values.sortedBy { "$it" }.joinToString()}' for property '$property' on ${entity.description}"
         )
       )
 
     class InvalidCardinality(
-      relationship: KString,
-      side: Side,
+      entity: Entity.Relationship,
       count: Int,
       type: Limit,
       limit: Int,
     ) :
       Violation(
         Rule.Violation(
-          "Cardinality violation: $relationship $side has $count instances ($type $limit)"
+          @Suppress("MaxLineLength")
+          "Invalid cardinality for ${entity.description}; ${if (type == Limit.MIN) "at least" else "at most"} $limit is expected, but $count was found"
         )
       ) {
-
-      enum class Side {
-
-        SOURCE,
-        TARGET,
-      }
 
       enum class Limit {
 
