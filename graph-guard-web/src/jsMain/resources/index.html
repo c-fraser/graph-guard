@@ -959,23 +959,21 @@
       .plugin-code-editor::-webkit-scrollbar-thumb:hover {
         background: var(--scrollbar-thumb-hover);
       }
-      .plugin-code-editor::placeholder {
-        color: var(--text-secondary);
-        opacity: 0.5;
+      .codemirror-mount {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
       }
-      .plugin-code-editor::-webkit-scrollbar {
-        width: 8px;
+      .codemirror-mount .cm-editor {
+        height: 100%;
+        font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
       }
-      .plugin-code-editor::-webkit-scrollbar-track {
-        background: var(--scrollbar-track);
-        border-radius: 4px;
-      }
-      .plugin-code-editor::-webkit-scrollbar-thumb {
-        background: var(--scrollbar-thumb);
-        border-radius: 4px;
-      }
-      .plugin-code-editor::-webkit-scrollbar-thumb:hover {
-        background: var(--scrollbar-thumb-hover);
+      .codemirror-mount .cm-scroller {
+        overflow: auto;
       }
       .header-title-group {
         display: flex;

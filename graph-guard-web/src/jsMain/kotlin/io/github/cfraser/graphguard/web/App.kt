@@ -21,13 +21,19 @@ import dev.fritz2.core.render
 import dev.fritz2.core.src
 import dev.fritz2.core.storeOf
 import dev.fritz2.routing.routerOf
+import io.github.cfraser.graphguard.web.codemirror.EditorState
+import io.github.cfraser.graphguard.web.codemirror.EditorView
+import io.github.cfraser.graphguard.web.codemirror.StreamLanguage
+import io.github.cfraser.graphguard.web.codemirror.basicSetup
+import io.github.cfraser.graphguard.web.codemirror.kotlinMode
+import io.github.cfraser.graphguard.web.codemirror.oneDark
 import io.github.cfraser.graphguard.web.rpc.Message
 import io.github.cfraser.graphguard.web.rpc.Service
 import io.github.cfraser.graphguard.web.rpc.Violation
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.js.Js
 import kotlin.js.Date
-import kotlinx.browser.document
+import kotlin.js.json
 import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -74,6 +80,8 @@ private val violationsStore = storeOf(emptyList<TimestampedViolation>(), Job())
 private val schemaStore = storeOf<String?>(null, Job())
 private val errorStore = storeOf<String?>(null, Job())
 private val pluginEditorStore = storeOf("", Job())
+
+private var editorView: EditorView? = null
 
 private val service =
   try {
@@ -125,6 +133,14 @@ private fun RenderContext.app() {
         }
     } catch (ex: Exception) {
       errorStore.update("Error: ${ex.message}")
+    }
+  }
+  CoroutineScope(job).launch {
+    router.data.collect { route ->
+      if (Page.entries.find { it.route == route } != Page.PLUGINS) {
+        editorView?.destroy()
+        editorView = null
+      }
     }
   }
   div("app-container") {
@@ -195,7 +211,7 @@ private fun RenderContext.page(
   content()
 }
 
-/** Renders a scrollable list of [items] from [data], showing [emptyText] when empty. */
+/** Renders a scrollable list of [card]s from [data], showing [emptyText] when empty. */
 private fun <T> RenderContext.flowPage(
   data: Flow<List<T>>,
   emptyText: String,
@@ -489,19 +505,9 @@ private fun RenderContext.pluginsPage() {
           {
             CoroutineScope(job).launch {
               try {
-                val editorElement = document.getElementById("plugin-code-editor-element")
-                val script = editorElement?.textContent?.takeIf(String::isNotBlank)
+                val script = editorView?.let { it.state.doc.toString() }?.takeIf(String::isNotBlank)
                 service!!.load(script)
-                val refreshedPlugin = service.getPlugin()
-                pluginEditorStore.update(refreshedPlugin.orEmpty())
-                editorElement?.textContent = refreshedPlugin.orEmpty()
-                editorElement?.let { element ->
-                  (element as? HTMLElement)?.let { htmlElement ->
-                    htmlElement.removeAttribute("data-highlighted")
-                    htmlElement.className = "language-kotlin plugin-code-editor"
-                    hljs.highlightElement(htmlElement)
-                  }
-                }
+                pluginEditorStore.update(service.getPlugin().orEmpty())
               } catch (ex: Exception) {
                 errorStore.update("Failed to save plugin: ${ex.message}")
               }
@@ -518,17 +524,34 @@ private fun RenderContext.pluginsPage() {
 
 private fun RenderContext.pluginEditor() {
   div("plugin-editor-container") {
-    pluginEditorStore.data.render { code ->
-      pre("plugin-code-wrapper") {
-        code("language-kotlin plugin-code-editor") {
-          attr("contenteditable", "true")
-          attr("spellcheck", "false")
-          attr("autocomplete", "off")
-          attr("autocorrect", "off")
-          attr("autocapitalize", "off")
-          attr("id", "plugin-code-editor-element")
-          domNode.textContent = code
-          domNode.also(hljs::highlightElement)
+    div("codemirror-mount") {
+      domNode.also { mount ->
+        editorView?.destroy()
+        editorView =
+          EditorView(
+            json(
+              "state" to
+                EditorState.create(
+                  json(
+                    "doc" to pluginEditorStore.current,
+                    "extensions" to arrayOf(basicSetup, StreamLanguage.define(kotlinMode), oneDark),
+                  )
+                ),
+              "parent" to mount,
+            )
+          )
+      }
+      CoroutineScope(job).launch {
+        pluginEditorStore.data.collect { content ->
+          editorView?.also { view ->
+            val current = view.state.doc.toString()
+            if (current != content)
+              view.dispatch(
+                json(
+                  "changes" to json("from" to 0, "to" to view.state.doc.length, "insert" to content)
+                )
+              )
+          }
         }
       }
     }

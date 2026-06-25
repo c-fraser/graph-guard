@@ -42,7 +42,9 @@ kotlin {
         implementation(libs.kotlinx.rpc.krpc.ktor.client)
         implementation(libs.kotlinx.rpc.krpc.serialization.json)
         implementation(libs.fritz2.core)
-        implementation(libs.fritz2.headless)
+        implementation(npm("codemirror", "6.0.1"))
+        implementation(npm("@codemirror/legacy-modes", "6.5.3"))
+        implementation(npm("@codemirror/theme-one-dark", "6.1.2"))
       }
     }
   }
