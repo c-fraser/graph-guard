@@ -13,65 +13,35 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import com.github.gradle.node.npm.task.NpmTask
+
 plugins {
-  alias(libs.plugins.kotlin.serialization)
-  alias(libs.plugins.kotlinx.rpc)
+  base
+  alias(libs.plugins.node.gradle)
 }
 
-kotlin {
-  jvm()
-  js {
-    browser { commonWebpackConfig { cssSupport { enabled.set(true) } } }
-    binaries.executable()
-  }
-
-  sourceSets {
-    commonMain {
-      dependencies {
-        api(libs.kotlinx.rpc.krpc.core)
-        implementation(libs.kotlinx.serialization.json)
-      }
-    }
-
-    @Suppress("unused")
-    val jsMain by getting {
-      dependencies {
-        implementation(libs.ktor.client.js)
-        implementation(libs.ktor.client.websockets)
-        implementation(libs.kotlinx.rpc.krpc.client)
-        implementation(libs.kotlinx.rpc.krpc.ktor.client)
-        implementation(libs.kotlinx.rpc.krpc.serialization.json)
-        implementation(libs.fritz2.core)
-        implementation(npm("codemirror", "6.0.1"))
-        implementation(npm("@codemirror/legacy-modes", "6.5.3"))
-        implementation(npm("@codemirror/theme-one-dark", "6.1.2"))
-      }
-    }
-  }
+node {
+  download = true
+  version = "24.18.0"
 }
 
 tasks {
   val copyLogos by
     registering(Copy::class) {
       from(
-        project.rootDir.resolve("docs/favicon.ico"),
-        project.rootDir.resolve("docs/graph-guard.png"),
-        project.rootDir.resolve("docs/graph-guard-dark.png"),
+        rootDir.resolve("docs/favicon.ico"),
+        rootDir.resolve("docs/graph-guard.png"),
+        rootDir.resolve("docs/graph-guard-dark.png"),
       )
-      into(project.projectDir.resolve("src/jsMain/resources"))
+      into(projectDir.resolve("src/public"))
     }
 
   val downloadAssets by registering {
     val fontAwesomeUrl = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2"
-    val fontAwesomeCss = project.projectDir.resolve("src/jsMain/resources/font-awesome.min.css")
-    val fontAwesomeFontsDir =
-      project.projectDir.resolve("src/jsMain/resources/webfonts").also(File::mkdirs)
-    val highlightUrl = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0"
-    val highlightCss = project.projectDir.resolve("src/jsMain/resources/github-dark.min.css")
-    val highlightJs = project.projectDir.resolve("src/jsMain/resources/highlight.min.js")
-    val highlightCypherJs = project.projectDir.resolve("src/jsMain/resources/cypher.min.js")
+    val fontAwesomeCss = projectDir.resolve("src/public/font-awesome.min.css")
+    val fontAwesomeFontsDir = projectDir.resolve("src/public/webfonts").also(File::mkdirs)
 
-    outputs.files(fontAwesomeCss, highlightCss, highlightJs, highlightCypherJs)
+    outputs.files(fontAwesomeCss)
     outputs.dir(fontAwesomeFontsDir)
 
     doLast {
@@ -88,9 +58,6 @@ tasks {
             .forEach { font ->
               this += "$fontAwesomeUrl/webfonts/$font" to fontAwesomeFontsDir.resolve(font)
             }
-          this += "$highlightUrl/styles/github-dark.min.css" to highlightCss
-          this += "$highlightUrl/highlight.min.js" to highlightJs
-          this += "https://unpkg.com/highlightjs-cypher/dist/cypher.min.js" to highlightCypherJs
         }
         .forEach { (url, file) ->
           uri(url).toURL().openStream().use { input ->
@@ -101,6 +68,26 @@ tasks {
   }
 
   @Suppress("unused")
-  val jsProcessResources by
-    getting(ProcessResources::class) { dependsOn(copyLogos, downloadAssets) }
+  val generateTailwind by
+    registering(NpmTask::class) {
+      dependsOn(npmInstall)
+      args = listOf("run", "generate")
+      inputs.file("elm.json")
+      inputs.file("package.json")
+      inputs.file("tailwind.config.cjs")
+      outputs.dir(projectDir.resolve("src/elm/Tailwind"))
+    }
+
+  val buildElm by
+    registering(NpmTask::class) {
+      dependsOn(npmInstall, copyLogos, downloadAssets)
+      args = listOf("run", "build")
+      inputs.dir("src")
+      inputs.file("elm.json")
+      inputs.file("package.json")
+      inputs.file("vite.config.js")
+      outputs.dir(layout.buildDirectory.dir("web"))
+    }
+
+  assemble { dependsOn(buildElm) }
 }

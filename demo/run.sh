@@ -40,7 +40,7 @@ extract \
 
 echo 'Building graph-guard-app Docker image...'
 cd "$PROJECT_DIR" || exit 1
-./gradlew graph-guard-app:jibDockerBuild --image=graph-guard-app:latest
+./gradlew graph-guard-app:clean graph-guard-app:jibDockerBuild --image=graph-guard-app:latest
 
 cd "$SCRIPT_DIR" || exit 1
 docker compose down -v --remove-orphans

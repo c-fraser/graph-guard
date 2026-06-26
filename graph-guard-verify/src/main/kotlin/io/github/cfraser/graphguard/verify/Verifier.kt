@@ -64,6 +64,7 @@ constructor(
    * @return the [Violation]s found, empty when the graph is [schema] compliant
    */
   suspend fun verify(labels: Collection<String>): Collection<Violation> {
+    if (labels.isEmpty()) return emptyList()
     LOGGER.debug("Verifying labels: {}", labels)
     val session =
       driver.session(
@@ -84,7 +85,7 @@ constructor(
         }
         .distinctBy { violation -> violation.schemaViolation.ruleViolation }
         .also { violations ->
-          LOGGER.info("Found violations: {}", violations)
+          if (violations.isNotEmpty()) LOGGER.info("Found violations: {}", violations)
         }
     } finally {
       session.closeAsync().await()

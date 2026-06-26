@@ -21,22 +21,32 @@ import io.github.cfraser.graphguard.Bolt
 import io.github.cfraser.graphguard.Server
 import io.github.cfraser.graphguard.Server.Plugin.DSL.plugin
 import io.github.cfraser.graphguard.app.Command.Output
-import io.github.cfraser.graphguard.app.Web.PluginLoader.mutex
+import io.github.cfraser.graphguard.app.Web.Companion.flatten
+import io.github.cfraser.graphguard.app.Web.Message.Direction.ReceivedFromClient
+import io.github.cfraser.graphguard.app.Web.Message.Direction.ReceivedFromGraph
+import io.github.cfraser.graphguard.app.Web.Message.Direction.SentToClient
+import io.github.cfraser.graphguard.app.Web.Message.Direction.SentToGraph
 import io.github.cfraser.graphguard.plugin.Script
 import io.github.cfraser.graphguard.utils.Internal
 import io.github.cfraser.graphguard.validate.Query
 import io.github.cfraser.graphguard.validate.Schema
 import io.github.cfraser.graphguard.verify.Verifier
-import io.github.cfraser.graphguard.web.rpc.Message
-import io.github.cfraser.graphguard.web.rpc.Service
-import io.github.cfraser.graphguard.web.rpc.Violation
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.Netty
+import io.ktor.server.request.receiveText
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.Frame
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,15 +57,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.rpc.krpc.ktor.server.Krpc
-import kotlinx.rpc.krpc.ktor.server.rpc
-import kotlinx.rpc.krpc.serialization.json.json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.Driver
 import org.neo4j.driver.GraphDatabase
@@ -73,16 +81,74 @@ internal class Web(
   private val schemaText: Lazy<String?>,
   private val graphUri: Lazy<String>,
   private val verifyOptions: Lazy<Command.VerifyOptions?>,
-) : Output, Server.Plugin, Service {
+) : Output, Server.Plugin {
 
+  /**
+   * The [io.ktor.server.engine.EmbeddedServer] serving the web resources and the corresponding API.
+   */
   val server =
     embeddedServer(Netty, port) {
-      install(Krpc)
+      install(WebSockets)
       routing {
         staticResources("/", "static")
-        rpc("/rpc") {
-          rpcConfig { serialization { json { classDiscriminator = "type" } } }
-          registerService<Service> { this@Web }
+        get("/api/schema") {
+          when (val schema = schemaText.value) {
+            null -> call.respond(HttpStatusCode.NoContent)
+            else -> call.respondText(schema)
+          }
+        }
+        get("/api/plugin") {
+          when (val plugin = PluginLoader.getPlugin()) {
+            null -> call.respond(HttpStatusCode.NoContent)
+            else -> call.respondText(plugin)
+          }
+        }
+        post("/api/plugin") {
+          val script = call.receiveText()
+          PluginLoader.load(script.ifBlank { null })
+          call.respond(HttpStatusCode.OK)
+        }
+        webSocket("/ws") {
+          val messagesJob = launch {
+            messages.collect { message ->
+              val json = buildJsonObject {
+                put("type", "message")
+                put(
+                  "data",
+                  buildJsonObject {
+                    put("session", message.session)
+                    put("direction", message.direction::class.simpleName)
+                    put("address", message.address)
+                    put("bolt", message.bolt.toJsonObject())
+                  },
+                )
+              }
+              send(Frame.Text(json.toString()))
+            }
+          }
+          val violationsJob = launch {
+            violations.collect { violation ->
+              val json = buildJsonObject {
+                put("type", "violation")
+                put(
+                  "data",
+                  buildJsonObject {
+                    put("message", violation.message)
+                    put("elementId", violation.elementId.toJsonElement())
+                    put("name", violation.name.toJsonElement())
+                    put("isNode", violation.isNode)
+                  },
+                )
+              }
+              send(Frame.Text(json.toString()))
+            }
+          }
+          try {
+            closeReason.await()
+          } finally {
+            messagesJob.cancel()
+            violationsJob.cancel()
+          }
         }
       }
       // after application startup, begin the periodic verification according to the interval
@@ -102,9 +168,13 @@ internal class Web(
       }
     }
 
+  /** The [kotlinx.coroutines.flow.Flow] of [Message]s [intercept]ed. */
   private val messages = MutableSharedFlow<Message>(replay = 2048)
+
+  /** The [kotlinx.coroutines.flow.Flow] of [Violation]s detected by the [Verifier]. */
   private val violations = MutableSharedFlow<Violation>(replay = 2048)
 
+  /** The [Schema] lazily initialized from the [schemaText]. */
   private val schema: Schema? by lazy { schemaText.value?.let(Schema::init) }
 
   /** A [Mutex] to isolate [Verifier.verify] execution. */
@@ -143,40 +213,24 @@ internal class Web(
   override suspend fun observe(event: Server.Event) {
     if (event !is Server.Proxied) return
     if (event.source is Server.Connection.Client)
-      event.received.toRpc().forEach { message ->
+      event.received.flatten().forEach { bolt ->
         messages.emit(
-          Message.ReceivedFromClient(event.session.id, message, "${event.source.address}")
+          Message(event.session.id, ReceivedFromClient, bolt, "${event.source.address}")
         )
       }
     if (event.destination is Server.Connection.Client)
-      event.sent.toRpc().forEach { message ->
-        messages.emit(
-          Message.SentToClient(event.session.id, message, "${event.destination.address}")
-        )
+      event.sent.flatten().forEach { bolt ->
+        messages.emit(Message(event.session.id, SentToClient, bolt, "${event.destination.address}"))
       }
     if (event.destination is Server.Connection.Graph)
-      event.sent.toRpc().forEach { message ->
-        messages.emit(
-          Message.SentToGraph(event.session.id, message, "${event.destination.address}")
-        )
+      event.sent.flatten().forEach { bolt ->
+        messages.emit(Message(event.session.id, SentToGraph, bolt, "${event.destination.address}"))
       }
     if (event.source is Server.Connection.Graph)
-      event.received.toRpc().forEach { message ->
-        messages.emit(
-          Message.ReceivedFromGraph(event.session.id, message, "${event.source.address}")
-        )
+      event.received.flatten().forEach { bolt ->
+        messages.emit(Message(event.session.id, ReceivedFromGraph, bolt, "${event.source.address}"))
       }
   }
-
-  override fun getMessages() = messages
-
-  override fun getViolations() = violations
-
-  override suspend fun getSchema() = schemaText.value
-
-  override suspend fun getPlugin() = PluginLoader.getPlugin()
-
-  override suspend fun load(script: String?) = PluginLoader.load(script)
 
   private suspend fun verify() {
     val driver = driver ?: return
@@ -205,25 +259,14 @@ internal class Web(
    */
   object PluginLoader : Server.Plugin {
 
-    /**
-     * A [PluginLoader.Loaded] is the [script] source and [Script.evaluate]d [plugin] currently
-     * being used by the [Server].
-     */
     private data class Loaded(val script: String?, val plugin: Server.Plugin)
 
-    /** A [Mutex] for updating/reading [PluginLoader.loaded]. */
     private val mutex = Mutex()
 
-    /**
-     * The [PluginLoader.Loaded] [Server.Plugin].
-     * > Use the [mutex] to update [PluginLoader.loaded].
-     */
     private var loaded = Loaded(null, plugin {})
 
-    /** Get the [PluginLoader.loaded] script source. */
     suspend fun getPlugin(): String? = mutex.withLock { loaded.script }
 
-    /** [Script.evaluate] the [script] then load the [Server.Plugin]. */
     suspend fun load(script: String?) {
       if (script == null) {
         mutex.withLock { loaded = Loaded(script, plugin {}) }
@@ -233,48 +276,123 @@ internal class Web(
       mutex.withLock { this.loaded = Loaded(script, plugin) }
     }
 
-    /** [Server.Plugin.intercept] the [message] with the [PluginLoader.loaded]. */
     override suspend fun intercept(session: Bolt.Session, message: Bolt.Message) =
       mutex.withLock { loaded.plugin }.intercept(session, message)
 
-    /** [Server.Plugin.observe] the [event] with the [PluginLoader.loaded]. */
     override suspend fun observe(event: Server.Event) =
       mutex.withLock { loaded.plugin }.observe(event)
   }
 
+  data class Message(
+    val session: String,
+    val direction: Direction,
+    val bolt: Bolt.Message,
+    val address: String,
+  ) {
+
+    enum class Direction {
+      ReceivedFromClient,
+      SentToClient,
+      SentToGraph,
+      ReceivedFromGraph,
+    }
+  }
+
+  data class Violation(
+    val message: String,
+    val elementId: String?,
+    val name: String?,
+    val isNode: Boolean,
+  )
+
   private companion object {
 
-    @Suppress("CyclomaticComplexMethod")
-    fun Bolt.Message.toRpc(): List<Message.Bolt> =
+    /** Recursively [flatten] the [Bolt.Messages] within `this`. */
+    fun Bolt.Message.flatten(): List<Bolt.Message> =
+      if (this is Bolt.Messages) messages.flatMap { it.flatten() } else listOf(this)
+
+    /** Convert this [Bolt.Message] into a [JsonObject]. */
+    fun Bolt.Message.toJsonObject(): JsonObject =
       when (this) {
-        is Bolt.Messages -> messages.flatMap { it.toRpc() }
-        is Bolt.Begin -> listOf(Message.Bolt.Begin(extra.toJsonObject()))
-        Bolt.Commit -> listOf(Message.Bolt.Commit)
-        is Bolt.Discard -> listOf(Message.Bolt.Discard(extra.toJsonObject()))
-        is Bolt.Failure -> listOf(Message.Bolt.Failure(metadata.toJsonObject()))
-        Bolt.Goodbye -> listOf(Message.Bolt.Goodbye)
-        is Bolt.Hello -> listOf(Message.Bolt.Hello(extra.toJsonObject()))
-        Bolt.Ignored -> listOf(Message.Bolt.Ignored)
-        Bolt.Logoff -> listOf(Message.Bolt.Logoff)
-        is Bolt.Logon -> listOf(Message.Bolt.Logon(auth.toJsonObject()))
-        is Bolt.Pull -> listOf(Message.Bolt.Pull(extra.toJsonObject()))
-        is Bolt.Record ->
-          listOf(
-            Message.Bolt.Record(
-              buildJsonArray { data.forEach { value -> add(value.toJsonElement()) } }
-            )
-          )
-        Bolt.Reset -> listOf(Message.Bolt.Reset)
-        Bolt.Rollback -> listOf(Message.Bolt.Rollback)
+        is Bolt.Hello ->
+          buildJsonObject {
+            put("type", Bolt.Hello::class.simpleName)
+            put("extra", extra.toJsonObject())
+          }
+        Bolt.Goodbye -> buildJsonObject { put("type", Bolt.Goodbye::class.simpleName) }
+        is Bolt.Logon ->
+          buildJsonObject {
+            put("type", Bolt.Logon::class.simpleName)
+            put("auth", auth.toJsonObject())
+          }
+        Bolt.Logoff -> buildJsonObject { put("type", Bolt.Logoff::class.simpleName) }
+        is Bolt.Begin ->
+          buildJsonObject {
+            put("type", Bolt.Begin::class.simpleName)
+            put("extra", extra.toJsonObject())
+          }
+        Bolt.Commit -> buildJsonObject { put("type", Bolt.Commit::class.simpleName) }
+        Bolt.Rollback -> buildJsonObject { put("type", Bolt.Rollback::class.simpleName) }
         is Bolt.Route ->
-          listOf(Message.Bolt.Route(routing.toJsonObject(), bookmarks, extra.toJsonObject()))
+          buildJsonObject {
+            put("type", Bolt.Route::class.simpleName)
+            put("routing", routing.toJsonObject())
+            put(
+              "bookmarks",
+              buildJsonArray { bookmarks.forEach { bookmark -> add(bookmark.toJsonElement()) } },
+            )
+            put("extra", extra.toJsonObject())
+          }
+        Bolt.Reset -> buildJsonObject { put("type", Bolt.Reset::class.simpleName) }
         is Bolt.Run ->
-          listOf(Message.Bolt.Run(query, parameters.toJsonObject(), extra.toJsonObject()))
-        is Bolt.Success -> listOf(Message.Bolt.Success(metadata.toJsonObject()))
-        is Bolt.Telemetry -> listOf(Message.Bolt.Telemetry(api))
+          buildJsonObject {
+            put("type", Bolt.Run::class.simpleName)
+            put("query", query)
+            put("parameters", parameters.toJsonObject())
+            put("extra", extra.toJsonObject())
+          }
+        is Bolt.Discard ->
+          buildJsonObject {
+            put("type", Bolt.Discard::class.simpleName)
+            put("extra", extra.toJsonObject())
+          }
+        is Bolt.Pull ->
+          buildJsonObject {
+            put("type", Bolt.Pull::class.simpleName)
+            put("extra", extra.toJsonObject())
+          }
+        is Bolt.Telemetry ->
+          buildJsonObject {
+            put("type", Bolt.Telemetry::class.simpleName)
+            put("api", api)
+          }
+        is Bolt.Success ->
+          buildJsonObject {
+            put("type", Bolt.Success::class.simpleName)
+            put("metadata", metadata.toJsonObject())
+          }
+        is Bolt.Record ->
+          buildJsonObject {
+            put("type", Bolt.Record::class.simpleName)
+            put("data", buildJsonArray { data.forEach { any -> add(any.toJsonElement()) } })
+          }
+        Bolt.Ignored -> buildJsonObject { put("type", Bolt.Ignored::class.simpleName) }
+        is Bolt.Failure ->
+          buildJsonObject {
+            put("type", Bolt.Failure::class.simpleName)
+            put("metadata", metadata.toJsonObject())
+          }
+        is Bolt.Messages ->
+          buildJsonObject {
+            put("type", Bolt.Messages::class.simpleName)
+            put(
+              "messages",
+              buildJsonArray { messages.forEach { message -> add(message.toJsonObject()) } },
+            )
+          }
       }
 
-    /** Convert the [Map] to a [JsonObject]. */
+    /** Convert this [Map] into a [JsonObject]. */
     fun Map<String, Any?>.toJsonObject(): JsonObject = buildJsonObject {
       this@toJsonObject.forEach { (key, value) -> put(key, value.toJsonElement()) }
     }

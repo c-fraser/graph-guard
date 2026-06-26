@@ -21,7 +21,6 @@ plugins {
   alias(libs.plugins.buildconfig)
   alias(libs.plugins.shadow)
   alias(libs.plugins.kotlin.serialization)
-  alias(libs.plugins.kotlinx.rpc)
 }
 
 application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
@@ -33,14 +32,10 @@ dependencies {
   implementation(project(":graph-guard-script"))
   implementation(project(":graph-guard-utils"))
   implementation(project(":graph-guard-verify"))
-  implementation(project(":graph-guard-web"))
   implementation(libs.caffeine)
   implementation(libs.clikt)
   implementation(libs.jackson)
   implementation(libs.kotlinx.coroutines)
-  implementation(libs.kotlinx.rpc.krpc.server)
-  implementation(libs.kotlinx.rpc.krpc.ktor.server)
-  implementation(libs.kotlinx.rpc.krpc.serialization.json)
   implementation(libs.kotlinx.serialization.json)
   implementation(libs.ktor.server.netty)
   implementation(libs.ktor.server.core)
@@ -81,7 +76,7 @@ tasks {
 
   val setupWeb by
     registering(Copy::class) {
-      val buildWeb = project(":graph-guard-web").tasks.named("jsBrowserDistribution")
+      val buildWeb = project(":graph-guard-web").tasks.named("buildElm")
       dependsOn(buildWeb)
       from(buildWeb.map { it.outputs })
       into(layout.buildDirectory.dir("resources/main/static"))

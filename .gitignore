@@ -18,12 +18,12 @@ docs/api
 graph-guard-validate/src/main/java
 # dev notes
 TODO.md
-# kotlin/js artifacts
-kotlin-js-store
+# web app artifacts
+elm-stuff
 node_modules
 .yarn
 # static assets
-graph-guard-web/src/jsMain/resources
-!graph-guard-web/src/jsMain/resources/index.html
+graph-guard-web/src/public/*
+!graph-guard-web/src/public/index.html
 # demo
 demo/*.gg*

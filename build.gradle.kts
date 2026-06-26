@@ -47,7 +47,6 @@ buildscript {
 
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
-  alias(libs.plugins.kotlin.multiplatform) apply false
   alias(libs.plugins.dokka)
   alias(libs.plugins.spotless)
   alias(libs.plugins.detekt) apply false
@@ -70,14 +69,13 @@ allprojects {
 val web = project(":graph-guard-web")
 
 subprojects project@{
-  if (this@project == web) apply(plugin = "org.jetbrains.kotlin.multiplatform")
-  else {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
+  if (this@project == web) return@project
 
-    apply<DokkaPlugin>()
+  apply(plugin = "org.jetbrains.kotlin.jvm")
 
-    configure<JavaPluginExtension> { withSourcesJar() }
-  }
+  apply<DokkaPlugin>()
+
+  configure<JavaPluginExtension> { withSourcesJar() }
 
   configure<KotlinProjectExtension> {
     jvmToolchain { languageVersion.set(JavaLanguageVersion.of(21)) }
@@ -242,15 +240,37 @@ configure<SpotlessExtension> {
     target("**/src/main/antlr/*.g4")
   }
 
+  javascript {
+    prettier()
+      .config(mapOf("printWidth" to 100, "tabWidth" to 2, "semi" to false, "singleQuote" to true))
+    target(
+      fileTree(rootProject.rootDir) {
+        include("**/*.js", "**/*.cjs", "**/*.mjs")
+        exclude("**/bin/**", "**/build/**", "**/node_modules/**")
+      }
+    )
+  }
+
   format("prettier") {
     prettier()
       .config(mapOf("printWidth" to 100, "tabWidth" to 2, "semi" to false, "singleQuote" to true))
     target(
       fileTree(rootProject.rootDir) {
-        include("**/extra.css", "**/index.html", "**/*.json", "**/*.yml")
-        exclude("**/bin/**", "**/build/**", "**/dist/**", "**/docs/**")
+        include("**/index.html", "**/*.json", "**/*.yml")
+        exclude("**/bin/**", "**/build/**", "**/dist/**", "**/docs/**", "**/node_modules/**")
       }
     )
+  }
+
+  format("elm") {
+    target(
+      fileTree(rootProject.rootDir) {
+        include("**/src/elm/**/*.elm")
+        exclude("**/build/**", "**/elm-stuff/**", "**/node_modules/**")
+      }
+    )
+    prettier(mapOf("prettier" to "2.8.8", "prettier-plugin-elm" to "0.12.0"))
+      .config(mapOf("parser" to "elm"))
   }
 }
 
@@ -372,17 +392,7 @@ tasks {
     }
   }
 
-  val demoScript = rootDir.resolve("demo/client.py").toPath()
-
-  val ruffCheck by
-    registering(Exec::class) { commandLine("uvx", "ruff", "check", "--fix", demoScript) }
-
-  val ruffFormat by registering(Exec::class) { commandLine("uvx", "ruff", "format", demoScript) }
-
-  val spotlessPython by registering { dependsOn(ruffCheck, ruffFormat) }
-
   spotlessApply {
-    finalizedBy(spotlessPython)
     mustRunAfter(setupDocs)
   }
 
@@ -396,22 +406,17 @@ tasks {
               it.tasks.withType<KotlinApiBuildTask>() +
               it.tasks.withType<Test>()
           }
-          .toTypedArray(),
-        provider {
-          web.tasks.filter { task ->
-            task.name.contains("Compile", ignoreCase = true) ||
-              task.name.contains("Metadata", ignoreCase = true) ||
-              task.name.contains("commonMain", ignoreCase = true)
-          }
-        },
+          .toTypedArray()
       )
     }
   val spotlessKotlinGradle by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlin) }
   val spotlessJava by getting(SpotlessTask::class) { mustRunAfter(spotlessKotlinGradle) }
   val spotlessAntlr4 by getting(SpotlessTask::class) { mustRunAfter(spotlessJava) }
+  val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
+  val spotlessJavascript by getting(SpotlessTask::class) { mustRunAfter(spotlessPrettier) }
 
   @Suppress("unused")
-  val spotlessPrettier by getting(SpotlessTask::class) { mustRunAfter(spotlessAntlr4) }
+  val spotlessElm by getting(SpotlessTask::class) { mustRunAfter(spotlessJavascript) }
 
   val releaseApp by registering {
     dependsOn(

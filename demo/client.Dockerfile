@@ -1,7 +1,8 @@
-FROM  astral/uv:python3.14-bookworm-slim
+FROM node:24-slim
 
-WORKDIR /
+WORKDIR /app
+COPY package.json .
+RUN npm install --omit=dev
+COPY client.mjs .
 
-COPY client.py .
-
-CMD ["uv", "run", "/client.py"]
+CMD ["./node_modules/.bin/zx", "client.mjs"]

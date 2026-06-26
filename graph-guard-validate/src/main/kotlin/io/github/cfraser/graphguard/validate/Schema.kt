@@ -408,7 +408,7 @@ internal constructor(
       Violation(
         Rule.Violation(
           @Suppress("MaxLineLength")
-          "Invalid cardinality for ${entity.description}; ${if (type == Limit.MIN) "at least" else "at most"} $limit is expected, but $count was found"
+          "Invalid cardinality; there's $count '${entity.name}' relationships from '${entity.sources.asString()}' to '${entity.targets.asString()}' but ${if (type == Limit.MIN) "at least" else "at most"} $limit is expected"
         )
       ) {
 

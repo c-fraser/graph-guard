@@ -517,18 +517,18 @@ public abstract class io/github/cfraser/graphguard/validate/Schema$Violation {
 
 public abstract class io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public abstract fun getLabel ()Ljava/lang/String;
-	public final fun getName ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public abstract fun getName ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$Entity$Node : io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
 	public fun <init> (Ljava/lang/String;)V
-	public fun getLabel ()Ljava/lang/String;
+	public fun getName ()Ljava/lang/String;
 }
 
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$Entity$Relationship : io/github/cfraser/graphguard/validate/Schema$Violation$Entity {
 	public fun <init> (Ljava/lang/String;Ljava/util/Collection;Ljava/util/Collection;)V
-	public fun getLabel ()Ljava/lang/String;
+	public fun getName ()Ljava/lang/String;
 	public final fun getSources ()Ljava/util/Collection;
 	public final fun getTargets ()Ljava/util/Collection;
 }
