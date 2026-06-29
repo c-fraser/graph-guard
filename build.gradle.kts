@@ -392,7 +392,17 @@ tasks {
     }
   }
 
+  val demoScript = rootDir.resolve("demo/client.py").toPath()
+
+  val ruffCheck by
+    registering(Exec::class) { commandLine("uvx", "ruff", "check", "--fix", demoScript) }
+
+  val ruffFormat by registering(Exec::class) { commandLine("uvx", "ruff", "format", demoScript) }
+
+  val spotlessPython by registering { dependsOn(ruffCheck, ruffFormat) }
+
   spotlessApply {
+    finalizedBy(spotlessPython)
     mustRunAfter(setupDocs)
   }
 

@@ -20,6 +20,9 @@
     "vite": "^8.0.0",
     "vite-plugin-elm": "^3.0.0"
   },
+  "overrides": {
+    "cross-spawn": ">=6.0.6"
+  },
   "dependencies": {
     "@codemirror/language": "^6.0.0",
     "@codemirror/legacy-modes": "6.5.3",
