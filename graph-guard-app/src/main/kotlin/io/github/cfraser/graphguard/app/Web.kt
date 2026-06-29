@@ -312,6 +312,7 @@ internal class Web(
       if (this is Bolt.Messages) messages.flatMap { it.flatten() } else listOf(this)
 
     /** Convert this [Bolt.Message] into a [JsonObject]. */
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun Bolt.Message.toJsonObject(): JsonObject =
       when (this) {
         is Bolt.Hello ->

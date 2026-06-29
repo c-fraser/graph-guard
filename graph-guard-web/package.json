@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "generate": "elm-tailwind-modules --dir src/elm --tailwind-config tailwind.config.cjs",
-    "dev": "vite",
-    "build": "vite build"
+    "dev": "npm run generate && vite",
+    "build": "npm run generate && vite build"
   },
   "devDependencies": {
     "elm": "0.19.1-6",

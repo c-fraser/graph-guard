@@ -266,7 +266,7 @@ configure<SpotlessExtension> {
     target(
       fileTree(rootProject.rootDir) {
         include("**/src/elm/**/*.elm")
-        exclude("**/build/**", "**/elm-stuff/**", "**/node_modules/**")
+        exclude("**/build/**", "**/elm-stuff/**", "**/node_modules/**", "**/Tailwind/**")
       }
     )
     prettier(mapOf("prettier" to "2.8.8", "prettier-plugin-elm" to "0.12.0"))

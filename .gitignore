@@ -22,6 +22,8 @@ TODO.md
 elm-stuff
 node_modules
 .yarn
+# generated elm-tailwind-modules output
+graph-guard-web/src/elm/Tailwind/
 # static assets
 graph-guard-web/src/public/*
 !graph-guard-web/src/public/index.html
