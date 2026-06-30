@@ -17,14 +17,12 @@ package io.github.cfraser.graphguard.verify
 
 import io.github.cfraser.graphguard.utils.Internal
 import io.github.cfraser.graphguard.validate.Schema
-import io.github.cfraser.graphguard.validate.Schema.Property.Type
 import io.github.cfraser.graphguard.validate.Schema.Relationship
 import io.github.cfraser.graphguard.validate.Schema.Violation.Entity
 import io.github.cfraser.graphguard.validate.Schema.Violation.Entity.Node
 import io.github.cfraser.graphguard.validate.Schema.Violation.Entity.Relationship as VRelationship
 import io.github.cfraser.graphguard.validate.Schema.Violation.InvalidCardinality
 import io.github.cfraser.graphguard.validate.Schema.Violation.InvalidCardinality.Limit
-import io.github.cfraser.graphguard.validate.Schema.Violation.MissingProperty
 import io.github.cfraser.graphguard.validate.Schema.Violation.Unknown
 import io.github.cfraser.graphguard.validate.Schema.Violation.UnknownProperty
 import kotlinx.coroutines.future.await
@@ -106,38 +104,19 @@ constructor(
         val properties = record["properties"].asList(Value::asString).toSet()
         val nodeLabels =
           record["labels"].asList(Value::asString).filter { nodeLabel -> nodeLabel in schema.nodes }
-        val missing = nodeLabels.flatMap { nodeLabel ->
-          schema.nodes
-            .getValue(nodeLabel)
-            .properties
-            .filterNot { property -> property.type is Type.Nullable }
-            .filterNot { property -> property.name in properties }
-            .map { property ->
-              Violation(
-                MissingProperty(
-                  Node(nodeLabel),
-                  property.name,
-                ),
-                id,
-                Node(nodeLabel),
-              )
-            }
-        }
         val known =
           nodeLabels.flatMapTo(mutableSetOf()) { schemaLabel ->
             schema.nodes.getValue(schemaLabel).properties.map(Schema.Property::name)
           }
-        val unknown =
-          properties
-            .filterNot { property -> property in known }
-            .map { property ->
-              Violation(
-                UnknownProperty(Node(label), property),
-                id,
-                Node(label),
-              )
-            }
-        missing + unknown
+        properties
+          .filterNot { property -> property in known }
+          .map { property ->
+            Violation(
+              UnknownProperty(Node(label), property),
+              id,
+              Node(label),
+            )
+          }
       }
   }
 
@@ -198,17 +177,10 @@ constructor(
       )
     if (schemaRelationship == null) return listOf(Violation(Unknown(entity), id, entity))
     val properties = rel["props"].asList(Value::asString).toSet()
-    val missing =
-      schemaRelationship.properties
-        .filterNot { property -> property.type is Type.Nullable }
-        .filterNot { property -> property.name in properties }
-        .map { property -> Violation(MissingProperty(entity, property.name), id, entity) }
     val known = schemaRelationship.properties.mapTo(mutableSetOf(), Schema.Property::name)
-    val unknown =
-      properties
-        .filterNot { property -> property in known }
-        .map { property -> Violation(UnknownProperty(entity, property), id, entity) }
-    return missing + unknown
+    return properties
+      .filterNot { property -> property in known }
+      .map { property -> Violation(UnknownProperty(entity, property), id, entity) }
   }
 
   /** Check [outgoing] and [incoming] relationships for [InvalidCardinality] on the [label] node. */
@@ -281,7 +253,7 @@ constructor(
   )
 
   /**
-   * A [schemaViolation] found for a specific node or relationship in the graph.
+   * A violation found for a specific node or relationship in the graph.
    *
    * @property schemaViolation the [Schema.Violation]
    * @property elementId the

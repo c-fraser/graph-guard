@@ -388,9 +388,6 @@ internal constructor(
     class UnknownProperty(entity: Entity, property: KString) :
       Violation(Rule.Violation("Unknown property '$property' for ${entity.description}"))
 
-    class MissingProperty(entity: Entity, property: KString) :
-      Violation(Rule.Violation("Missing required property '$property' for ${entity.description}"))
-
     class InvalidProperty(entity: Entity, property: Property, values: KList<KAny?>) :
       Violation(
         Rule.Violation(

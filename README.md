@@ -426,7 +426,7 @@ Download and run the `graph-guard-app` application.
 ```shell
 curl -OL https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
 mkdir graph-guard-app
-tar -xvf graph-guard-app.tar --strip-components=1 -C graph-guard-app
+tar -xvf graph-guard-app-shadow.tar --strip-components=1 -C graph-guard-app
 ./graph-guard-app/bin/graph-guard-app --help
 ```
 

@@ -38,7 +38,7 @@ app.ports.consoleLog.subscribe((msg) => console.log('[elm]', msg))
 app.ports.initEditor.subscribe((content) => {
   // defer so Elm has painted the codemirror-mount node
   requestAnimationFrame(() => {
-    initEditor(content, (text) => app.ports.editorChanged.send(text))
+    initEditor(content)
   })
 })
 

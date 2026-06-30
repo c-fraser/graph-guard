@@ -21,7 +21,7 @@ export function destroyAll() {
   }
 }
 
-export function initEditor(content, onGetContent) {
+export function initEditor(content) {
   destroyAll()
   const mount = document.querySelector('.codemirror-mount')
   if (!mount) return
@@ -30,7 +30,6 @@ export function initEditor(content, onGetContent) {
     extensions: [basicSetup, StreamLanguage.define(kotlin), oneDark],
     parent: mount,
   })
-  editorView._onGetContent = onGetContent
 }
 
 export function setEditorContent(content) {
