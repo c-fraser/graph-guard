@@ -549,10 +549,6 @@ public final class io/github/cfraser/graphguard/validate/Schema$Violation$Invali
 	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;Lio/github/cfraser/graphguard/validate/Schema$Property;Ljava/util/List;)V
 }
 
-public final class io/github/cfraser/graphguard/validate/Schema$Violation$MissingProperty : io/github/cfraser/graphguard/validate/Schema$Violation {
-	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;Ljava/lang/String;)V
-}
-
 public final class io/github/cfraser/graphguard/validate/Schema$Violation$Unknown : io/github/cfraser/graphguard/validate/Schema$Violation {
 	public fun <init> (Lio/github/cfraser/graphguard/validate/Schema$Violation$Entity;)V
 }
