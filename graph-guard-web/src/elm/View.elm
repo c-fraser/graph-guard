@@ -208,7 +208,7 @@ pageContent model =
             schemaPage model.schema
 
         Plugins ->
-            pluginsPage
+            pluginsPage model.pluginLoading model.saveStatus
 
 
 pageHeader : String -> Maybe (Html msg) -> Maybe (Html msg) -> Html msg
@@ -909,59 +909,101 @@ schemaPage schema =
         ]
 
 
-pluginsPage : Html Msg
-pluginsPage =
+saveStatusDisplay : SaveStatus -> Html msg
+saveStatusDisplay status =
+    case status of
+        Idle ->
+            text ""
+
+        Saving ->
+            span [ css [ Tw.text_sm, Tw.text_color Theme.gray_300, Tw.inline_flex, Tw.items_center, Tw.gap_1_dot_5 ] ]
+                [ div
+                    [ css
+                        [ Tw.animate_spin
+                        , Tw.rounded_full
+                        , Tw.h_3
+                        , Tw.w_3
+                        , Tw.border_b_2
+                        , Tw.border_b_color Theme.gray_300
+                        ]
+                    ]
+                    []
+                , text "Saving..."
+                ]
+
+        Saved ->
+            span [ css [ Tw.text_sm, Tw.text_color Theme.green_400, Tw.inline_flex, Tw.items_center, Tw.gap_1_dot_5 ] ]
+                [ i [ class "fas fa-check" ] []
+                , text "Saved"
+                ]
+
+        SaveFailed ->
+            span [ css [ Tw.text_sm, Tw.text_color Theme.red_400, Tw.inline_flex, Tw.items_center, Tw.gap_1_dot_5 ] ]
+                [ i [ class "fas fa-times" ] []
+                , text "Save failed"
+                ]
+
+
+pluginsPage : Bool -> SaveStatus -> Html Msg
+pluginsPage loading saveStatus =
     flowContainer
         [ pageHeader "Plugin Editor"
             Nothing
             (Just
-                (div
-                    [ css
-                        [ Tw.bg_color Theme.green_500
-                        , Tw.bg_opacity_20
-                        , Tw.border_2
-                        , Tw.border_color Theme.green_500
-                        , Tw.border_opacity_30
-                        , Tw.px_4
-                        , Tw.py_2_dot_5
-                        , Tw.rounded_lg
-                        , Tw.cursor_pointer
-                        , Tw.text_color Theme.gray_100
-                        , Tw.inline_flex
-                        , Tw.items_center
-                        , Tw.gap_2
-                        , Tw.text_base
-                        , Css.hover
+                (div [ css [ Tw.inline_flex, Tw.items_center, Tw.gap_3 ] ]
+                    [ saveStatusDisplay saveStatus
+                    , div
+                        [ css
                             [ Tw.bg_color Theme.green_500
-                            , Tw.bg_opacity_40
+                            , Tw.bg_opacity_20
+                            , Tw.border_2
                             , Tw.border_color Theme.green_500
-                            , Tw.border_opacity_50
+                            , Tw.border_opacity_30
+                            , Tw.px_4
+                            , Tw.py_2_dot_5
+                            , Tw.rounded_lg
+                            , Tw.cursor_pointer
+                            , Tw.text_color Theme.gray_100
+                            , Tw.inline_flex
+                            , Tw.items_center
+                            , Tw.gap_2
+                            , Tw.text_base
+                            , Css.hover
+                                [ Tw.bg_color Theme.green_500
+                                , Tw.bg_opacity_40
+                                , Tw.border_color Theme.green_500
+                                , Tw.border_opacity_50
+                                ]
+                            , Tw.transition_all
+                            , Tw.duration_200
                             ]
-                        , Tw.transition_all
-                        , Tw.duration_200
+                        , attribute "title" "Save plugin"
+                        , onClick SavePlugin
                         ]
-                    , attribute "title" "Save plugin"
-                    , onClick SavePlugin
-                    ]
-                    [ i [ class "fas fa-save" ] []
-                    , span [] [ text "Save" ]
+                        [ i [ class "fas fa-save" ] []
+                        , span [] [ text "Save" ]
+                        ]
                     ]
                 )
             )
-        , div [ css [ Tw.flex_1, Tw.overflow_hidden, Tw.flex, Tw.flex_col ] ]
-            [ div [ css [ Tw.p_5, Tw.flex, Tw.flex_col, Tw.flex_1, Tw.overflow_hidden ] ]
-                [ div
-                    [ class "codemirror-mount"
-                    , css
-                        [ Tw.flex_1
-                        , Tw.min_h_0
-                        , Tw.overflow_hidden
-                        , Tw.border
-                        , Tw.border_color Theme.gray_700
-                        , Tw.rounded_lg
+        , if loading then
+            flowList [ waitingEmptyState "Loading plugin..." ]
+
+          else
+            div [ css [ Tw.flex_1, Tw.overflow_hidden, Tw.flex, Tw.flex_col ] ]
+                [ div [ css [ Tw.p_5, Tw.flex, Tw.flex_col, Tw.flex_1, Tw.overflow_hidden ] ]
+                    [ div
+                        [ class "codemirror-mount"
+                        , css
+                            [ Tw.flex_1
+                            , Tw.min_h_0
+                            , Tw.overflow_hidden
+                            , Tw.border
+                            , Tw.border_color Theme.gray_700
+                            , Tw.rounded_lg
+                            ]
                         ]
+                        []
                     ]
-                    []
                 ]
-            ]
         ]

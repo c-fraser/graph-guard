@@ -124,6 +124,7 @@ internal class Web(
                 )
               }
               send(Frame.Text(json.toString()))
+              flush()
             }
           }
           val violationsJob = launch {
@@ -141,6 +142,7 @@ internal class Web(
                 )
               }
               send(Frame.Text(json.toString()))
+              flush()
             }
           }
           val nextVerifyJob = launch {
@@ -150,6 +152,7 @@ internal class Web(
                 put("data", buildJsonObject { put("epochMs", ms) })
               }
               send(Frame.Text(json.toString()))
+              flush()
             }
           }
           try {

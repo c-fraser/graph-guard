@@ -6,6 +6,8 @@ import Http
 import Json.Decode as JD
 import Model exposing (..)
 import Ports
+import Process
+import Task
 import Url
 
 
@@ -19,7 +21,11 @@ update msg model =
 
                 cmd =
                     if page == Plugins then
-                        Ports.initEditor model.plugin
+                        if model.pluginLoading then
+                            Cmd.none
+
+                        else
+                            Ports.initEditor model.plugin
 
                     else if page == Schema then
                         Maybe.withDefault Cmd.none (Maybe.map Ports.initSchemaView model.schema)
@@ -50,7 +56,11 @@ update msg model =
 
                 extraCmd =
                     if page == Plugins then
-                        Ports.initEditor model.plugin
+                        if model.pluginLoading then
+                            Cmd.none
+
+                        else
+                            Ports.initEditor model.plugin
 
                     else if page == Schema then
                         Maybe.withDefault Cmd.none (Maybe.map Ports.initSchemaView model.schema)
@@ -123,19 +133,23 @@ update msg model =
         PluginResponse result ->
             case result of
                 Ok plugin ->
-                    ( { model | plugin = plugin }
+                    ( { model | plugin = plugin, pluginLoading = False }
                     , if model.page == Plugins then
-                        Ports.setEditorContent plugin
+                        if model.pluginLoading then
+                            Ports.initEditor plugin
+
+                        else
+                            Ports.setEditorContent plugin
 
                       else
                         Cmd.none
                     )
 
                 Err err ->
-                    ( { model | plugin = "" }, Ports.consoleLog ("[plugin] error: " ++ httpErrorToString err) )
+                    ( { model | plugin = "", pluginLoading = False }, Ports.consoleLog ("[plugin] error: " ++ httpErrorToString err) )
 
         SavePlugin ->
-            ( model, Ports.getEditorContent () )
+            ( { model | saveStatus = Saving }, Ports.getEditorContent () )
 
         EditorChanged content ->
             ( model
@@ -153,15 +167,18 @@ update msg model =
         PluginSaved result ->
             case result of
                 Ok () ->
-                    ( model
-                    , Http.get
-                        { url = "/api/plugin"
-                        , expect = Http.expectString PluginResponse
-                        }
+                    ( { model | saveStatus = Saved }
+                    , Cmd.batch
+                        [ Http.get { url = "/api/plugin", expect = Http.expectString PluginResponse }
+                        , Process.sleep 3000 |> Task.perform (\_ -> ClearSaveStatus)
+                        ]
                     )
 
                 Err err ->
-                    ( { model | error = Just "Failed to save plugin" }, Ports.consoleLog ("[plugin save] error: " ++ httpErrorToString err) )
+                    ( { model | saveStatus = SaveFailed }, Ports.consoleLog ("[plugin save] error: " ++ httpErrorToString err) )
+
+        ClearSaveStatus ->
+            ( { model | saveStatus = Idle }, Cmd.none )
 
         CopyToClipboard text_ ->
             ( model, Ports.copyToClipboard text_ )

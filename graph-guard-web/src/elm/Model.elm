@@ -5,6 +5,7 @@ module Model exposing
     , Model
     , Msg(..)
     , Page(..)
+    , SaveStatus(..)
     , TimestampedViolation
     , Violation
     , WsEvent(..)
@@ -47,11 +48,20 @@ type alias Model =
     , violations : List TimestampedViolation
     , schema : Maybe String
     , plugin : String
+    , pluginLoading : Bool
+    , saveStatus : SaveStatus
     , wsStatus : WsStatus
     , error : Maybe String
     , now : Time.Posix
     , nextVerifyAt : Maybe Int
     }
+
+
+type SaveStatus
+    = Idle
+    | Saving
+    | Saved
+    | SaveFailed
 
 
 type Msg
@@ -64,6 +74,7 @@ type Msg
     | PluginResponse (Result Http.Error String)
     | SavePlugin
     | PluginSaved (Result Http.Error ())
+    | ClearSaveStatus
     | EditorChanged String
     | CopyToClipboard String
     | Tick Time.Posix
