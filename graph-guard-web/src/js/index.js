@@ -16,7 +16,10 @@ function connect() {
   ws = new WebSocket(`${protocol}//${location.host}/ws`)
   app.ports.wsStatus.send('connecting')
   ws.onopen = () => app.ports.wsStatus.send('connected')
-  ws.onmessage = (e) => app.ports.wsMessage.send(e.data)
+  ws.onmessage = (e) => {
+    console.debug('[ws] data:', e.data)
+    app.ports.wsMessage.send(e.data)
+  }
   ws.onclose = () => {
     app.ports.wsStatus.send('disconnected')
     setTimeout(connect, 3000)
@@ -29,6 +32,8 @@ function connect() {
 connect()
 
 app.ports.copyToClipboard.subscribe((text) => navigator.clipboard.writeText(text))
+
+app.ports.consoleLog.subscribe((msg) => console.log('[elm]', msg))
 
 app.ports.initEditor.subscribe((content) => {
   // defer so Elm has painted the codemirror-mount node

@@ -183,27 +183,6 @@ pageLabel page =
             "Plugins"
 
 
-wsStatusBadge : WsStatus -> Html msg
-wsStatusBadge status =
-    let
-        ( textStyle, dotStyle, label ) =
-            case status of
-                Connected ->
-                    ( Tw.text_color Theme.green_500, Tw.bg_color Theme.green_500, "connected" )
-
-                Disconnected ->
-                    ( Tw.text_color Theme.red_500, Tw.bg_color Theme.red_500, "disconnected" )
-
-                Connecting ->
-                    ( Tw.text_color Theme.amber_500, Tw.bg_color Theme.amber_500, "connecting" )
-    in
-    span
-        [ css [ Tw.inline_flex, Tw.items_center, Tw.gap_1_dot_5, Tw.text_xs, textStyle ] ]
-        [ span [ css [ Tw.w_2, Tw.h_2, Tw.rounded_full, dotStyle, Tw.inline_block ] ] []
-        , text label
-        ]
-
-
 errorDisplay : String -> Html msg
 errorDisplay message =
     div
@@ -223,7 +202,7 @@ pageContent model =
             queryLogPage model.messages
 
         Violations ->
-            violationsPage model.violations model.now
+            violationsPage model.violations model.nextVerifyAt model.now
 
         Schema ->
             schemaPage model.schema
@@ -290,13 +269,41 @@ emptyState msg =
         [ p [] [ text msg ] ]
 
 
+waitingEmptyState : String -> Html msg
+waitingEmptyState msg =
+    div [ css [ Tw.p_8, Tw.text_center, Tw.text_color Theme.gray_400 ] ]
+        [ div
+            [ css
+                [ Tw.animate_spin
+                , Tw.rounded_full
+                , Tw.h_8
+                , Tw.w_8
+                , Tw.border_b_2
+                , Tw.border_b_color Theme.gray_400
+                , Tw.mx_auto
+                , Tw.mb_4
+                ]
+            ]
+            []
+        , p [] [ text msg ]
+        ]
+
+
+successEmptyState : String -> Html msg
+successEmptyState msg =
+    div [ css [ Tw.p_8, Tw.text_center ] ]
+        [ i [ class "fas fa-check-circle", css [ Tw.text_color Theme.green_500, Tw.text_4xl, Tw.block, Tw.mb_2 ] ] []
+        , p [ css [ Tw.text_color Theme.green_400 ] ] [ text msg ]
+        ]
+
+
 messageStreamPage : List BoltMessage -> Html msg
 messageStreamPage messages =
     flowContainer
         [ pageHeader "Bolt Messages" Nothing Nothing
         , flowList
             (if List.isEmpty messages then
-                [ emptyState "No Bolt messages intercepted yet..." ]
+                [ waitingEmptyState "No Bolt messages intercepted yet..." ]
 
              else
                 List.map messageCard messages
@@ -422,13 +429,10 @@ type alias QueryEntry =
     }
 
 
-
--- messages list is newest-first; reverse to process in arrival order
-
-
 getQueries : List BoltMessage -> List QueryEntry
 getQueries messages =
     let
+        -- messages list is newest-first; reverse to process in arrival order
         inOrder =
             List.reverse messages
 
@@ -509,7 +513,7 @@ queryLogPage messages =
         [ pageHeader "Query Log" Nothing Nothing
         , flowList
             (if List.isEmpty queries then
-                [ emptyState "No queries intercepted yet..." ]
+                [ waitingEmptyState "No queries intercepted yet..." ]
 
              else
                 List.map queryLogCard queries
@@ -696,33 +700,69 @@ queryLogCard query =
         ]
 
 
-violationsPage : List TimestampedViolation -> Time.Posix -> Html Msg
-violationsPage violations now =
+violationsPage : List TimestampedViolation -> Maybe Int -> Time.Posix -> Html Msg
+violationsPage violations nextVerifyAt now =
     flowContainer
         [ pageHeader "Schema Violations"
             (Just
-                (p
-                    [ css [ Tw.text_sm, Tw.m_0, Tw.font_normal, Tw.text_color Theme.gray_100, Tw.text_opacity_70 ] ]
-                    [ text "Violations reported by the "
-                    , a
-                        [ href "https://c-fraser.github.io/graph-guard/api/graph-guard-verify/io.github.cfraser.graphguard.verify/-verifier/index.html"
-                        , target "_blank"
-                        , rel "noreferrer"
-                        , css [ Tw.text_color Theme.blue_300, Tw.text_opacity_90 ]
+                (div [ css [ Tw.flex, Tw.flex_col, Tw.gap_1 ] ]
+                    [ p
+                        [ css [ Tw.text_sm, Tw.m_0, Tw.font_normal, Tw.text_color Theme.gray_100, Tw.text_opacity_70 ] ]
+                        [ text "Violations reported by the "
+                        , a
+                            [ href "https://c-fraser.github.io/graph-guard/api/graph-guard-verify/io.github.cfraser.graphguard.verify/-verifier/index.html"
+                            , target "_blank"
+                            , rel "noreferrer"
+                            , css [ Tw.text_color Theme.blue_300, Tw.text_opacity_90 ]
+                            ]
+                            [ text "Verifier" ]
                         ]
-                        [ text "Verifier" ]
+                    , nextVerifyDisplay nextVerifyAt now
                     ]
                 )
             )
             Nothing
         , flowList
             (if List.isEmpty violations then
-                [ emptyState "No violations found..." ]
+                [ successEmptyState "No violations found..." ]
 
              else
                 List.map (violationCard now) violations
             )
         ]
+
+
+nextVerifyDisplay : Maybe Int -> Time.Posix -> Html msg
+nextVerifyDisplay nextVerifyAt now =
+    case nextVerifyAt of
+        Nothing ->
+            text ""
+
+        Just ms ->
+            let
+                diff =
+                    ms - Time.posixToMillis now
+
+                label =
+                    if diff <= 0 then
+                        "verification running..."
+
+                    else
+                        let
+                            m =
+                                diff // 60000
+                        in
+                        "next verification in "
+                            ++ (if m > 0 then
+                                    String.fromInt m ++ "m"
+
+                                else
+                                    "< 1m"
+                               )
+            in
+            span
+                [ css [ Tw.text_xs, Tw.text_color Theme.gray_100, Tw.text_opacity_50 ] ]
+                [ text label ]
 
 
 violationCard : Time.Posix -> TimestampedViolation -> Html Msg

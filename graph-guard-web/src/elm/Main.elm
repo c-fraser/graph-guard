@@ -40,6 +40,7 @@ init _ url key =
             , wsStatus = Connecting
             , error = Nothing
             , now = Time.millisToPosix 0
+            , nextVerifyAt = Nothing
             }
 
         cmds =

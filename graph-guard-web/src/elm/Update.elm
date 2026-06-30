@@ -82,8 +82,11 @@ update msg model =
                     in
                     ( { model | violations = updated }, Cmd.none )
 
-                Err _ ->
-                    ( model, Cmd.none )
+                Ok (NextVerifyEvent ms) ->
+                    ( { model | nextVerifyAt = Just ms }, Cmd.none )
+
+                Err err ->
+                    ( model, Ports.consoleLog ("[ws] decode error: " ++ JD.errorToString err) )
 
         WsStatusChanged s ->
             let
@@ -114,8 +117,8 @@ update msg model =
                 Err (Http.BadStatus 204) ->
                     ( { model | schema = Nothing }, Cmd.none )
 
-                Err _ ->
-                    ( { model | schema = Nothing }, Cmd.none )
+                Err err ->
+                    ( { model | schema = Nothing }, Ports.consoleLog ("[schema] error: " ++ httpErrorToString err) )
 
         PluginResponse result ->
             case result of
@@ -128,8 +131,8 @@ update msg model =
                         Cmd.none
                     )
 
-                Err _ ->
-                    ( { model | plugin = "" }, Cmd.none )
+                Err err ->
+                    ( { model | plugin = "" }, Ports.consoleLog ("[plugin] error: " ++ httpErrorToString err) )
 
         SavePlugin ->
             ( model, Ports.getEditorContent () )
@@ -157,11 +160,30 @@ update msg model =
                         }
                     )
 
-                Err _ ->
-                    ( { model | error = Just "Failed to save plugin" }, Cmd.none )
+                Err err ->
+                    ( { model | error = Just "Failed to save plugin" }, Ports.consoleLog ("[plugin save] error: " ++ httpErrorToString err) )
 
         CopyToClipboard text_ ->
             ( model, Ports.copyToClipboard text_ )
 
         Tick posix ->
             ( { model | now = posix }, Cmd.none )
+
+
+httpErrorToString : Http.Error -> String
+httpErrorToString err =
+    case err of
+        Http.BadUrl url ->
+            "bad url: " ++ url
+
+        Http.Timeout ->
+            "timeout"
+
+        Http.NetworkError ->
+            "network error"
+
+        Http.BadStatus code ->
+            "bad status: " ++ String.fromInt code
+
+        Http.BadBody body ->
+            "bad body: " ++ body

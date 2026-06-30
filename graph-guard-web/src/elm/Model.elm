@@ -50,6 +50,7 @@ type alias Model =
     , wsStatus : WsStatus
     , error : Maybe String
     , now : Time.Posix
+    , nextVerifyAt : Maybe Int
     }
 
 
@@ -107,6 +108,7 @@ type alias TimestampedViolation =
 type WsEvent
     = MessageEvent BoltMessage
     | ViolationEvent Violation
+    | NextVerifyEvent Int
 
 
 pageFromFragment : Maybe String -> Page
@@ -226,6 +228,10 @@ wsEventDecoder =
                     "violation" ->
                         D.field "data" violationDecoder
                             |> D.map ViolationEvent
+
+                    "nextVerify" ->
+                        D.at [ "data", "epochMs" ] D.int
+                            |> D.map NextVerifyEvent
 
                     _ ->
                         D.fail ("unknown ws event type: " ++ t)

@@ -117,7 +117,7 @@ internal class Web(
                   "data",
                   buildJsonObject {
                     put("session", message.session)
-                    put("direction", message.direction::class.simpleName)
+                    put("direction", message.direction.name)
                     put("address", message.address)
                     put("bolt", message.bolt.toJsonObject())
                   },
@@ -143,11 +143,21 @@ internal class Web(
               send(Frame.Text(json.toString()))
             }
           }
+          val nextVerifyJob = launch {
+            nextVerifyAt.collect { ms ->
+              val json = buildJsonObject {
+                put("type", "nextVerify")
+                put("data", buildJsonObject { put("epochMs", ms) })
+              }
+              send(Frame.Text(json.toString()))
+            }
+          }
           try {
             closeReason.await()
           } finally {
             messagesJob.cancel()
             violationsJob.cancel()
+            nextVerifyJob.cancel()
           }
         }
       }
@@ -157,6 +167,7 @@ internal class Web(
         verifyScope.launch {
           while (true) {
             verify()
+            nextVerifyAt.emit(System.currentTimeMillis() + options.interval.inWholeMilliseconds)
             delay(options.interval)
           }
         }
@@ -173,6 +184,9 @@ internal class Web(
 
   /** The [kotlinx.coroutines.flow.Flow] of [Violation]s detected by the [Verifier]. */
   private val violations = MutableSharedFlow<Violation>(replay = 2048)
+
+  /** The epoch-millisecond timestamp of the next scheduled [Verifier.verify] run. */
+  private val nextVerifyAt = MutableSharedFlow<Long>(replay = 1)
 
   /** The [Schema] lazily initialized from the [schemaText]. */
   private val schema: Schema? by lazy { schemaText.value?.let(Schema::init) }
