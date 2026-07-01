@@ -343,6 +343,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cardinality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cardinality
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -515,6 +526,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#graph-guard-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph-guard-verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#graph-guard-script" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -651,7 +673,7 @@ fun runExample02() {
 }
 -->
 
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">Server</span><span class="p">(</span><span class="n">boltURI</span><span class="p">(),</span><span class="w"> </span><span class="n">Validator</span><span class="p">(</span><span class="n">Schema</span><span class="p">(</span><span class="n">MOVIES_SCHEMA</span><span class="p">)),</span><span class="w"> </span><span class="n">Server</span><span class="p">.</span><span class="na">Address</span><span class="p">.</span><span class="na">InetSocket</span><span class="p">(</span><span class="s">&quot;localhost&quot;</span><span class="p">,</span><span class="w"> </span><span class="m">8787</span><span class="p">)).</span><span class="na">use</span><span class="w"> </span><span class="p">{</span>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">Server</span><span class="p">(</span><span class="n">boltURI</span><span class="p">(),</span><span class="w"> </span><span class="n">Validator</span><span class="p">(</span><span class="n">Schema</span><span class="p">.</span><span class="na">init</span><span class="p">(</span><span class="n">MOVIES_SCHEMA</span><span class="p">)),</span><span class="w"> </span><span class="n">Server</span><span class="p">.</span><span class="na">Address</span><span class="p">.</span><span class="na">InetSocket</span><span class="p">(</span><span class="s">&quot;localhost&quot;</span><span class="p">,</span><span class="w"> </span><span class="m">8787</span><span class="p">)).</span><span class="na">use</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">server</span><span class="w"> </span><span class="o">-&gt;</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="n">server</span><span class="p">.</span><span class="na">start</span><span class="p">()</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="n">GraphDatabase</span><span class="p">.</span><span class="na">driver</span><span class="p">(</span><span class="s">&quot;bolt://localhost:8787&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">withoutEncryption</span><span class="p">().</span><span class="na">build</span><span class="p">())</span>
@@ -683,11 +705,11 @@ const val MOVIES_SCHEMA =
 
 <div class="language-kotlin highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">graph</span><span class="w"> </span><span class="n">Movies</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">born</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">):</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">      </span><span class="n">ACTED_IN</span><span class="p">(</span><span class="n">roles</span><span class="p">:</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">      </span><span class="n">DIRECTED</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="n">PRODUCED</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="n">WROTE</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="n">REVIEWED</span><span class="p">(</span><span class="n">summary</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">;</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">      </span><span class="n">ACTED_IN</span><span class="w"> </span><span class="o">[</span><span class="n">M</span><span class="o">?.</span><span class="p">.</span><span class="na">M</span><span class="o">]</span><span class="p">(</span><span class="n">roles</span><span class="p">:</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">      </span><span class="n">DIRECTED</span><span class="w"> </span><span class="o">[</span><span class="n">M</span><span class="o">?.</span><span class="p">.</span><span class="na">M</span><span class="o">]</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="n">PRODUCED</span><span class="w"> </span><span class="o">[</span><span class="n">M</span><span class="o">?.</span><span class="p">.</span><span class="na">M</span><span class="o">]</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="n">WROTE</span><span class="w"> </span><span class="o">[</span><span class="n">M</span><span class="o">?.</span><span class="p">.</span><span class="na">M</span><span class="o">]</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">,</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="n">REVIEWED</span><span class="w"> </span><span class="o">[</span><span class="n">M</span><span class="o">?.</span><span class="p">.</span><span class="na">M</span><span class="o">?]</span><span class="p">(</span><span class="n">summary</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Movie</span><span class="p">;</span>
 </span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="n">node</span><span class="w"> </span><span class="n">Movie</span><span class="p">(</span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">released</span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">,</span><span class="w"> </span><span class="n">tagline</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">);</span>
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">}</span>
@@ -719,6 +741,91 @@ have <a href="#properties">properties</a> and/or <a href="#relationships">relati
 <p>Relationships are defined relative to the <em>source</em> <a href="#nodes">node</a>. A relationship definition must
 have a name, direction (<code>-&gt;</code> for directed, or <code>--</code> for undirected), and target node. A relationship
 must have a unique <code>(source)-[name]-(target)</code>, and may also have <a href="#properties">properties</a>.</p>
+<h4 id="cardinality">Cardinality</h4>
+<p>A <a href="#relationships">relationship</a> may include
+a <a href="https://neo4j.com/docs/graphql/current/relationships/cardinality/">cardinality</a> constraint,
+written as <code>[&lt;one&gt;..&lt;many&gt;]</code> between the name and <a href="#properties">properties</a>. Each side independently
+constrains the source <a href="#nodes">node</a>'s outgoing count or the target <a href="#nodes">node</a>'s incoming count.</p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Min</th>
+<th>Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>1</code></td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>1?</code></td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>M</code></td>
+<td>1</td>
+<td>&gt;=1</td>
+</tr>
+<tr>
+<td><code>M?</code></td>
+<td>0</td>
+<td>&gt;=0</td>
+</tr>
+</tbody>
+</table>
+<p>For example, the following explains the cardinality constraints in the <a href="#schema">movies schema</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Relationship</th>
+<th><code>Person</code></th>
+<th><code>Movie</code></th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ACTED_IN</code></td>
+<td><code>M?</code></td>
+<td><code>M</code></td>
+<td>a person may act in any number of movies; a movie must have at least one actor</td>
+</tr>
+<tr>
+<td><code>DIRECTED</code></td>
+<td><code>M?</code></td>
+<td><code>M</code></td>
+<td>a person may direct any number of movies; a movie must have at least one director</td>
+</tr>
+<tr>
+<td><code>PRODUCED</code></td>
+<td><code>M?</code></td>
+<td><code>M</code></td>
+<td>a person may produce any number of movies; a movie must have at least one producer</td>
+</tr>
+<tr>
+<td><code>WROTE</code></td>
+<td><code>M?</code></td>
+<td><code>M</code></td>
+<td>a person may write any number of movies; a movie must have at least one writer</td>
+</tr>
+<tr>
+<td><code>REVIEWED</code></td>
+<td><code>M?</code></td>
+<td><code>M?</code></td>
+<td>a person may review any number of movies; reviews are optional on a movie</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Cardinality violations can't be detected from a query alone. Whether a node satisfies its
+constraints depends on the existing graph state, which the <a href="#design">Validator</a> isn't aware of
+when the message is intercepted. The <a href="#graph-guard-verify">Verifier</a> addresses this by inspecting
+the graph directly.</p>
+</blockquote>
 <h4 id="properties">Properties</h4>
 <p>A <a href="#nodes">node</a> or <a href="#relationships">relationship</a> may have <em>typed</em> properties. The supported
 property types are listed below.</p>
@@ -880,7 +987,7 @@ fun runExample08() {
 <p>Download and run the <code>graph-guard-app</code> application.</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-OL<span class="w"> </span>https://github.com/c-fraser/graph-guard/releases/latest/download/graph-guard-app-shadow.tar
 </span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mkdir<span class="w"> </span>graph-guard-app
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-app.tar<span class="w"> </span>--strip-components<span class="o">=</span><span class="m">1</span><span class="w"> </span>-C<span class="w"> </span>graph-guard-app
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>tar<span class="w"> </span>-xvf<span class="w"> </span>graph-guard-app-shadow.tar<span class="w"> </span>--strip-components<span class="o">=</span><span class="m">1</span><span class="w"> </span>-C<span class="w"> </span>graph-guard-app
 </span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>./graph-guard-app/bin/graph-guard-app<span class="w"> </span>--help
 </span></code></pre></div>
 <h4 id="demo">Demo</h4>
@@ -904,6 +1011,14 @@ to <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.g
 for additional
 Cypher <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-rule/index.html">Rule</a>
 implementations.</p>
+<h3 id="graph-guard-verify">graph-guard-verify</h3>
+<p><code>graph-guard-verify</code>
+provides <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-verify/io.github.cfraser.graphguard.verify/-verifier/index.html">Verifier</a>,
+which verifies that the nodes and relationships in a <a href="https://neo4j.com/">Neo4j</a> graph conform to
+a <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-validate/io.github.cfraser.graphguard.validate/-schema/index.html">Schema</a>.
+Unlike <a href="#graph-guard-validate">Validator</a>, which validates Cypher queries in
+realtime, <a href="https://c-fraser.github.io/graph-guard/api/graph-guard-verify/io.github.cfraser.graphguard.verify/-verifier/index.html">Verifier</a>
+introspects data already stored in the graph and reports violations for non-compliant entities.</p>
 <h3 id="graph-guard-script">graph-guard-script</h3>
 <p><a href="https://c-fraser.github.io/graph-guard/api/graph-guard-script/io.github.cfraser.graphguard.plugin/-script/-companion/evaluate.html">Script.evaluate</a>
 enables <a href="https://c-fraser.github.io/graph-guard/api/graph-guard/io.github.cfraser.graphguard/-server/-plugin/index.html">plugins</a>
