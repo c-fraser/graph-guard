@@ -23,6 +23,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: setup Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: check code
         run: ./gradlew spotlessCheck
       - name: execute build
