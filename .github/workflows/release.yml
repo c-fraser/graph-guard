@@ -31,6 +31,8 @@ jobs:
         if: success() || failure()
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
+      - name: build jlink image
+        run: ./gradlew :graph-guard-app:runtimeZip
       - name: execute release
         run: ./gradlew jreleaserFullRelease publishToSonatype closeAndReleaseSonatypeStagingRepository --stacktrace
         env:

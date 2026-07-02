@@ -40,6 +40,7 @@ slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 #slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 [plugins]
+badass-runtime = { id = "org.beryx.runtime", version = "2.0.1" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.10" }
 node-gradle = { id = "com.github.node-gradle.node", version = "7.1.0" }
 compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.18.1" }

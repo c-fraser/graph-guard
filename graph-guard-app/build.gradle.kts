@@ -21,11 +21,20 @@ plugins {
   alias(libs.plugins.buildconfig)
   alias(libs.plugins.shadow)
   alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.badass.runtime)
 }
 
 application { mainClass.set("io.github.cfraser.graphguard.app.Main") }
 
 jib { from { image = "eclipse-temurin:21" } }
+
+runtime {
+  options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+  additive.set(true)
+  // used for bolt+s/neo4j+s connections
+  modules.set(listOf("jdk.crypto.ec"))
+  imageZip.set(layout.buildDirectory.file("distributions/${project.name}-linux-x64.zip"))
+}
 
 dependencies {
   implementation(project(":graph-guard"))
@@ -63,12 +72,7 @@ tasks {
     testLogging { showStandardStreams = true }
   }
 
-  val shadowJar =
-    withType<ShadowJar> {
-      archiveBaseName.set(null as String?)
-      archiveClassifier.set(null as String?)
-      archiveVersion.set(null as String?)
-    }
+  val shadowJar by getting(ShadowJar::class)
   distZip { mustRunAfter(shadowJar) }
   distTar { mustRunAfter(shadowJar) }
   startScripts { mustRunAfter(shadowJar, ":spotlessKotlin") }

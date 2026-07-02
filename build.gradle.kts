@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jreleaser.gradle.plugin.JReleaserExtension
 import org.jreleaser.gradle.plugin.tasks.JReleaserFullReleaseTask
 import org.jreleaser.model.Active
+import org.jreleaser.model.Distribution
 
 buildscript {
   repositories { mavenCentral() }
@@ -292,6 +293,8 @@ val appZip: Provider<RegularFile> =
   app.layout.buildDirectory.file("distributions/${app.name}-shadow.zip")
 val appImage: Provider<RegularFile> =
   app.layout.buildDirectory.file("distributions/${app.name}-image.tar")
+val appJlinkZip: Provider<RegularFile> =
+  app.layout.buildDirectory.file("distributions/${app.name}-linux-x64.zip")
 
 configure<JReleaserExtension> {
   project {
@@ -340,6 +343,13 @@ configure<JReleaserExtension> {
             multiPlatform.set(true)
             token.set(System.getenv("GITHUB_TOKEN").orEmpty())
           }
+        }
+      }
+      create("${app.name}-jlink") {
+        distributionType.set(Distribution.DistributionType.JLINK)
+        artifact {
+          path.set(appJlinkZip)
+          platform.set("linux-x86_64")
         }
       }
     }
@@ -429,6 +439,9 @@ tasks {
   val spotlessElm by getting(SpotlessTask::class) { mustRunAfter(spotlessJavascript) }
 
   val releaseApp by registering {
+    // `:graph-guard-app:runtimeZip` is deliberately excluded here. During task invocation, the
+    // `badass-runtime` plugin globally rewrites every `CreateStartScripts` task in the project,
+    // which corrupts the `shadow` distribution's launch script
     dependsOn(
       ":graph-guard-app:shadowDistTar",
       ":graph-guard-app:shadowDistZip",
