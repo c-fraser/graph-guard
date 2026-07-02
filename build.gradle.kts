@@ -62,7 +62,7 @@ apply<KnitPlugin>()
 
 allprojects {
   group = "io.github.c-fraser"
-  version = "1.4.1"
+  version = "1.4.2"
 
   repositories { mavenCentral() }
 }
